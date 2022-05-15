@@ -328,7 +328,7 @@ public class UserRC {
      * Navrati tym, ve kterem se uzivatel nachazi. Pokud neni v zadnem tymu navrati
      * Team.NOT_IN_TEAM
      * 
-     * @return
+     * @return ID tymu
      */
     public long getTeamID() {
         if (this.team == null) {

@@ -331,15 +331,9 @@ paths:
       description: Zrušit registraci robota může jakýkoli člen týmu. Zrušení registrace nebude možne pokud již byla povrzena.
       parameters:
         - in: query
-          name: robotID
+          name: id
           required: true
           description: ID robota
-          schema:
-            type: integer
-        - in: query
-          name: disciplineID
-          required: true
-          description: ID disciplíny, do které robota registrujeme
           schema:
             type: integer
       security:
