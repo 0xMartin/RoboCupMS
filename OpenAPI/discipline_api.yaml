@@ -215,12 +215,6 @@ paths:
       description: Disciplínu nebude možne odstranit pokud ma přiřazené nejaké hřiště nebo registrované roboty. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
       parameters:
         - in: query
-          name: year
-          required: true
-          description: Ročník soutěže
-          schema:
-            type: integer
-        - in: query
           name: id
           required: true
           description: ID disciplíny, která bude odstraněna

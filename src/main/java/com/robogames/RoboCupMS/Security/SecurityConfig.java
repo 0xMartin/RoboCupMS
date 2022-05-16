@@ -66,7 +66,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                                 repository, NOT_SECURED);
 
                 // povoli Pre-flight Request
-                http.cors(); 
+                http.cors();
 
                 // konfigurace zabezpeceni
                 http.csrf().disable()

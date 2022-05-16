@@ -108,7 +108,7 @@ paths:
               type: object
               properties:
                 year:
-                  type: string
+                  type: integer
                 date:
                   type: string
                   format: date
@@ -157,7 +157,7 @@ paths:
               type: object
               properties:
                 year:
-                  type: string
+                  type: integer
                 date:
                   type: string
                   format: date
