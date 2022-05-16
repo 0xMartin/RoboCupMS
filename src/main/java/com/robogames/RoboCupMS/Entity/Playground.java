@@ -112,6 +112,15 @@ public class Playground {
     }
 
     /**
+     * Navrati nazev discipliny, pro kterou je toto hriste urcine
+     * 
+     * @return Nazev discipliny
+     */
+    public String getDisciplineName() {
+        return this.discipline.getName();
+    }
+
+    /**
      * Navrati vsechny odehrane zapasy na tomto hristi
      * 
      * @return Seznam zapasu

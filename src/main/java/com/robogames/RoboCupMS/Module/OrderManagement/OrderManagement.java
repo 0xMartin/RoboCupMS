@@ -7,6 +7,7 @@ import com.robogames.RoboCupMS.Response;
 import com.robogames.RoboCupMS.ResponseHandler;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Entity.RobotMatch;
+import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.MultiMatchGroupObj;
 import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Service.OrderManagementService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,12 +33,13 @@ public class OrderManagement {
     private OrderManagementService competitionEvaluationService;
 
     /**
-     * Spusti servis pro rizeni poradi
+     * Spusti modul pro rizeni poradi. Modul bude mozne spustit jen pro soutez,
+     * ktery byla jiz zahajna.
      * 
      * @param year Rocnik souteze
      * @throws Exception
      */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER })
+    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT })
     @PutMapping("/run")
     Response run(@RequestParam int year) {
         try {
@@ -133,18 +136,17 @@ public class OrderManagement {
     /**
      * Vygeneruje skupinove zapasy "kazdy s kazdym" (sumo, robo strong, ...)
      * 
-     * @param year         Rocnik souteze
-     * @param robots       Seznam ID robotu, pro ktere se zapasy vytvori
-     * @param playgroundID ID hriste kde se zapasy budou konat
+     * @param multiMatchGroupObj Objekt definujici parametry pro vygenerovani vsech
+     *                           zapasu
      * @return Navrati identifikacni cislo tvurce zapasovych skupin (nasledne muze
      *         byt uplatneno pro odstraneni zapasu)
      */
     @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @PostMapping("/generateMatches")
-    Response generateMatches(@RequestParam int year, @RequestParam Long[] robots, @RequestParam Long playgroundID) {
+    Response generateMatches(@RequestBody MultiMatchGroupObj multiMatchGroupObj) {
         long creatorIdentifier;
         try {
-            creatorIdentifier = this.competitionEvaluationService.generateMatches(year, robots, playgroundID);
+            creatorIdentifier = this.competitionEvaluationService.generateMatches(multiMatchGroupObj);
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
         }

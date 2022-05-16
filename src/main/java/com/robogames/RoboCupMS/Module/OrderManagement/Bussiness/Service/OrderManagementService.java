@@ -14,6 +14,7 @@ import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Enum.EMatchState;
 import com.robogames.RoboCupMS.Business.Service.MatchService;
 import com.robogames.RoboCupMS.Communication.CallBack;
+import com.robogames.RoboCupMS.Entity.Competition;
 import com.robogames.RoboCupMS.Entity.Discipline;
 import com.robogames.RoboCupMS.Entity.MatchGroup;
 import com.robogames.RoboCupMS.Entity.MatchState;
@@ -21,6 +22,7 @@ import com.robogames.RoboCupMS.Entity.Playground;
 import com.robogames.RoboCupMS.Entity.Robot;
 import com.robogames.RoboCupMS.Entity.RobotMatch;
 import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.MatchQueue;
+import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.MultiMatchGroupObj;
 import com.robogames.RoboCupMS.Repository.CompetitionRepository;
 import com.robogames.RoboCupMS.Repository.MatchGroupRepository;
 import com.robogames.RoboCupMS.Repository.MatchStateRepository;
@@ -72,9 +74,7 @@ public class OrderManagementService {
         Communication.getInstance().getCallBacks().add(new CallBack() {
             @Override
             public void callBack(Object sender, Object data) {
-                // pokud zachyti http request na endpoint "GlobalConfig.AUTH_PREFIX +
-                // /match/writeScore" -> zapas byl
-                // odehran -> dojde k obnoveni
+                // refresh jen v pripade provedeni zmen v zapasech
                 if (sender instanceof MatchService) {
                     if (data instanceof MatchService.Message) {
                         MatchService.Message msg = (MatchService.Message) data;
@@ -93,14 +93,20 @@ public class OrderManagementService {
     }
 
     /**
-     * Spusti servis pro rizeni poradi
+     * Spusti modul pro rizeni poradi. Modul bude mozne spustit jen pro soutez,
+     * ktery byla jiz zahajna.
      * 
      * @param year Rocnik souteze
      * @throws Exception
      */
     public void run(int year) throws Exception {
-        if (!this.competitionRepository.findByYear(year).isPresent()) {
+        Optional<Competition> competition = this.competitionRepository.findByYear(year);
+        if (!competition.isPresent()) {
             throw new Exception(String.format("failure, compotition [%d] not exists", year));
+        }
+
+        if (!competition.get().getStarted()) {
+            throw new Exception(String.format("failure, compotition [%d] has not started yet", year));
         }
 
         // nastavi rocnik souteze
@@ -218,22 +224,21 @@ public class OrderManagementService {
      * Neoveruje zda jde o disciplinu, ktera umoznuje zapaseni robot proti robotu
      * 
      * 
-     * @param year         Rocnik souteze
-     * @param robots       Seznam ID robotu, pro ktere se zapasy vytvori
-     * @param playgroundID ID hriste kde se zapasy budou konat
+     * @param multiMatchGroupObj Objekt definujici parametry pro vygenerovani vsech
+     *                           zapasu
      * @return Navrati identifikacni cislo tvurce zapasovych skupin (nasledne muze
      *         byt uplatneno pro odstraneni zapasu)
      */
-    public long generateMatches(int year, Long[] robots, long playgroundID) throws Exception {
+    public long generateMatches(MultiMatchGroupObj multiMatchGroupObj) throws Exception {
         // overi zda roucnik souteze existuje
-        if (!this.competitionRepository.findByYear(year).isPresent()) {
-            throw new Exception(String.format("failure, compatition [%d] not exists", year));
+        if (!this.competitionRepository.findByYear(multiMatchGroupObj.getYear()).isPresent()) {
+            throw new Exception(String.format("failure, compatition [%d] not exists", multiMatchGroupObj.getYear()));
         }
 
         // overi zda hriste existuje
-        Optional<Playground> playground = this.playgroundRepository.findById(playgroundID);
+        Optional<Playground> playground = this.playgroundRepository.findById(multiMatchGroupObj.getPlaygroundID());
         if (!playground.isPresent()) {
-            throw new Exception(String.format("failure, playground with ID [%d] not exists", playgroundID));
+            throw new Exception(String.format("failure, playground with ID [%d] not exists", multiMatchGroupObj.getPlaygroundID()));
         }
 
         // ID kazdeho robota overi zda (existuje, je registrovany v danem rocniku
@@ -241,7 +246,7 @@ public class OrderManagementService {
         boolean first = true;
         ECategory mainCategory = ECategory.OPEN;
         Discipline mainDiscipline = null;
-        for (Long id : robots) {
+        for (Long id : multiMatchGroupObj.getRobots()) {
             // overeni existence
             Optional<Robot> robot = this.robotRepository.findById(id);
             if (!robot.isPresent()) {
@@ -252,7 +257,7 @@ public class OrderManagementService {
                 throw new Exception(String.format("failure, registration of robot with ID [%d] is not confirmed", id));
             }
             // overeni zda je robot registrovan v danem rocniku souteze
-            if (robot.get().getTeamRegistration().getCompatitionYear() != year) {
+            if (robot.get().getTeamRegistration().getCompatitionYear() != multiMatchGroupObj.getYear()) {
                 throw new Exception(String.format("failure, registration of robot with ID [%d] is not confirmed", id));
             }
             // prvotni inicializace kategorie a discipliny vsech robotu
@@ -276,6 +281,7 @@ public class OrderManagementService {
 
         // vygeneruje vsechny kombinace zapasu mezi roboty
         MatchState matchState = this.matchStateRepository.findByName(EMatchState.WAITING).get();
+        Long[] robots = multiMatchGroupObj.getRobots();
         for (int i = 0; i < robots.length - 1; ++i) {
             for (int j = i + 1; j < robots.length; ++j) {
                 // vytvori zapasovou skupinu
@@ -291,6 +297,9 @@ public class OrderManagementService {
                 this.robotMatchRepository.save(m2);
             }
         }
+
+        // refresh systemu pro rizeni poradi
+        this.refreshSystem();
 
         return creatorIdentifier;
     }

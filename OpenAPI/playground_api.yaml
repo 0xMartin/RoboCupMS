@@ -52,6 +52,9 @@ paths:
                         disciplineID:
                           type: integer
                           example: 11
+                        disciplineName:
+                          type: string
+                          example: "Robosumo"
 
   /all:
     get:
@@ -85,6 +88,9 @@ paths:
                         disciplineID:
                           type: integer
                           example: 11
+                        disciplineName:
+                          type: string
+                          example: "Robosumo"
 
   /getMatches:
     get:

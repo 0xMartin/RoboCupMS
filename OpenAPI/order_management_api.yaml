@@ -152,25 +152,27 @@ paths:
     post:
       summary: Vygeneruje skupinové zápasy "každý s každým" (robo sumo, robo strong, ...)
       description: Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, REFEREE].
-      parameters:
-        - in: query
-          name: year
-          required: true
-          description: Ročník soutěže
-          schema:
-            type: integer
-        - in: query
-          name: robots
-          required: true
-          description: List s ID všech robotu, pro které se zápasy budou generovat
-          schema:
-            type: integer
-        - in: query
-          name: playgroundID
-          required: true
-          description: ID hřiště, na kterém se zápasy budou hrát
-          schema:
-            type: integer
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                year:
+                  type: integer
+                  description: Ročník soutěže
+                robots:
+                  type: array
+                  description: List s ID všech robotu, pro které se zápasy budou generovat
+                playgroundID:
+                  type: integer
+                  description: ID hřiště, na kterém se zápasy budou hrát
+              required:
+                - year
+                - robots
+                - playgroundID
       security:
         - ApiKeyAuth: []
       responses:
@@ -190,8 +192,8 @@ paths:
 
   /run:
     put:
-      summary: Spustí servis pro řízéní pořadí
-      description: Automaticky po spuštění se pro káždé hřiště vygeneruje fronta zápasu čekajících na odehrání. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
+      summary: Spustí modul řízéní pořadí. Modul bude možné spustit jen pro soutěž, která byla již zahájena.
+      description: Automaticky po spuštění se pro káždé hřiště vygeneruje fronta zápasu čekajících na odehrání. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, ASSISTANT].
       parameters:
         - in: query
           name: year
