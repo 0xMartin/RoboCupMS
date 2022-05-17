@@ -57,10 +57,9 @@ public class TokenAuthorization extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
 			throws ServletException, IOException {
-
 		// endpoint filter
 		if (this.ignoredEndpoints != null) {
-			String uri = request.getRequestURI();
+			final String uri = request.getRequestURI();
 			for (String ep : this.ignoredEndpoints) {
 				if (ep.equals(uri)) {
 					chain.doFilter(request, response);
@@ -70,17 +69,23 @@ public class TokenAuthorization extends OncePerRequestFilter {
 		}
 
 		// validace tokenu
+		String msg;
 		UserRC user = null;
 		if ((user = validateToken(request)) != null) {
-			setUpSpringAuthentication(user, request.getHeader(this.x_token));
-			chain.doFilter(request, response);
+			if (setUpSpringAuthentication(user, request.getHeader(this.x_token))) {
+				chain.doFilter(request, response);
+				return;
+			}
+			msg = "You have no role";
 		} else {
-			SecurityContextHolder.clearContext();
-			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-			ServletOutputStream outputStream = response.getOutputStream();
-			outputStream.println(ResponseHandler.error("Access token is invalid").toString());
-			outputStream.flush();
+			msg = "Access token is invalid";
 		}
+		// pristup zamitnut
+		SecurityContextHolder.clearContext();
+		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+		ServletOutputStream outputStream = response.getOutputStream();
+		outputStream.println(ResponseHandler.error(msg).toString());
+		outputStream.flush();
 	}
 
 	/**
@@ -88,7 +93,12 @@ public class TokenAuthorization extends OncePerRequestFilter {
 	 * 
 	 * @param user Uzivatel ktery zada system o autentizaci
 	 */
-	private void setUpSpringAuthentication(UserRC user, String token) {
+	private boolean setUpSpringAuthentication(UserRC user, String token) {
+		// pokud uzivatel nema zadnou roli, nemuze pristoupit
+		if (user.getRoles().isEmpty()) {
+			return false;
+		}
+
 		// Set roly uzivatele prevede na kolekci SimpleGrantedAuthority
 		List<SimpleGrantedAuthority> authorities = new ArrayList<>();
 		for (Role r : user.getRoles()) {
@@ -99,6 +109,8 @@ public class TokenAuthorization extends OncePerRequestFilter {
 		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, token,
 				authorities);
 		SecurityContextHolder.getContext().setAuthentication(auth);
+
+		return true;
 	}
 
 	/**
