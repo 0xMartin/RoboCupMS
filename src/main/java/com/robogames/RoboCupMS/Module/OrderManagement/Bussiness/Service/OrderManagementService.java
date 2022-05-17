@@ -330,7 +330,6 @@ public class OrderManagementService {
         // prida vsechny zapasy, ktere cekaji na odehrani
         Stream<RobotMatch> matches = this.robotMatchRepository.findAll().stream()
                 .filter((m) -> (m.getRobot().getTeamRegistration().getCompatitionYear() == YEAR));
-
         matches.forEach((m) -> {
             MatchQueue queue = OrderManagementService.MATCH_GUEUES.get(m.getPlayground().getID());
             if (queue == null) {

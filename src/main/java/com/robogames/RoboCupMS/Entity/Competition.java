@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -58,7 +57,7 @@ public class Competition {
     /**
      * Registrace tymu do tohoto rocniku souteze
      */
-    @OneToMany(mappedBy = "competition", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "competition", fetch = FetchType.EAGER)
     private List<TeamRegistration> registrations;
 
     /**
