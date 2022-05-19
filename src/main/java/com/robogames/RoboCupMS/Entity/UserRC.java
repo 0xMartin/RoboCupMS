@@ -291,7 +291,7 @@ public class UserRC {
      * 
      * @param _age Vek uzivatele
      */
-    public void setBirthDate(Date _birthDate) {
+    public boolean setBirthDate(Date _birthDate) {
         // z datumu narozeni vypocit vek uzivatele
         LocalDate currentDate = LocalDate.now();
         LocalDate bd = _birthDate.toInstant()
@@ -303,6 +303,9 @@ public class UserRC {
         if (age >= GlobalConfig.USER_MIN_AGE &&
                 age <= GlobalConfig.USER_MAX_AGE) {
             this.birthDate = _birthDate;
+            return true;
+        } else {
+            return false;
         }
     }
 

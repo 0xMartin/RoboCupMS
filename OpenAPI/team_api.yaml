@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Team API
-  description: API slouži pro spravů týmu na serveru. Jednotlivé týmy se pak přihlašuji do konkrétních ročníků soutězě.
+  description: API slouží pro správu týmů na serveru. Jednotlivé týmy se pak přihlašuji do konkrétních ročníků soutěže.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz

@@ -96,6 +96,12 @@ public class AuthService extends OAuth2Service {
                 reg.getPassword(),
                 reg.getBirthDate(),
                 roles);
+
+        // uzivatel neni ve vekovem rozsahu definovanem v konfiguraci
+        if(u.getBirthDate() == null) {
+            throw new Exception("failure, wrong age");
+        }
+
         repository.save(u);
     }
 

@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Order Management Module
-  description: Tento modul umožnuje řizení a srpávů pořadí zápasů. Modul dokáže zobrazovat zápasy, které mají být v daný okamžik odehráné. Zápasy, které čekají na odehrání, jsou automaticky řazeny do front jednotlivych hřiští. Rozhodčí maji možnost měnit v jákem pořádí májí být zápasy odehrávány. Modul taktéž umožnuje jednoduché plánování "generování" zápasů.
+  description: Tento modul umožnuje řízení a správů pořadí zápasů. Modul dokáže zobrazovat zápasy, které mají být v daný okamžik odehráné. Zápasy, které čekají na odehrání, jsou automaticky řazeny do front jednotlivých hřišť. Rozhodčí majÍ možnost měnit v jakém pořádí májí být zápasy odehrávány. Modul taktéž umožnuje jednoduché plánování "generování" zápasů.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz
@@ -165,6 +165,8 @@ paths:
                   description: Ročník soutěže
                 robots:
                   type: array
+                  items:
+                    type: integer
                   description: List s ID všech robotu, pro které se zápasy budou generovat
                 playgroundID:
                   type: integer

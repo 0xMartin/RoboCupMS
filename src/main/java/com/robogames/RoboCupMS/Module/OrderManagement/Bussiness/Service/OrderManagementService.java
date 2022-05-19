@@ -212,9 +212,10 @@ public class OrderManagementService {
         }
 
         // seznam vsech zapasu robota, ktere prace cekaji na odehrani "stav:
-        // EMatchState.WAITING"
+        // EMatchState.WAITING nebo EMatchState.REMATCH"
         Stream<RobotMatch> matches = robot.get().getMatches().stream()
-                .filter((m) -> (m.getState().getName() == EMatchState.WAITING));
+                .filter((m) -> (m.getState().getName() == EMatchState.WAITING
+                        || m.getState().getName() == EMatchState.REMATCH));
 
         return matches.collect(Collectors.toList());
     }
@@ -238,7 +239,8 @@ public class OrderManagementService {
         // overi zda hriste existuje
         Optional<Playground> playground = this.playgroundRepository.findById(multiMatchGroupObj.getPlaygroundID());
         if (!playground.isPresent()) {
-            throw new Exception(String.format("failure, playground with ID [%d] not exists", multiMatchGroupObj.getPlaygroundID()));
+            throw new Exception(
+                    String.format("failure, playground with ID [%d] not exists", multiMatchGroupObj.getPlaygroundID()));
         }
 
         // ID kazdeho robota overi zda (existuje, je registrovany v danem rocniku

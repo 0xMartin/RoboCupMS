@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Competition Evaluation Module
-  description: Tento modul usnadňuje práci s výsledky soutěže. Automatizovaně vypočitá skoré a určí umístění robotů.
+  description: Tento modul usnadňuje práci s výsledky soutěže. Automatizovaně vypočitá skóre a určí umístění robotů.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz

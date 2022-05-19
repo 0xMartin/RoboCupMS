@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Auth API
-  description: API slouži pro přihlášení, odhlášení a registraci uživatelů
+  description: API slouží pro přihlášení, odhlášení a registraci uživatelů.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz

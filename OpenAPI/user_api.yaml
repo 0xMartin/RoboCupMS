@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - User API
-  description: API slouži pro spravů uživatelů na serveru. Umožnuje zakladní operace (informace o uživateli, vyhledavání, modifikace, odstranění). 
+  description: API slouží pro správů uživatelů na serveru. Umožnuje zakladní operace (informace o uživateli, vyhledavání, modifikace, odstranění). 
     Uživatel může mít tyto role [ADMIN, LEADER, ASSISTANT, REFEREE, COMPETITOR].
   version: 2.0.0
   contact:

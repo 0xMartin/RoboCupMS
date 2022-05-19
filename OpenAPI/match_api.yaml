@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Match API
-  description: API zajištuje spravů zápasů.
+  description: API zajištuje správů zápasů.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz

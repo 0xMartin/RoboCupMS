@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Competition API
-  description: API umožňuje spravu jednotlivých ročníků soutěží.
+  description: API umožňuje správu jednotlivých ročníků soutěží.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz

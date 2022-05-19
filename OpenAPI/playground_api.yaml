@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Playground API
-  description: API sloužíci pro správu soutěžních hřišť.
+  description: API sloužící pro správu soutěžních hřišť.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz

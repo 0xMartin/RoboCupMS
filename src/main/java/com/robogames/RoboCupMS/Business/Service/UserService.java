@@ -106,6 +106,12 @@ public class UserService {
                 reg.getPassword(),
                 reg.getBirthDate(),
                 roles);
+
+        // uzivatel neni ve vekovem rozsahu definovanem v konfiguraci
+        if(user.getBirthDate() == null) {
+            throw new Exception("failure, wrong age");
+        }
+
         this.repository.save(user);
     }
 
