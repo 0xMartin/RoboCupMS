@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Order Management Module
-  description: Tento modul umožnuje řízení a správů pořadí zápasů. Modul dokáže zobrazovat zápasy, které mají být v daný okamžik odehráné. Zápasy, které čekají na odehrání, jsou automaticky řazeny do front jednotlivých hřišť. Rozhodčí majÍ možnost měnit v jakém pořádí májí být zápasy odehrávány. Modul taktéž umožnuje jednoduché plánování "generování" zápasů.
+  description: Tento modul umožnuje řízení a správů pořadí zápasů. Modul dokáže zobrazovat zápasy, které mají být v daný okamžik odehráné. Zápasy, které čekají na odehrání, jsou automaticky řazeny do front jednotlivých hřišť. Rozhodčí mají možnost měnit v jakém pořádí májí být zápasy odehrávány. Modul taktéž umožnuje jednoduché plánování "generování" zápasů.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz
@@ -19,7 +19,7 @@ paths:
       parameters: []
       responses:
         "200":
-          description: Seznam zápasů, které se mají dostavit na přislušné hřiště pro odehrání zápasu
+          description: Seznam robotů, které se mají dostavit na přislušné hřiště pro odehrání zápasu
           content:
             application/json:
               schema:
@@ -129,7 +129,7 @@ paths:
 
   /isRunning:
     get:
-      summary: Návrátí informaci o tom zda je servis spuštěn
+      summary: Návrátí informaci o tom zda je modul spuštěn
       description: Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, ASSISTANT, REFEREE].
       security:
         - ApiKeyAuth: []
@@ -195,7 +195,7 @@ paths:
   /run:
     put:
       summary: Spustí modul řízéní pořadí. Modul bude možné spustit jen pro soutěž, která byla již zahájena.
-      description: Automaticky po spuštění se pro káždé hřiště vygeneruje fronta zápasu čekajících na odehrání. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, ASSISTANT].
+      description: Automaticky po spuštění se pro káždé hřiště vygeneruje fronta zápasů čekajících na odehrání. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, ASSISTANT].
       parameters:
         - in: query
           name: year
@@ -243,7 +243,7 @@ paths:
 
   /requestAnotherMatch:
     put:
-      summary: Vyžádá změnu pořadí zapasu ve frontě
+      summary: Vyžádá změnu pořadí zapasů ve frontě hřiště
       description: Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, REFEREE].
       parameters:
         - in: query
@@ -251,7 +251,6 @@ paths:
           required: true
           description:
             ID zápasu, o kterém rozhodčí rozhodne, aby byl odehrán v dánou chvíli. Zápas s tímto ID bude přesunut na první místo ve frontě.
-            (pokud bude zadána záporná neplatná hodnota pak systém vybere náhodně ze seznamu čekajících zápasů)
           schema:
             type: integer
       security:

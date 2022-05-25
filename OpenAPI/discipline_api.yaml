@@ -121,13 +121,13 @@ paths:
                   description: Popis nové discipliny
                 scoreAggregation:
                   type: string
-                  description: Název agregáční funkce skore (pro automatizované vyhodnocení). MIN, MAX, SUM 
+                  description: Název agregáční funkce skóre (pro automatizované vyhodnocení). MIN, MAX, SUM 
                 time:
                   type: string
                   description: Časový limit jednoho zápasu
                 maxRounds:
                   type: integer
-                  description: Omezení počtů zápasu, odehraných robotem v teto disciplině
+                  description: Omezení počtů zápasů, odehraných robotem v této disciplině
               required:
                 - name
                 - description
@@ -155,12 +155,12 @@ paths:
   /edit:
     put:
       summary: Upravi disciplínu
-      description: Umožnuje upravit jmeno, popis nebo typ agregacni funkce skore. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
+      description: Umožnuje upravit jméno, popis nebo typ agregační funkce skóre. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
       parameters:
         - in: query
           name: id
           required: true
-          description: ID discipliny, která má být upravena
+          description: ID disciplíny, která má být upravena
           schema:
             type: integer
       requestBody:
@@ -172,19 +172,19 @@ paths:
               properties:
                 name:
                   type: string
-                  description: Nový nazev discipliny
+                  description: Nový název discipliny
                 description:
                   type: string
                   description: Nový popis discipliny
                 scoreAggregation:
                   type: string
-                  description: Nový název agregáční funkce skore (pro automatizované vyhodnocení). MIN, MAX, SUM 
+                  description: Nový název agregáční funkce skóre (pro automatizované vyhodnocení). MIN, MAX, SUM 
                 time:
                   type: string
                   description: Nový časový limit jednoho zápasu
                 maxRounds:
                   type: integer
-                  description: Nové omezení počtů zápasu, odehraných robotem v teto disciplině
+                  description: Nové omezení počtů zápasů, odehraných robotem v této disciplině
               required:
                 - name
                 - description
@@ -212,7 +212,7 @@ paths:
   /remove:
     delete:
       summary: Odstraní disciplínu
-      description: Disciplínu nebude možne odstranit pokud ma přiřazené nejaké hřiště nebo registrované roboty. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
+      description: Disciplínu nebude možne odstranit pokud ma přiřazené nějaké hřiště. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
       parameters:
         - in: query
           name: id

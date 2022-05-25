@@ -147,8 +147,8 @@ paths:
                 groupID:
                   type: integer
                   description: ID zápasové skupiny. Jen v případě pokud zápasí proti
-                    sobě více robotů. V opačném případě zadat neplatnou
-                    zápornou hodnotu.
+                    sobě více robotů. V opačném případě zadat
+                    zápornou (neplatnou) hodnotu.
               required:
                 - robotID
                 - description
@@ -174,7 +174,7 @@ paths:
     put:
       summary: Zapíše výsledné skóre zápasu
       description:
-        Zapíše skóre zápasu a automaticky označí zápas jako odehraný. Skoré je typu "float" a muže reprezentovat více typů hodnot.
+        Zapíše skóre zápasu a automaticky označí zápas jako odehraný. Skoré je typu "float" a může reprezentovat více typů hodnot.
         Pokud jde o robosumo, skóre je reprezentováno jako bod za vítězství v zápase. Pokud jde o sledovače čáry, skóre je reprezentováno jako čas, za který robot ujel trasu.
       parameters:
         - in: query
@@ -209,7 +209,7 @@ paths:
   /rematch:
     put:
       summary: Vyžádá opětovné odehrání zápasu
-      description: V případě skupinového zápasu je požadavek automaticky vyžádán i pro ostatní zápasy jednotlivých robotů. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, REFEREE].
+      description: V případě skupinového zápasu je požadavek automaticky vyžádán i pro ostatní zápasy jednotlivých robotů skupiny. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, REFEREE].
       parameters:
         - in: query
           name: id

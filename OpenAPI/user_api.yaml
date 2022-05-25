@@ -17,7 +17,7 @@ paths:
   /info:
     get:
       summary: Navrátí všechny dostupné informace o uživateli
-      description: Podle přistupového tokenu najde v databazi, kterému přihlášenému uživateli patří a informace o něm navrátí.
+      description: Podle přistupového tokenu najde v databázi, kterému přihlášenému uživateli patří a informace o něm navrátí.
       parameters: []
       security:
         - ApiKeyAuth: []
@@ -381,13 +381,13 @@ paths:
         - in: query
           name: newPassword
           required: true
-          description: Nové uživatelske heslo
+          description: Nové uživatelské heslo
           schema:
             type: string
         - in: query
           name: id
           required: true
-          description: ID uživatele, pro kterého chceme hesle vygenerovat
+          description: ID uživatele, pro kterého chceme heslo vygenerovat
           schema:
             type: integer
       security:

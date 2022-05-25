@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Robot API
-  description: API umožnuje vytváření, upravování a registraci robotů. Robot je vytvářen na registraci týmu v soutěži.
+  description: API umožnuje vytváření, upravování a registraci robotů. Každý robot je vytvářen na registraci týmu v soutěži.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz
@@ -67,8 +67,8 @@ paths:
 
   /all:
     get:
-      summary: Navrátí všechny roboty vytvořene pro registraci tymu v určitem ročniku soutěže
-      description: Navrátí všechny vytvořene roboty pro danou registracu týmu, ve kterém se přihlášený uživatel nachází.
+      summary: Navrátí všechny roboty vytvořene pro registraci týmu v určitém ročniku soutěže
+      description: Navrátí všechny vytvořené roboty pro danou registraci týmu, ve kterém se přihlášený uživatel nachází.
       security:
         - ApiKeyAuth: []
       parameters:
@@ -178,7 +178,7 @@ paths:
 
   /create:
     post:
-      summary: Vytvoří nového robata
+      summary: Vytvoří nového robota
       description: Vytvořit robota může jakýkoli člen týmu. Robot je výtvářen na registraci týmu v určitém ročníku soutěže.
       parameters:
         - in: query
@@ -219,7 +219,7 @@ paths:
   /rename:
     put:
       summary: Změní jméno robota
-      description: Změní jméno robota může jakýkoli člen týmu. Jméno musí být v rámci ročníku unikátní. Pokud již
+      description: Změnit jméno robota může jakýkoli člen týmu. Jméno musí být v rámci ročníku unikátní.
       parameters:
         - in: query
           name: year
@@ -259,7 +259,7 @@ paths:
   /register:
     put:
       summary: Registruje robota do určité disciplíny
-      description: Registrovat robota může jakýkoli člen týmu. Robota je možné přihlásit dokud soutěž nezačala.
+      description: Registrovat robota může jakýkoli člen týmu. Robota je možné registrovat dokud soutěž nezačala.
       parameters:
         - in: query
           name: robotID

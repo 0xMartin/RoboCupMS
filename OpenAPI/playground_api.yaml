@@ -196,7 +196,7 @@ paths:
 
   /edit:
     put:
-      summary: Upravi parametry soutěžního hřiště
+      summary: Upraví parametry soutěžního hřiště
       description: Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, ASSISTANT].
       parameters:
         - in: query
@@ -245,7 +245,7 @@ paths:
   /remove:
     delete:
       summary: Odstraní soutěžní hřiště
-      description: Hřiště je možne odstranit jen pokud na něm nebyl odhrán žádný zápas. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, ASSISTANT].
+      description: Hřiště je možné odstranit jen pokud na něm nebyl odehrán žádný zápas. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, ASSISTANT].
       parameters:
         - in: query
           name: id

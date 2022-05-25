@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Competition API
-  description: API umožňuje správu jednotlivých ročníků soutěží.
+  description: API umožňuje správu jednotlivých ročníků soutěží. Je možné vytvářet nové souteže a taktéž je zahajovat.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz
@@ -55,7 +55,7 @@ paths:
 
   /allRegistrations:
     get:
-      summary: Navratí všechny registrace týmu pro dány ročník soutěže
+      summary: Navratí všechny registrace týmů pro daný ročník soutěže
       parameters:
         - in: query
           name: year
@@ -65,7 +65,7 @@ paths:
             type: integer
       responses:
         "200":
-          description: Všechný registrace týmu v dáném ročníku
+          description: Všechny registrace týmů v dáném ročníku
           content:
             application/json:
               schema:
@@ -190,7 +190,7 @@ paths:
   /start:
     put:
       summary: Zahájí soutěž
-      description: Po zahájení soutěže již není možne registrovat dalši tym a registrovat roboty do disciplín. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
+      description: Po zahájení soutěže již néni možné registrovat další tým a registrovat roboty do disciplín. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
       parameters:
         - in: query
           name: id
@@ -217,8 +217,8 @@ paths:
 
   /remove:
     delete:
-      summary: Odstraní soutez z databaze
-      description: Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
+      summary: Odstraní soutež z databáze
+      description: Soutěž bude možné odstranit jen pokud ještě nebyla zahájena. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
       parameters:
         - in: query
           name: id

@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Team API
-  description: API slouží pro správu týmů na serveru. Jednotlivé týmy se pak přihlašuji do konkrétních ročníků soutěže.
+  description: API sloužící pro správu týmů na serveru. Jednotlivé týmy se pak přihlašuji do konkrétních ročníků soutěže.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz
@@ -157,7 +157,7 @@ paths:
 
   /all:
     get:
-      summary: Navrátí vsechný týmy, kterou jsou v systemu vytvořeny
+      summary: Navrátí vsechný týmy, kterou jsou v systému vytvořeny
       parameters: []
       security:
         - ApiKeyAuth: []
@@ -233,7 +233,7 @@ paths:
 
   /rename:
     put:
-      summary: Přejmenuje tým
+      summary: Změní jméno týmu
       description: Přejmenovat tým může jen jeho vedoucí
       parameters:
         - in: query
@@ -319,7 +319,7 @@ paths:
 
   /leave:
     put:
-      summary: Opustit tým, ve kterém se přihlášený uživatel nachází. Nový vedoucí je určen v případě kdy tým opouští jeho vedoucí.
+      summary: Opusti tým, ve kterém se přihlášený uživatel nachází. Nový vedoucí je určen v případě kdy tým opouští jeho vedoucí.
       parameters: []
       security:
         - ApiKeyAuth: []
@@ -341,7 +341,7 @@ paths:
   /remove:
     delete:
       summary: Odstraní tým
-      description: Tým může odstránit jen jeho vedoucí a to s tou podmínkou, že neni přihlášen do soutěže, která jit začala.
+      description: Tým může odstránit jen jeho vedoucí a to s tou podmínkou, že není registrovaný v soutěži, která jit začala.
       parameters:
         - in: query
           name: name

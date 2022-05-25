@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: RoboCupMS - Competition Evaluation Module
-  description: Tento modul usnadňuje práci s výsledky soutěže. Automatizovaně vypočitá skóre a určí umístění robotů.
+  description: Tento modul usnadňuje práci s výsledky soutěže. Automatizovaně vypočítá skóre a určí umístění robotů.
   version: 2.0.0
   contact:
     email: m1_krcma@utb.cz
@@ -26,12 +26,12 @@ paths:
         - in: query
           name: category
           required: true
-          description: Kategorie, pro kterou zobrazi výsledky
+          description: Kategorie, pro kterou zobrazí výsledky
           schema:
             type: string
       responses:
         "200":
-          description: Seznam všech robotu a jejich skore v souteži
+          description: Seznam všech robotů a jejich skóre v souteži
           content:
             application/json:
               schema:
@@ -88,7 +88,7 @@ paths:
             type: integer
       responses:
         "200":
-          description: Seznam všech robotu a jejich skore v souteži
+          description: Seznam všech robotů a jejich skóre v soutěži
           content:
             application/json:
               schema:
@@ -145,7 +145,7 @@ paths:
             type: integer
       responses:
         "200":
-          description: Seznam všech robotu a jejich skore v souteži
+          description: Skóre robota
           content:
             application/json:
               schema:
@@ -184,7 +184,7 @@ paths:
 
   /getOrder:
     get:
-      summary: Navratí umístění robotu v konkrétní disciplíně v ramci soutěžní kategorie.
+      summary: Navratí umístění robotů v konkrétní disciplíně v rámci soutěžní kategorie.
       parameters:
         - in: query
           name: year
@@ -195,18 +195,18 @@ paths:
         - in: query
           name: category
           required: true
-          description: Kategorie, pro kterou zobrazi výsledky
+          description: Kategorie, pro kterou zobrazí výsledky
           schema:
             type: string
         - in: query
           name: id
           required: true
-          description: ID soutěžní disciplíny, pro kterou zobrazi výsledky
+          description: ID soutěžní disciplíny, pro kterou zobrazí výsledky
           schema:
             type: integer
       responses:
         "200":
-          description: Pořadí všech robotů, kteří soutěžili v dané disciplíně + kategorii
+          description: Pořadí všech robotů, kteří soutěžili v dané disciplíně
           content:
             application/json:
               schema:

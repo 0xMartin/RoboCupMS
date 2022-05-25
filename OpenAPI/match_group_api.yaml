@@ -46,7 +46,7 @@ paths:
 
   /getByCID:
     get:
-      summary: Navrtí všechny zápasové skupiny pro specifikovaný identifikator tvurce skupiny
+      summary: Navrtí všechny zápasové skupiny pro specifikovaný identifikator tvůrce skupiny
       parameters: 
         - in: query
           name: creatorID
@@ -56,7 +56,7 @@ paths:
             type: integer
       responses:
         "200":
-          description: Seznam všech zápasovych skupin, které mají stejný ID tvůrce
+          description: Seznam všech zápasových skupin, které mají stejný ID tvůrce
           content:
             application/json:
               schema:

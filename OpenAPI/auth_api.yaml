@@ -15,10 +15,10 @@ components:
 paths:
   /login:
     post:
-      summary: Přihlásí uživatele do systemu
+      summary: Přihlásí uživatele do systému
       description:
-        Uživatel, který se chce přihlásit do systemu odešle svůj email a heslo. Pokud jsou přihlašovací údaje platné pak vygeneruje přistupový token.
-        Token je platný do doby dokud se uživatel znovů nepřihlási z jíneho zařízeni nebo se neodhlásí.
+        Uživatel, který se chce přihlásit do systému odešle svůj email a heslo. Pokud jsou přihlašovací údaje platné tak vygeneruje přistupový token.
+        Token je platný do doby dokud se uživatel znovu nepřihlásí z jíného zařízení nebo se neodhlásí.
         Token se stavá automaticky neplatným po uplynutí definovaneho casu.
       requestBody:
         required: true
@@ -36,7 +36,7 @@ paths:
                 - password
       responses:
         "200":
-          description: Uživatel je přihlášen a získa přistupový token. V opačné připadě je typ odpovědi "ERROR"
+          description: Uživatel je přihlášen a získá přistupový token. V opačném připádě je typ odpovědi "ERROR"
           content:
             application/json:
               schema:
@@ -56,7 +56,7 @@ paths:
         Vygeneruje odkaz pro autorizaci uživatele. Po uspěšné autorizaci je uživatel
         přesměrován na specifikovanou adresu. Zde musí být
         odeslán POST request na endpoint serveru "/auth/oAuth2GenerateToken" s
-        parametrem "code" a "redirectURI" jejihž hodnutu získá z aktualní URL. "redirectURI" bude předan parametrem "state".
+        parametrem "code" a "redirectURI" jejihž hodnutu získá z aktualní URL. "redirectURI" bude předán parametrem "state".
       parameters:
         - in: query
           name: redirectURI
@@ -82,8 +82,8 @@ paths:
 
   /logout:
     post:
-      summary: Odhlásí uživatele ze systemu
-      description: Pro odhlášení využije přistupový token, podle kterého určí jakého uživatele ma odhlásit. Následně se přístupový token stáva neplatným.
+      summary: Odhlásí uživatele ze systému
+      description: Pro odhlášení využije přistupový token, podle kterého určí jakého uživatele ma odhlásit. Následně se přístupový token stává neplatným.
       security:
         - ApiKeyAuth: []
       responses:
@@ -104,27 +104,20 @@ paths:
   /oAuth2GenerateToken:
     post:
       summary: Vygeneruje přístupový token pro uživatele s využitím OAuth2 autorizačního kódu
-      description: Pokud uživatel v systemu neexistuje, pak ho zaregistruje.
+      description: Pokud uživatel v systému neexistuje tak ho zaregistruje.
       parameters:
         - in: query
           name: redirectURI
           required: true
-          description: Andresa, na kterou bude uživatel přesmerovan z autorizacniho serveru
+          description: Andresa, na kterou bude uživatel přesmerován z autorizačního serveru
           schema:
             type: integer
         - in: query
           name: code
           required: true
-          description: Autorizační kód
+          description: Autorizační kód získaný po uspěšné autorizaci uživatele
           schema:
             type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: string
-              description: Pristupovy kod ziskany po uspesne autorizaci uzivatele
       responses:
         "200":
           description: Přistupový token uživatele

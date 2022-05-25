@@ -70,7 +70,7 @@ paths:
                   description: Ročník soutěže, do kterého se tým chce registrovat
                 open:
                   type: integer
-                  description: Pokud je nastaven na "true", automaticky tým přihlási do kategorie OPEN
+                  description: Pokud je nastaven na "true", automaticky tým přihlásí do kategorie OPEN
               required:
                 - year
                 - open
@@ -94,7 +94,7 @@ paths:
   /changeCategory:
     put:
       summary: Změní kategorii týmu
-      description: Změní kategorii týmu. Změna neni nijak omezovano věkem a tak je možné zvolit libovolnou. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, ASSISTANT].
+      description: Změní kategorii týmu. Změna neni nijak omezována věkem a tak je možné zvolit libovolnou kategorii. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER, ASSISTANT].
       parameters:
         - in: query
           name: id
@@ -134,7 +134,7 @@ paths:
 
   /joinCategory:
     put:
-      summary: Slouci dvě různé kategorie dohromady
+      summary: Sloučí dvě různé kategorie dohromady
       description: Všechny týmy registrované v jedné kategorii se přesunou do jiné zvolené kategorie. Mají přístup jen uživatelé s touto rolí [ADMIN, LEADER].
       parameters:
         - in: query
