@@ -5,23 +5,15 @@ package com.robogames.RoboCupMS.Business.Enum;
  */
 public enum ECategory {
     /**
-     * Kategorie pro zakladni skolu
+     * Nizsi vekova kategorie (defaultne nastaveno max do 15 let)
      */
-    ELEMENTARY_SCHOOL,
+    LOW_AGE_CATEGORY,
 
     /**
-     * Kategorie pro stredni skolu
+     * Vyssi vekova kategorie (defaultne nad 15 let)
      */
-    HIGH_SCHOOL,
-
-    /**
-     * Kategorie pro vysokou skolu
-     */
-    UNIVERSITY,
-
-    /**
-     * Kategorie pro verejnost (bez omezeni)
-     */
-    OPEN;
+    HIGH_AGE_CATEGORY;
 
 }
+
+

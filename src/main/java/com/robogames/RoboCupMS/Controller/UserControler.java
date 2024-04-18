@@ -1,14 +1,17 @@
 package com.robogames.RoboCupMS.Controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Response;
 import com.robogames.RoboCupMS.ResponseHandler;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
+import com.robogames.RoboCupMS.Business.Object.TeamInvitationObj;
 import com.robogames.RoboCupMS.Business.Object.UserEditObj;
 import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
 import com.robogames.RoboCupMS.Business.Service.UserService;
+import com.robogames.RoboCupMS.Entity.TeamInvitation;
 import com.robogames.RoboCupMS.Entity.UserRC;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,12 +45,22 @@ public class UserControler {
         return ResponseHandler.response(user);
     }
 
+    @GetMapping("/getTeamInvitations")
+    Response getTeamInvitations() {
+        List<TeamInvitationObj> all = new ArrayList<TeamInvitationObj>();
+        for (TeamInvitation inv : this.userService.getTeamInvitations()) {
+            all.add(new TeamInvitationObj(inv.getId(), inv.getUser().getID(), inv.getTeam().getID(),
+                    inv.getTeam().getName()));
+        }
+        return ResponseHandler.response(all);
+    }
+
     /**
      * Navrati vsechny uzivatele
      * 
      * @return Vsichni uzivatele v databazi
      */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT })
+    // @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT })
     @GetMapping("/all")
     Response getAll() {
         List<UserRC> all = this.userService.getAll();

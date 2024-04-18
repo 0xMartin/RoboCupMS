@@ -19,5 +19,4 @@ public interface UserRepository extends JpaRepository<UserRC, Long> {
 
     Optional<UserRC> findByToken(String token);
 
-    Optional<UserRC> findByUuid(String uuid);
 }

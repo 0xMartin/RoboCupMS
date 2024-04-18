@@ -44,29 +44,14 @@ public class GlobalConfig {
 
     /**
      * Defaultni nastaveni kategorii
-     * zakladni skola: max 15 let
-     * stredni skola: max 19 let
-     * vysoka skola: max 26 let
-     * open kategorie: vic jak 26 let
+     * nizka vekova skupina (nastaveno do 15 let)
+     * vysoka vekova skupina 
      */
 
     /**
-     * Maximalni vekove hranice pro zakladni skoly
-     * (pro zruseni kategorie zadej zaporne cislo)
+     * Maximalni vekove hranice pro nizkou vekovou kategorii
      */
-    public static int ELEMENTARY_SCHOOL_MAX_AGE = 15;
-
-    /**
-     * Maximalni vekove hranice pro strdeni skoly
-     * (pro zruseni kategorie zadej zaporne cislo)
-     */
-    public static int HIGH_SCHOOL_MAX_AGE = 19;
-
-    /**
-     * Maximalni vekova hranice pro vysoke skoly
-     * (pro zruseni kategorie zadej zaporne cislo)
-     */
-    public static int UNIVERSITY_MAX_AGE = 26;
+    public static int LOW_AGE_CATEGORY_MAX_AGE = 15;
 
     /**
      * Maximalni pocet registrovanych robotu v discipline na jeden tym

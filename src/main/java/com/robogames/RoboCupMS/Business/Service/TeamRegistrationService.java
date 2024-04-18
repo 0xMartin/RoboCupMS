@@ -72,12 +72,7 @@ public class TeamRegistrationService {
         }
 
         // urci kategorii tymu
-        ECategory cat_name;
-        if (!teamRegistrationObj.getOpen()) {
-            cat_name = t.get().determinateCategory();
-        } else {
-            cat_name = ECategory.OPEN;
-        }
+        ECategory cat_name = t.get().determinateCategory();
         Optional<Category> cat = this.categoryRepository.findByName(cat_name);
         if (!cat.isPresent()) {
             throw new Exception("failure, category not exists");
