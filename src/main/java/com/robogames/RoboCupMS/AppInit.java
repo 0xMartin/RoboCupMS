@@ -88,25 +88,11 @@ public class AppInit {
                 logger.info("USER_MAX_AGE set on: " + USER_MAX_AGE);
             }
 
-            // maximalni vek pro kategorii zakladni skoly
-            Long ELEMENTARY_SCHOOL_MAX_AGE = (Long) obj.get("ELEMENTARY_SCHOOL_MAX_AGE");
-            if (ELEMENTARY_SCHOOL_MAX_AGE != null) {
-                GlobalConfig.ELEMENTARY_SCHOOL_MAX_AGE = (int) ELEMENTARY_SCHOOL_MAX_AGE.longValue();
-                logger.info("ELEMENTARY_SCHOOL_MAX_AGE set on: " + ELEMENTARY_SCHOOL_MAX_AGE);
-            }
-
-            // maximalni vek pro kategorii stredni skoly
-            Long HIGH_SCHOOL_MAX_AGE = (Long) obj.get("HIGH_SCHOOL_MAX_AGE");
-            if (HIGH_SCHOOL_MAX_AGE != null) {
-                GlobalConfig.HIGH_SCHOOL_MAX_AGE = (int) HIGH_SCHOOL_MAX_AGE.longValue();
-                logger.info("HIGH_SCHOOL_MAX_AGE set on: " + HIGH_SCHOOL_MAX_AGE);
-            }
-
-            // maximalni vek pro kategorii vysoke skoly
-            Long UNIVERSITY_MAX_AGE = (Long) obj.get("UNIVERSITY_MAX_AGE");
-            if (UNIVERSITY_MAX_AGE != null) {
-                GlobalConfig.UNIVERSITY_MAX_AGE = (int) UNIVERSITY_MAX_AGE.longValue();
-                logger.info("UNIVERSITY_MAX_AGE set on: " + UNIVERSITY_MAX_AGE);
+            // maximalni vek pro nizsi vekovou kategorii
+            Long LOW_AGE_CATEGORY_MAX_AGE = (Long) obj.get("LOW_AGE_CATEGORY_MAX_AGE");
+            if (LOW_AGE_CATEGORY_MAX_AGE != null) {
+                GlobalConfig.LOW_AGE_CATEGORY_MAX_AGE = (int) LOW_AGE_CATEGORY_MAX_AGE.longValue();
+                logger.info("LOW_AGE_CATEGORY_MAX_AGE set on: " + LOW_AGE_CATEGORY_MAX_AGE);
             }
 
             // maximalni mocet robotu v discipline na jeden tym
@@ -174,10 +160,8 @@ public class AppInit {
     public ApplicationRunner initCategory(CategoryRepository repository) {
         if (repository.count() == 0) {
             return args -> repository.saveAll(Arrays.asList(
-                    new Category(ECategory.ELEMENTARY_SCHOOL),
-                    new Category(ECategory.HIGH_SCHOOL),
-                    new Category(ECategory.UNIVERSITY),
-                    new Category(ECategory.OPEN)));
+                    new Category(ECategory.LOW_AGE_CATEGORY),
+                    new Category(ECategory.HIGH_AGE_CATEGORY)));
         } else {
             return null;
         }

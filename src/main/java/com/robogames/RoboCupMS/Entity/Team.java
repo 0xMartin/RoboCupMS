@@ -54,7 +54,7 @@ public class Team {
     /**
      * Clenove tymu (pokud je tym mazan neni mozne odstrani uzivatele)
      */
-    @OneToMany(mappedBy = "team", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "team", fetch = FetchType.LAZY)
     private List<UserRC> members;
 
     /**
@@ -221,19 +221,17 @@ public class Team {
     public ECategory determinateCategory() {
         List<UserRC> users = this.getMembers();
 
+        // vypocet veku nejstarsiho uzivatele v tymu
         int max_age = 0;
         for (UserRC u : users) {
             max_age = Math.max(max_age, u.getAge());
         }
 
-        if (max_age <= GlobalConfig.ELEMENTARY_SCHOOL_MAX_AGE) {
-            return ECategory.ELEMENTARY_SCHOOL;
-        } else if (max_age <= GlobalConfig.HIGH_SCHOOL_MAX_AGE) {
-            return ECategory.HIGH_SCHOOL;
-        } else if (max_age <= GlobalConfig.UNIVERSITY_MAX_AGE) {
-            return ECategory.UNIVERSITY;
+        // podle veku urci kategorii
+        if (max_age <= GlobalConfig.LOW_AGE_CATEGORY_MAX_AGE) {
+            return ECategory.LOW_AGE_CATEGORY;
         } else {
-            return ECategory.OPEN;
+            return ECategory.HIGH_AGE_CATEGORY;
         }
     }
 

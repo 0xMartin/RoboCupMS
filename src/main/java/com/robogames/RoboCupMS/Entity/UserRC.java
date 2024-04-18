@@ -45,12 +45,6 @@ public class UserRC {
     private Long id;
 
     /**
-     * UUID uzivatele
-     */
-    @Column(name = "uuid", nullable = false, unique = true)
-    private String uuid;
-
-    /**
      * Jmeno uzivatele
      */
     @Column(name = "name", length = 40, nullable = false, unique = false)
@@ -125,7 +119,6 @@ public class UserRC {
      * @param _role      Vsechny role uzivatele (enum)
      */
     public UserRC(String _name, String _surname, String _email, String _password, Date _birthDate, List<ERole> _roles) {
-        this.uuid = UUID.randomUUID().toString();
         this.name = _name;
         this.surname = _surname;
         this.email = _email;
@@ -147,15 +140,6 @@ public class UserRC {
      */
     public long getID() {
         return this.id;
-    }
-
-    /**
-     * Navrati UUID uzivatele
-     * 
-     * @return UUID
-     */
-    public String getUuid() {
-        return this.uuid;
     }
 
     /**

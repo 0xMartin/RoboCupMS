@@ -7,8 +7,10 @@ import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Object.TeamObj;
 import com.robogames.RoboCupMS.Entity.Robot;
 import com.robogames.RoboCupMS.Entity.Team;
+import com.robogames.RoboCupMS.Entity.TeamInvitation;
 import com.robogames.RoboCupMS.Entity.TeamRegistration;
 import com.robogames.RoboCupMS.Entity.UserRC;
+import com.robogames.RoboCupMS.Repository.TeamInvitationRepository;
 import com.robogames.RoboCupMS.Repository.TeamRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
@@ -27,6 +29,9 @@ public class TeamService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TeamInvitationRepository invitationRepository;
 
     /**
      * Navrati info o tymu, ve kterem se prihlaseny uzivatel nachazi
@@ -176,7 +181,7 @@ public class TeamService {
      * @param id ID clena, ktery ma byt pridat do tymu
      * @throws Exception
      */
-    public void addMember(String uuid) throws Exception {
+    public void addMember(Long id) throws Exception {
         UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Optional<Team> t = this.teamRepository.findAllByLeader(leader).stream().findFirst();
@@ -186,20 +191,15 @@ public class TeamService {
                 throw new Exception("failure, team is full");
             }
 
-            Optional<UserRC> u = this.userRepository.findByUuid(uuid);
+            Optional<UserRC> u = this.userRepository.findById(id);
             if (u.isPresent()) {
-                // overa zda jiz pridavany uzivatel neni v nejakem tymu
-                if (u.get().getTeamID() != Team.NOT_IN_TEAM) {
-                    throw new Exception("failure, user is already in team");
-                }
-
-                // prida uzivatele do tymu
-                t.get().getMembers().add(u.get());
-                u.get().setTeam(t.get());
-                this.teamRepository.save(t.get());
-                this.userRepository.save(u.get());
+                // vytvori pozvanku do tymu
+                TeamInvitation invitation = new TeamInvitation();
+                invitation.setUser(u.get());
+                invitation.setTeam(t.get());
+                this.invitationRepository.save(invitation);
             } else {
-                throw new Exception(String.format("failure, user with UUID [%s] not found", uuid));
+                throw new Exception(String.format("failure, user with ID [%s] not found", id));
             }
         } else {
             throw new Exception("failure, you are not the leader of any existing team");
@@ -212,22 +212,65 @@ public class TeamService {
      * @param id ID clena, ktery ma byt odebran z tymu
      * @throws Exception
      */
-    public void removeMember(String uuid) throws Exception {
+    public void removeMember(Long id) throws Exception {
         UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Optional<Team> t = this.teamRepository.findAllByLeader(leader).stream().findFirst();
         if (t.isPresent()) {
-            Optional<UserRC> u = this.userRepository.findByUuid(uuid);
+            Optional<UserRC> u = this.userRepository.findById(id);
             if (u.isPresent()) {
                 t.get().getMembers().remove(u.get());
                 u.get().setTeam(null);
                 this.teamRepository.save(t.get());
                 this.userRepository.save(u.get());
             } else {
-                throw new Exception(String.format("failure, user with UUID [%s] not found", uuid));
+                throw new Exception(String.format("failure, user with ID [%s] not found", id));
             }
         } else {
             throw new Exception("failure, you are not the leader of any existing team");
+        }
+    }
+
+    public void acceptInvitation(Long id) throws Exception {
+        Optional<TeamInvitation> invitation = this.invitationRepository.findById(id);
+        if (invitation.isPresent()) {
+            UserRC currentUser = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            UserRC u = invitation.get().getUser();
+            Team t = invitation.get().getTeam();
+
+            // pokud pozvanka nepatri uzivateli, kteremu realne byla odeslana
+            if(currentUser != u) {
+                throw new Exception("failure, this is not your invitation");
+            }
+
+            // prida uzivatele do tymu a ulozi zmeni v databazi pro tym i pro uzivatele
+            t.getMembers().add(u);
+            u.setTeam(t);
+            this.teamRepository.save(t);
+            this.userRepository.save(u);
+
+            // odstraneni z databaze
+            this.invitationRepository.delete(invitation.get());
+        } else {
+            throw new Exception(String.format("failure, invitaton with ID [%s] not found", id));
+        }
+    }
+
+    public void rejectInvitation(Long id) throws Exception {
+        Optional<TeamInvitation> invitation = this.invitationRepository.findById(id);
+        if (invitation.isPresent()) {
+            UserRC currentUser = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            UserRC u = invitation.get().getUser();
+            
+            // pokud pozvanka nepatri uzivateli, kteremu realne byla odeslana
+            if(currentUser != u) {
+                throw new Exception("failure, this is not your invitation");
+            }
+
+            // odstraneni z databaze
+            this.invitationRepository.delete(invitation.get());
+        } else {
+            throw new Exception(String.format("failure, invitaton with ID [%s] not found", id));
         }
     }
 

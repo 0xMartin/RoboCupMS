@@ -246,7 +246,7 @@ public class OrderManagementService {
         // ID kazdeho robota overi zda (existuje, je registrovany v danem rocniku
         // souteze a zda jsou vsichni roboti ze stejne kategorie a discipliny)
         boolean first = true;
-        ECategory mainCategory = ECategory.OPEN;
+        ECategory mainCategory = ECategory.LOW_AGE_CATEGORY;
         Discipline mainDiscipline = null;
         for (Long id : multiMatchGroupObj.getRobots()) {
             // overeni existence

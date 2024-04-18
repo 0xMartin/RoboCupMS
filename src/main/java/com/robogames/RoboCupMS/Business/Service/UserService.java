@@ -5,13 +5,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.robogames.RoboCupMS.Business.Enum.ERole;
+import com.robogames.RoboCupMS.Business.Object.TeamInvitationObj;
 import com.robogames.RoboCupMS.Business.Object.UserEditObj;
 import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
 import com.robogames.RoboCupMS.Entity.Role;
+import com.robogames.RoboCupMS.Entity.TeamInvitation;
 import com.robogames.RoboCupMS.Entity.UserRC;
 import com.robogames.RoboCupMS.Repository.RoleRepository;
+import com.robogames.RoboCupMS.Repository.TeamInvitationRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +33,9 @@ public class UserService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private TeamInvitationRepository invitationRepository;
 
     /**
      * Navrati info o prihlasenem uzivateli
@@ -108,7 +115,7 @@ public class UserService {
                 roles);
 
         // uzivatel neni ve vekovem rozsahu definovanem v konfiguraci
-        if(user.getBirthDate() == null) {
+        if (user.getBirthDate() == null) {
             throw new Exception("failure, wrong age");
         }
 
@@ -232,6 +239,15 @@ public class UserService {
         } else {
             throw new Exception(String.format("failure, user with ID [%d] not found", id));
         }
+    }
+
+    public List<TeamInvitation> getTeamInvitations() {
+        UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        List<TeamInvitation> invitations = invitationRepository.findAll().stream()
+                .filter(e -> e.getUser().getID() == user.getID()).collect(Collectors.toList());
+        
+        return invitations;
     }
 
 }

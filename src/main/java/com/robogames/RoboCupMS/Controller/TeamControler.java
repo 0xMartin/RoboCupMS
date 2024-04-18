@@ -144,9 +144,9 @@ public class TeamControler {
      * @return Informace o stavu provedeneho requestu
      */
     @PutMapping("/addMember")
-    Response addMember(@RequestParam String uuid) {
+    Response addMember(@RequestParam Long id) {
         try {
-            this.teamService.addMember(uuid);
+            this.teamService.addMember(id);
             return ResponseHandler.response("success");
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
@@ -160,9 +160,29 @@ public class TeamControler {
      * @return Informace o stavu provedeneho requestu
      */
     @PutMapping("/removeMember")
-    Response removeMember(@RequestParam String uuid) {
+    Response removeMember(@RequestParam Long id) {
         try {
-            this.teamService.removeMember(uuid);
+            this.teamService.removeMember(id);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    @PutMapping("/acceptInvitation")
+    Response acceptInvitation(@RequestParam Long id) {
+        try {
+            this.teamService.acceptInvitation(id);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    @PutMapping("/rejectInvitation")
+    Response rejectInvitation(@RequestParam Long id) {
+        try {
+            this.teamService.rejectInvitation(id);
             return ResponseHandler.response("success");
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
