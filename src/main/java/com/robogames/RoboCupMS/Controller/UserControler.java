@@ -213,7 +213,7 @@ public class UserControler {
      * @param id ID uzivatele, ktery ma byt odebran
      * @return Informace o stavu provedeneho requestu
      */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER })
+    //@Secured({ ERole.Names.ADMIN, ERole.Names.LEADER })
     @DeleteMapping("/remove")
     Response remove(@RequestParam long id) {
         try {

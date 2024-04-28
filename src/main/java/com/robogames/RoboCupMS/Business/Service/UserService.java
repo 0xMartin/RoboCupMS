@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.robogames.RoboCupMS.Business.Enum.ERole;
-import com.robogames.RoboCupMS.Business.Object.TeamInvitationObj;
 import com.robogames.RoboCupMS.Business.Object.UserEditObj;
 import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
 import com.robogames.RoboCupMS.Entity.Role;
@@ -235,6 +234,10 @@ public class UserService {
     public void remove(long id) throws Exception {
         Optional<UserRC> user = repository.findById(id);
         if (user.isPresent()) {
+            List<TeamInvitation> invitations = invitationRepository.findAll().stream()
+                    .filter(e -> e.getUser().getID() == user.get().getID()).collect(Collectors.toList());
+            this.invitationRepository.deleteAll(invitations);      
+            user.get().getRoles().clear();      
             this.repository.delete(user.get());
         } else {
             throw new Exception(String.format("failure, user with ID [%d] not found", id));
@@ -246,7 +249,7 @@ public class UserService {
 
         List<TeamInvitation> invitations = invitationRepository.findAll().stream()
                 .filter(e -> e.getUser().getID() == user.getID()).collect(Collectors.toList());
-        
+
         return invitations;
     }
 
