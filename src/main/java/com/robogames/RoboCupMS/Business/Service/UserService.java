@@ -56,6 +56,14 @@ public class UserService {
     }
 
     /**
+     * Vsichin uzivatele, kteri nejsou v tymu
+     * @return Vsichni uzivatele v databazi
+     */
+    public List<UserRC> getAllNoTeam() {
+        return this.repository.findAll().stream().filter(u -> u.getTeam() == null).collect(Collectors.toList());
+    }
+
+    /**
      * Navrati jednoho uzivatele se specifickym id
      * 
      * @param id ID hledaneho uzivatele
@@ -236,8 +244,8 @@ public class UserService {
         if (user.isPresent()) {
             List<TeamInvitation> invitations = invitationRepository.findAll().stream()
                     .filter(e -> e.getUser().getID() == user.get().getID()).collect(Collectors.toList());
-            this.invitationRepository.deleteAll(invitations);      
-            user.get().getRoles().clear();      
+            this.invitationRepository.deleteAll(invitations);
+            user.get().getRoles().clear();
             this.repository.delete(user.get());
         } else {
             throw new Exception(String.format("failure, user with ID [%d] not found", id));
