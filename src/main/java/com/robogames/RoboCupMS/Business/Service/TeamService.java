@@ -239,7 +239,7 @@ public class TeamService {
             Team t = invitation.get().getTeam();
 
             // pokud pozvanka nepatri uzivateli, kteremu realne byla odeslana
-            if(currentUser != u) {
+            if(currentUser.getID() != u.getID()) {
                 throw new Exception("failure, this is not your invitation");
             }
 
@@ -263,7 +263,7 @@ public class TeamService {
             UserRC u = invitation.get().getUser();
             
             // pokud pozvanka nepatri uzivateli, kteremu realne byla odeslana
-            if(currentUser != u) {
+            if(currentUser.getID() != u.getID()) {
                 throw new Exception("failure, this is not your invitation");
             }
 
