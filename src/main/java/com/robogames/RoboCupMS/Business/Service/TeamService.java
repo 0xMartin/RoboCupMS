@@ -2,6 +2,7 @@ package com.robogames.RoboCupMS.Business.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Object.TeamObj;
@@ -14,9 +15,11 @@ import com.robogames.RoboCupMS.Repository.TeamInvitationRepository;
 import com.robogames.RoboCupMS.Repository.TeamRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Zajistuje spravu tymu
@@ -239,7 +242,7 @@ public class TeamService {
             Team t = invitation.get().getTeam();
 
             // pokud pozvanka nepatri uzivateli, kteremu realne byla odeslana
-            if(currentUser.getID() != u.getID()) {
+            if (currentUser.getID() != u.getID()) {
                 throw new Exception("failure, this is not your invitation");
             }
 
@@ -261,9 +264,9 @@ public class TeamService {
         if (invitation.isPresent()) {
             UserRC currentUser = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             UserRC u = invitation.get().getUser();
-            
+
             // pokud pozvanka nepatri uzivateli, kteremu realne byla odeslana
-            if(currentUser.getID() != u.getID()) {
+            if (currentUser.getID() != u.getID()) {
                 throw new Exception("failure, this is not your invitation");
             }
 
@@ -278,6 +281,7 @@ public class TeamService {
      * Opusti tym, ve ktrem se prihlaseny uzivatel aktualne nachazi. Pokud tim kdo
      * opousti tym je jeho vedouci pak se automaticky urci novy vedouci.
      */
+    @Transactional
     public void leaveTeam() throws Exception {
         UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -290,11 +294,12 @@ public class TeamService {
         // pokud zde jis clen neni bude nastaven na null.
         Team team = user.getTeam();
         if (team.getLeaderID() == user.getID()) {
-            team.getMembers().remove(user);
-            if (team.getMembers().isEmpty()) {
+            List<UserRC> members = this.userRepository.findAll().stream().filter(u -> u.getTeamID() == team.getID())
+                    .collect(Collectors.toList());
+            if (members.size() <= 1) {
                 team.setLeader(null);
             } else {
-                team.setLeader(team.getMembers().get(0));
+                team.setLeader(user);
             }
             this.teamRepository.save(team);
         }

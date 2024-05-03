@@ -151,7 +151,6 @@ public class TokenAuthorization extends OncePerRequestFilter {
 		if (!user.isPresent()) {
 			return null;
 		}
-
 		// overi casovou platnost
 		Date now = new java.util.Date(Calendar.getInstance().getTime().getTime());
 
