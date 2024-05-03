@@ -10,6 +10,7 @@ import com.robogames.RoboCupMS.Business.Service.TeamService;
 import com.robogames.RoboCupMS.Entity.Team;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping(GlobalConfig.API_PREFIX + "/team")
+@Transactional
 public class TeamControler {
 
     @Autowired
