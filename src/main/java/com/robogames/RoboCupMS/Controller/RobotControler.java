@@ -82,6 +82,23 @@ public class RobotControler {
     }
 
     /**
+     * Navrati vsehcny roboty pro dany rocnik
+     * 
+     * @param year Rocnik souteze
+     * @return Seznam robotu s potvrzenou registraci
+     */
+    @GetMapping("/allForYear")
+    Response allForYear(@RequestParam int year) {
+        List<Robot> robots;
+        try {
+            robots = this.robotService.allForYear(year);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+        return ResponseHandler.response(robots);
+    }
+
+    /**
      * Vytvori noveho robata. Robot je vytvaren na registraci tymu v urcitem
      * rocniku souteze.
      * 

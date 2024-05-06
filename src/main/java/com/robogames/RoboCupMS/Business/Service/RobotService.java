@@ -100,6 +100,12 @@ public class RobotService {
         return robots.collect(Collectors.toList());
     }
 
+    public List<Robot> allForYear(int year) throws Exception {
+        Stream<Robot> robots = this.robotRepository.findAll().stream()
+                .filter((r) -> (r.getTeamRegistration().getCompatitionYear() == year));
+        return robots.collect(Collectors.toList());
+    }
+
     /**
      * Vytvori noveho robata. Robot je vytvaren na registraci tymu v urcitem
      * rocniku souteze.
