@@ -85,7 +85,15 @@ public class CompetitionEvaluationService {
             }
         }
 
-        return scoreList;
+        List<RobotScore> minScores = filterByAggregation(scoreList, EScoreAggregation.MIN);
+        List<RobotScore> maxScores = filterByAggregation(scoreList, EScoreAggregation.MAX);
+        List<RobotScore> sumScores = filterByAggregation(scoreList, EScoreAggregation.SUM);
+
+        sortListByCriteria(minScores, EScoreAggregation.MIN);
+        sortListByCriteria(maxScores, EScoreAggregation.MAX);
+        sortListByCriteria(sumScores, EScoreAggregation.SUM);
+
+        return mergeSortedLists(minScores, maxScores, sumScores);
     }
 
     /**
@@ -242,6 +250,56 @@ public class CompetitionEvaluationService {
 
         // navrati viteze discipliny v dane soutezni kategorii
         return order;
+    }
+
+    private static List<RobotScore> filterByAggregation(List<RobotScore> scoreList, EScoreAggregation aggregation) {
+        List<RobotScore> filteredList = new ArrayList<>();
+        for (RobotScore rs : scoreList) {
+            if (rs.getRobot().getDiscipline().getScoreAggregation().getName() == aggregation) {
+                filteredList.add(rs);
+            }
+        }
+        return filteredList;
+    }
+
+    private static void sortListByCriteria(List<RobotScore> scoreList, EScoreAggregation aggregation) {
+        // serazeni
+        if (aggregation == EScoreAggregation.MIN) {
+            // MIN -> od nejnizsi hodnoty skore po nejvestisi (line follower, drag race, ...
+            // => score reprezenutje cas)
+            Collections.sort(scoreList, new Comparator<RobotScore>() {
+                @Override
+                public int compare(RobotScore r1, RobotScore r2) {
+                    return r2.getScore() < r1.getScore() ? 1 : -1;
+                }
+            });
+        } else {
+            // MAX nebo SUM -> od nejvyssi po nejnizsi (sumo, robostrong, ..)
+            Collections.sort(scoreList, new Comparator<RobotScore>() {
+                @Override
+                public int compare(RobotScore r1, RobotScore r2) {
+                    return r2.getScore() > r1.getScore() ? 1 : -1;
+                }
+            });
+        }
+    }
+
+    private static List<RobotScore> mergeSortedLists(List<RobotScore> minList, List<RobotScore> maxList,
+            List<RobotScore> sumList) {
+        List<RobotScore> mergedList = new ArrayList<>();
+        int size = Math.max(Math.max(minList.size(), maxList.size()), sumList.size());
+        for (int i = 0; i < size; i++) {
+            if (i < minList.size()) {
+                mergedList.add(minList.get(i));
+            }
+            if (i < maxList.size()) {
+                mergedList.add(maxList.get(i));
+            }
+            if (i < sumList.size()) {
+                mergedList.add(sumList.get(i));
+            }
+        }
+        return mergedList;
     }
 
 }
