@@ -78,6 +78,13 @@ public class AuthService extends OAuth2Service {
             throw new Exception("failure, user with this email already exists");
         }
 
+        if (reg.getName().length() > 20) {
+            throw new Exception("failure, name is too long");
+        }
+        if (reg.getSurname().length() > 20) {
+            throw new Exception("failure, surname is too long");
+        }
+
         // validace emailu
         // https://mailtrap.io/blog/java-email-validation/
         Pattern pattern = Pattern
