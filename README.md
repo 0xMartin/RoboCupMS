@@ -8,6 +8,7 @@ A server application for managing robotics competitions. This project is current
 
 ---
 
+
 ## About The Project
 
 **RoboCupMS** is a backend system for handling the organization of robotics tournaments. It provides functionalities for user management, team creation, and the setup of competition elements like disciplines, robots, and matches.
