@@ -2,7 +2,6 @@
 
 ![Version](https://img.shields.io/badge/version-v2.0.0-blue)
 ![Status](https://img.shields.io/badge/status-in%20development-yellow)
-![License](https://img.shields.io/badge/license-MIT-green)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 
 A server application for managing robotics competitions. This project is currently in development.
