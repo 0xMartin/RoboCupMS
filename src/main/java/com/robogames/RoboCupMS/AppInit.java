@@ -67,11 +67,11 @@ public class AppInit {
                 logger.info("HEADER_FIELD_TOKEN set on: " + HEADER_FIELD_TOKEN);
             }
 
-            // maximalni mocet robotu v kategorii na jeden tym
+            // zivotnost uzivatelskeho tokenu
             Long TOKEN_VALIDITY_DURATION = (Long) obj.get("TOKEN_VALIDITY_DURATION");
             if (TOKEN_VALIDITY_DURATION != null) {
                 GlobalConfig.TOKEN_VALIDITY_DURATION = (int) TOKEN_VALIDITY_DURATION.longValue();
-                logger.info("MAX_TEAM_MEMBERS set on: " + TOKEN_VALIDITY_DURATION);
+                logger.info("TOKEN_VALIDITY_DURATION set on: " + TOKEN_VALIDITY_DURATION);
             }
 
             // minimalni vek uzivatele

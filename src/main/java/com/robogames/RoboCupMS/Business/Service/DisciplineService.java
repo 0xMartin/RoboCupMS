@@ -122,6 +122,7 @@ public class DisciplineService {
                     d.setDescription(disciplineObj.getDescription());
                     d.setTime(disciplineObj.getTime());
                     d.setScoreAggregation(score.get());
+                    d.setMaxRounds(disciplineObj.getMaxRounds());
                     return this.disciplineRepository.save(d);
                 });
         if (!map.isPresent()) {
