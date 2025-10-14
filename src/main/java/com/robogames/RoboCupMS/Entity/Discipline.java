@@ -223,4 +223,12 @@ public class Discipline {
         this.time = _time;
     }
 
+    /**
+     * Nastavi maximalni pocet kol jednoho zapasu
+     * 
+     * @param _maxRounds Pocet kol
+     */
+    public void setMaxRounds(int _maxRounds){
+        this.maxRounds = _maxRounds;
+    }
 }
