@@ -44,7 +44,7 @@ The project is containerized and can be run using Docker Compose.
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/0xMartin/RoboCupMS.git](https://github.com/0xMartin/RoboCupMS.git)
+    git clone https://github.com/0xMartin/RoboCupMS.git
     cd RoboCupMS
     ```
 
