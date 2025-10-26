@@ -39,7 +39,7 @@ Přihlásíme se k Google účtu a potvrdíme souhlas s oprávněními. Po úsp�
 
 1. Google nás přesměruje zpět na frontend, na adresu specifikovanou v parametru __redirectURI__. 
 
-__Přiklad konkretní URL:__
+__Přiklad konkretní redirect URL:__
 ```
 https://localhost/auth/oauth2/code?
 state=https%3A%2F%2Flocalhost%2Fauth%2Foauth2%2Fcode
