@@ -37,7 +37,7 @@ Přihlásíme se k Google účtu a potvrdíme souhlas s oprávněními. Po úsp�
 
 ## Krok 3: Zpracování přesměrování (Redirect)
 
-1. Google nás přesměruje zpět na frontend, na adresu. 
+1. Google nás přesměruje zpět na frontend, na adresu specifikovanou v parametru __redirectURI__. 
 
 __Přiklad konkretní URL:__
 ```
