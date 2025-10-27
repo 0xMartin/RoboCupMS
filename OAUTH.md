@@ -53,8 +53,15 @@ state=https%3A%2F%2Flocalhost%2Fauth%2Foauth2%2Fcode
 
 ```bash
 curl -k -X POST "https://localhost:8080/auth/oAuth2GenerateToken" \
-     -d "redirectURI=<TA_REDIRECT_URI_ZE_STATE>" \
-     -d "code=<TEN_KOD>"
+     -d "redirectURI=<state>" \
+     -d "code=<code>"
+```
+
+__Konkretní příklad:__
+```bash
+curl -k -X POST "https://localhost:8080/auth/oAuth2GenerateToken" \
+     -d "redirectURI=https%3A%2F%2Flocalhost%2Fauth%2Foauth2%2Fcode" \
+     -d "code=4%2F0Ab32j90yFi_iKk2xKykUvte8Goz1R4aKCTbuXyv8AZc52gN6j8FtQnh-iYRrpvUowvEG3Q"
 ```
 
 __Odpověď:__ Dostaneme JSON s autorizačním bearer tokenem, který budeme používat pro autorizaci dalších požadavků.
