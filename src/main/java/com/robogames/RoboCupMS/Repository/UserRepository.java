@@ -1,5 +1,6 @@
 package com.robogames.RoboCupMS.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.robogames.RoboCupMS.Entity.UserRC;
@@ -19,4 +20,5 @@ public interface UserRepository extends JpaRepository<UserRC, Long> {
 
     Optional<UserRC> findByToken(String token);
 
+    List<UserRC> findByTeamId(Long teamId);
 }

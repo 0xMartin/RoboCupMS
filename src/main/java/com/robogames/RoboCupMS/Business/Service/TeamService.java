@@ -2,7 +2,6 @@ package com.robogames.RoboCupMS.Business.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Object.TeamObj;
@@ -296,16 +295,20 @@ public class TeamService {
             throw new Exception("failure, you are not member of any team");
         }
 
-        // pokud je uzivatel vedoucim tymu, pak se vedouci musi zmeni na jineho z clenu.
-        // pokud zde jis clen neni bude nastaven na null.
+        // pokud je uzivatel vedoucim tymu, pak se vedoucim musi stat jiny z clenu tymu.
+        // pokud zde jiz zadny clen neni, bude nastaven na null.
         Team team = user.getTeam();
         if (team.getLeaderID() == user.getID()) {
-            List<UserRC> members = this.userRepository.findAll().stream().filter(u -> u.getTeamID() == team.getID())
-                    .collect(Collectors.toList());
+            List<UserRC> members = userRepository.findByTeamId(team.getID());
+
             if (members.size() <= 1) {
                 team.setLeader(null);
             } else {
-                team.setLeader(user);
+                UserRC newLeader = members.stream()
+                        .filter(u -> u.getID() != user.getID())
+                        .findFirst()
+                        .orElse(null);
+                team.setLeader(newLeader);
             }
             this.teamRepository.save(team);
         }
