@@ -191,8 +191,8 @@ public class RobotService {
         }
 
         Optional<Robot> robot = registration.getRobots().stream().filter((r) -> (r.getID()) == id).findFirst();
-        // zmeni jmeno robota
-        if (robot.isPresent()) {
+        // robot nenalezen
+        if (!robot.isPresent()) {
             throw new Exception(String.format("failure, robot with ID [%d] not found", id));
         }
 
