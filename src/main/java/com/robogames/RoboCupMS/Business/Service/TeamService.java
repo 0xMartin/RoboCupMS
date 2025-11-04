@@ -15,7 +15,6 @@ import com.robogames.RoboCupMS.Repository.TeamInvitationRepository;
 import com.robogames.RoboCupMS.Repository.TeamRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -195,6 +194,13 @@ public class TeamService {
             }
 
             Optional<UserRC> u = this.userRepository.findById(id);
+
+            // overi zda uzivatel jeste nebyl do tymu pozvan
+            Optional<TeamInvitation> existingInvitation = this.invitationRepository.findByUserAndTeam(u.get(), t.get());
+            if (existingInvitation.isPresent()) {
+                throw new Exception("failure, user already invited");
+            }
+
             if (u.isPresent()) {
                 // vytvori pozvanku do tymu
                 TeamInvitation invitation = new TeamInvitation();
