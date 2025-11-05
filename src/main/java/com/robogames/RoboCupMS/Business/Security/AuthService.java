@@ -78,11 +78,32 @@ public class AuthService extends OAuth2Service {
             throw new Exception("failure, user with this email already exists");
         }
 
-        if (reg.getName().length() > 20) {
+        // overi delku emailu
+        if (reg.getEmail().length() < 8) {
+            throw new Exception("failure, email is too short");
+        } else if (reg.getEmail().length() > 30) {
+            throw new Exception("failure, email is too long");
+        }
+
+        // overi delku jmena
+        if (reg.getName().length() < 2) {
+            throw new Exception("failure, name is too short");
+        } else if (reg.getName().length() > 20) {
             throw new Exception("failure, name is too long");
         }
-        if (reg.getSurname().length() > 20) {
+
+        // overi delku prijmeni
+        if (reg.getSurname().length() < 2) {
+            throw new Exception("failure, surname is too short");
+        } else if (reg.getSurname().length() > 20) {
             throw new Exception("failure, surname is too long");
+        }
+
+        // overi delku hesla
+        if (reg.getPassword().length() < 8) {
+            throw new Exception("failure, password is too short");
+        } else if (reg.getSurname().length() > 30) {
+            throw new Exception("failure, password is too long");
         }
 
         // validace emailu
