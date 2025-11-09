@@ -1,6 +1,7 @@
 package com.robogames.RoboCupMS.Business.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -137,9 +138,34 @@ public class UserService {
      */
     public void edit(UserEditObj userEditObj) throws Exception {
         UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        user.setName(userEditObj.getName());
-        user.setSurname(userEditObj.getSurname());
-        user.setBirthDate(userEditObj.getBirthDate());
+
+        String newName = userEditObj.getName();
+        String newSurname = userEditObj.getSurname();
+        Date newBirthDate = userEditObj.getBirthDate();
+
+        // overi delku jmena
+        if (newName.length() < 2) {
+            throw new Exception("failure, name is too short");
+        } else if (newName.length() > 20) {
+            throw new Exception("failure, name is too long");
+        }
+
+        // overi delku prijmeni
+        if (newSurname.length() < 2) {
+            throw new Exception("failure, surname is too short");
+        } else if (newSurname.length() > 20) {
+            throw new Exception("failure, surname is too long");
+        }
+
+        user.setName(newName);
+        user.setSurname(newSurname);
+        user.setBirthDate(newBirthDate);
+
+        // overi, ze uzivatel je ve vekovem rozsahu definovanem v konfiguraci
+        if(user.getBirthDate() == null){
+           throw new Exception("failure, wrong age"); 
+        }
+        
         this.repository.save(user);
     }
 
