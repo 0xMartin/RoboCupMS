@@ -122,11 +122,19 @@ public class RobotService {
             throw new Exception(e.getMessage());
         }
 
+        String name = robotObj.getName();
+
+        // overi delku nazvu robota
+        if(name.length() < 3){
+            throw new Exception("failure, name is too short");
+        } else if (name.length() > 15) {
+            throw new Exception("failure, name is too long");
+        }
+
         // overeni unikatnosti jmena robota v ramci rocniku souteze
-        if (this.robotRepository.findByName(robotObj.getName()).isPresent()) {
+        if (this.robotRepository.findByName(name).isPresent()) {
             throw new Exception(
-                    String.format("failure, robot with name [%s] already exists in the year [%d]", robotObj.getName(),
-                            year));
+                    String.format("failure, robot with name [%s] already exists in the year [%d]", name, year));
         }
 
         // ulozi robota do databaze
@@ -182,6 +190,13 @@ public class RobotService {
             registration = this.getTeamRegistration(year);
         } catch (Exception e) {
             throw new Exception(e.getMessage());
+        }
+
+        // overi delku nazvu robota
+        if(name.length() < 3){
+            throw new Exception("failure, name is too short");
+        } else if (name.length() > 15) {
+            throw new Exception("failure, name is too long");
         }
 
         // overeni unikatnosti jmena robota v ramci rocniku souteze
