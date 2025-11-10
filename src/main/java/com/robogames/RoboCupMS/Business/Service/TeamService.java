@@ -117,7 +117,7 @@ public class TeamService {
         }
 
         // overeni unikatnosti jmena
-        if (this.teamRepository.findByName(teamObj.getName()).isPresent()) {
+        if (this.teamRepository.findByName(name).isPresent()) {
             throw new Exception("failure, team with this name already exists");
         }
 
