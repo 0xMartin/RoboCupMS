@@ -102,6 +102,14 @@ public class TeamService {
      */
     public void create(TeamObj teamObj) throws Exception {
         UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String name = teamObj.getName();
+
+        // overi delku nazvu tymu
+        if(name.length() < 3){
+            throw new Exception("failure, name is too short");
+        } else if (name.length() > 15) {
+            throw new Exception("failure, name is too long");
+        }
 
         // overi zda uzivatel jiz neni clenem tymu
         if (leader.getTeamID() != Team.NOT_IN_TEAM) {
@@ -113,7 +121,7 @@ public class TeamService {
             throw new Exception("failure, team with this name already exists");
         }
 
-        Team t = new Team(teamObj.getName(), leader);
+        Team t = new Team(name, leader);
         this.teamRepository.save(t);
         this.userRepository.save(leader);
     }
@@ -166,6 +174,13 @@ public class TeamService {
      */
     public void rename(String name) throws Exception {
         UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        // overi delku nazvu tymu
+        if(name.length() < 3){
+            throw new Exception("failure, name is too short");
+        } else if (name.length() > 15) {
+            throw new Exception("failure, name is too long");
+        }
 
         Optional<Team> t = this.teamRepository.findAllByLeader(leader).stream().findFirst();
         if (t.isPresent()) {

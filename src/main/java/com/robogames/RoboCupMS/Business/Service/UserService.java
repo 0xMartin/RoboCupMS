@@ -58,6 +58,7 @@ public class UserService {
 
     /**
      * Vsichin uzivatele, kteri nejsou v tymu
+     * 
      * @return Vsichni uzivatele v databazi
      */
     public List<UserRC> getAllNoTeam() {
@@ -103,11 +104,44 @@ public class UserService {
      * @throws Exception
      */
     public void add(RegistrationObj reg) throws Exception {
+        String email = reg.getEmail();
+        String name = reg.getName();
+        String surname = reg.getSurname();
+        String password = reg.getPassword();
+
+        // overi delku emailu
+        if (email.length() < 8) {
+            throw new Exception("failure, email is too short");
+        } else if (email.length() > 30) {
+            throw new Exception("failure, email is too long");
+        }
+
+        // overi delku jmena
+        if (name.length() < 2) {
+            throw new Exception("failure, name is too short");
+        } else if (name.length() > 20) {
+            throw new Exception("failure, name is too long");
+        }
+
+        // overi delku prijmeni
+        if (surname.length() < 2) {
+            throw new Exception("failure, surname is too short");
+        } else if (surname.length() > 20) {
+            throw new Exception("failure, surname is too long");
+        }
+
+        // overi delku hesla
+        if (password.length() < 8) {
+            throw new Exception("failure, password is too short");
+        } else if (password.length() > 30) {
+            throw new Exception("failure, password is too long");
+        }
+
         // validace emailu
         // https://mailtrap.io/blog/java-email-validation/
         Pattern pattern = Pattern
                 .compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
-        if (!pattern.matcher(reg.getEmail()).matches()) {
+        if (!pattern.matcher(email).matches()) {
             throw new Exception("failure, email is invalid");
         }
 
@@ -115,10 +149,10 @@ public class UserService {
         List<ERole> roles = new ArrayList<ERole>();
         roles.add(ERole.COMPETITOR);
         UserRC user = new UserRC(
-                reg.getName(),
-                reg.getSurname(),
-                reg.getEmail(),
-                reg.getPassword(),
+                name,
+                surname,
+                email,
+                password,
                 reg.getBirthDate(),
                 roles);
 
@@ -162,10 +196,10 @@ public class UserService {
         user.setBirthDate(newBirthDate);
 
         // overi, ze uzivatel je ve vekovem rozsahu definovanem v konfiguraci
-        if(user.getBirthDate() == null){
-           throw new Exception("failure, wrong age"); 
+        if (user.getBirthDate() == null) {
+            throw new Exception("failure, wrong age");
         }
-        
+
         this.repository.save(user);
     }
 
