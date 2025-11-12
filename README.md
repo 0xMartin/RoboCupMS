@@ -76,6 +76,21 @@ The project is containerized and can be run using Docker Compose.
 
 ---
 
+## Running in the Background
+
+For regular use, you typically want to run the application in "detached" mode (in the background). Use the `-d` flag for this:
+```bash
+docker compose up -d
+```
+The application will be running at `https://localhost:8080`
+
+## Stopping the Application
+
+To stop and remove the containers defined in your `docker-compose.yml` file, run:
+```bash
+docker compose down
+```
+
 ## Quick Test ✅
 
 To verify the API is running, call a public endpoint using `curl`:
