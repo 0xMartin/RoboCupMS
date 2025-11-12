@@ -91,6 +91,8 @@ To stop and remove the containers defined in your `docker-compose.yml` file, run
 docker compose down
 ```
 
+---
+
 ## Quick Test ✅
 
 To verify the API is running, call a public endpoint using `curl`:
