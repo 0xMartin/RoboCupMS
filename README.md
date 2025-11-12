@@ -70,7 +70,7 @@ The project is containerized and can be run using Docker Compose.
 
 3.  **Build and run the application:**
     ```bash
-    docker-compose up --build
+    docker compose up --build
     ```
     The application will be running at `https://localhost:8080`.
 
