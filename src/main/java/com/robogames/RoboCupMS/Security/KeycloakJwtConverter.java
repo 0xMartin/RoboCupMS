@@ -2,18 +2,18 @@ package com.robogames.RoboCupMS.Security;
 
 import com.robogames.RoboCupMS.Entity.UserRC;
 import com.robogames.RoboCupMS.Repository.UserRepository;
-import com.robogames.RoboCupMS.Business.Enum.ERole;
+// import com.robogames.RoboCupMS.Business.Enum.ERole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AbstractAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+// import org.springframework.security.core.GrantedAuthority;
+// import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.stream.Collectors;
+// import java.util.stream.Collectors;
 
 @Component
 public class KeycloakJwtConverter implements Converter<Jwt, AbstractAuthenticationToken> {
@@ -24,7 +24,7 @@ public class KeycloakJwtConverter implements Converter<Jwt, AbstractAuthenticati
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
         // 1. Získání rolí z Keycloak tokenu (obvykle jsou v claimu realm_access nebo resource_access)
-        Collection<GrantedAuthority> authorities = extractAuthorities(jwt);
+        // Collection<GrantedAuthority> authorities = extractAuthorities(jwt);
 
         // 2. Získání emailu z tokenu
         String email = jwt.getClaimAsString("email");
@@ -34,7 +34,7 @@ public class KeycloakJwtConverter implements Converter<Jwt, AbstractAuthenticati
 
         // 4. Vrátíme Authentication objekt, který má uvnitř UserRC jako "Principal"
         // Díky tomuto bude fungovat vaše stávající logika, která castuje Principal na UserRC
-        return new UsernamePasswordAuthenticationToken(userRC, jwt, authorities);
+        return new UsernamePasswordAuthenticationToken(userRC, jwt);
     }
 
     private UserRC syncUserWithDb(Jwt jwt, String email) {
@@ -48,25 +48,26 @@ public class KeycloakJwtConverter implements Converter<Jwt, AbstractAuthenticati
             // Keycloak řeší hesla, my už jen ukládáme profil
             UserRC newUser = new UserRC();
             newUser.setEmail(email);
-            newUser.setName(jwt.getClaimAsString("given_name"));
-            newUser.setSurname(jwt.getClaimAsString("family_name"));
-            
-            // Nastavení defaultní role, data narození atd. (možná bude potřeba vytáhnout z tokenu, pokud to tam Keycloak posílá)
-            // newUser.setBirthDate(...); 
+            newUser.setName(jwt.getClaimAsString("name"));
+            newUser.setSurname(jwt.getClaimAsString("surname"));
+
+            // TODO: birthDate, initial role
+            // newUser.setBirthDate(jwt.getClaimAsString("birthDate"));
+            // newUser.setRoles();
             
             return userRepository.save(newUser);
         }
     }
 
-    private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
-        Map<String, Object> realmAccess = jwt.getClaim("realm_access");
-        if (realmAccess == null || realmAccess.isEmpty()) {
-            return new ArrayList<>();
-        }
+    // private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
+    //     Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+    //     if (realmAccess == null || realmAccess.isEmpty()) {
+    //         return new ArrayList<>();
+    //     }
 
-        Collection<String> roles = (Collection<String>) realmAccess.get("roles");
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
-                .collect(Collectors.toList());
-    }
+    //     Collection<String> roles = (Collection<String>) realmAccess.get("roles");
+    //     return roles.stream()
+    //             .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+    //             .collect(Collectors.toList());
+    // }
 }

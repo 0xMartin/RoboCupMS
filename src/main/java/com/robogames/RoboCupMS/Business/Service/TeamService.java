@@ -15,7 +15,7 @@ import com.robogames.RoboCupMS.Repository.TeamInvitationRepository;
 import com.robogames.RoboCupMS.Repository.TeamRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
-import org.hibernate.Hibernate;
+// import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;

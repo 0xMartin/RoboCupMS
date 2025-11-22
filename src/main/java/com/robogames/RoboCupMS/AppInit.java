@@ -198,21 +198,21 @@ public class AppInit {
                             "Martin",
                             "Krcma",
                             "m1_krcma@utb.cz",
-                            "A12Admin34n56",
+                            // "A12Admin34n56",
                             new GregorianCalendar(1999, Calendar.OCTOBER, 17).getTime(),
                             admin_role),
                     new UserRC(
                             "Pavel",
                             "Sevcik",
                             "p_sevcik@utb.cz",
-                            "A12Admin34n56",
+                            // "A12Admin34n56",
                             new GregorianCalendar(1999, Calendar.NOVEMBER, 12).getTime(),
                             admin_role),
                     new UserRC(
                             "Eliska",
                             "Obadalova",
                             "e_obadalova@utb.cz",
-                            "A12Admin34n56",
+                            // "A12Admin34n56",
                             new GregorianCalendar(1999, Calendar.NOVEMBER, 6).getTime(),
                             admin_role)));
         } else {

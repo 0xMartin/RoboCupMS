@@ -1,36 +1,36 @@
-package com.robogames.RoboCupMS.Business.Security;
+// package com.robogames.RoboCupMS.Business.Security;
 
 
-public class LoginObj {
+// public class LoginObj {
 
-    private String email;
+//     private String email;
 
-    private String password;
+//     private String password;
 
-    public LoginObj() {
-        this.email = null;
-        this.password = null;
-    }
+//     public LoginObj() {
+//         this.email = null;
+//         this.password = null;
+//     }
 
-    public LoginObj(String email, String password) {
-        this.email = email;
-        this.password = password;
-    }
+//     public LoginObj(String email, String password) {
+//         this.email = email;
+//         this.password = password;
+//     }
 
-    public String getEmail() {
-        return this.email;
-    }
+//     public String getEmail() {
+//         return this.email;
+//     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+//     public void setEmail(String email) {
+//         this.email = email;
+//     }
 
-    public String getPassword() {
-        return this.password;
-    }
+//     public String getPassword() {
+//         return this.password;
+//     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+//     public void setPassword(String password) {
+//         this.password = password;
+//     }
 
-}
+// }

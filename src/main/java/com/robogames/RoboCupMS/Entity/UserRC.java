@@ -23,8 +23,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonProperty.Access;
+// import com.fasterxml.jackson.annotation.JsonProperty;
+// import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.robogames.RoboCupMS.AppInit;
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
@@ -293,18 +293,18 @@ public class UserRC {
      * 
      * @return Token
      */
-    @JsonIgnore
-    public String getToken() {
-        return this.getToken();
-    }
+    // @JsonIgnore
+    // public String getToken() {
+    //     return this.getToken();
+    // }
 
     /**
      * Nastavi novy token
      * 
      * @param _token Token
      */
-    public void setToken(String _token) {
-        this.token = _token;
-    }
+    // public void setToken(String _token) {
+    //     this.token = _token;
+    // }
 
 }

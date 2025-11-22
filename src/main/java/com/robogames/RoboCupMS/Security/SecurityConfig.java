@@ -1,8 +1,8 @@
 package com.robogames.RoboCupMS.Security;
 
 import com.robogames.RoboCupMS.GlobalConfig;
-import com.robogames.RoboCupMS.Business.Security.TokenAuthorization;
-import com.robogames.RoboCupMS.Repository.UserRepository;
+// import com.robogames.RoboCupMS.Business.Security.TokenAuthorization;
+// import com.robogames.RoboCupMS.Repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+// import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Konfigurace zabazepeceni serveru
@@ -22,10 +22,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         private static final String[] NOT_SECURED = new String[] {
                         // sekce prihlasovani a registrace
-                        GlobalConfig.AUTH_PREFIX + "/login",
-                        GlobalConfig.AUTH_PREFIX + "/register",
-                        GlobalConfig.AUTH_PREFIX + "/oAuth2",
-                        GlobalConfig.AUTH_PREFIX + "/oAuth2GenerateToken",
+                        // GlobalConfig.AUTH_PREFIX + "/login",
+                        // GlobalConfig.AUTH_PREFIX + "/register",
+                        // GlobalConfig.AUTH_PREFIX + "/oAuth2",
+                        // GlobalConfig.AUTH_PREFIX + "/oAuth2GenerateToken",
 
                         // verejnosti umozni zobrazovat vytvorene souteze a registrovane tymy
                         GlobalConfig.API_PREFIX + "/competition/all",
@@ -58,8 +58,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         @Autowired
         private KeycloakJwtConverter keycloakJwtConverter;
 
-        @Autowired
-        private UserRepository repository;
+        // @Autowired
+        // private UserRepository repository;
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
