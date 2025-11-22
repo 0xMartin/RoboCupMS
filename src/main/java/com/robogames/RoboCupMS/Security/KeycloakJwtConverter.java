@@ -50,8 +50,6 @@ public class KeycloakJwtConverter implements Converter<Jwt, AbstractAuthenticati
             newUser.setEmail(email);
             newUser.setName(jwt.getClaimAsString("given_name"));
             newUser.setSurname(jwt.getClaimAsString("family_name"));
-            newUser.setPassword(""); // Heslo už neukládáme, řeší Keycloak
-            newUser.setToken(null); // Váš starý token už nepotřebujeme
             
             // Nastavení defaultní role, data narození atd. (možná bude potřeba vytáhnout z tokenu, pokud to tam Keycloak posílá)
             // newUser.setBirthDate(...); 
