@@ -61,11 +61,10 @@ public class UserRC {
     @Column(name = "email", length = 120, nullable = false, unique = true)
     private String email;
 
-    /**
-     * Heslo uzivatele
-     */
+    /*
     @Column(name = "password", nullable = false, unique = false)
     private String password;
+    */
 
     /**
      * Datum narozeni uzivatele
@@ -88,18 +87,15 @@ public class UserRC {
     @JoinColumn(name = "team_id", nullable = true)
     private Team team;
 
-    /**
-     * Pristupovy token uzivatele
-     */
+    /*
     @Column(name = "token", nullable = true, unique = true)
     private String token;
+    */
 
-    /**
-     * Cas posledniho pristupu uzivatele na server (pouziva se pro zneplatneni
-     * pristupoveho tokenu po uplinuti prednastaveneho casu)
-     */
+    /*
     @Column(name = "last_access_time", nullable = true, unique = false)
     private Date lastAccessTime;
+    */
 
     /**
      * Vytvori noveho uzivatele robosouteze
@@ -113,15 +109,13 @@ public class UserRC {
      * @param _name      Jmeno uzivatele
      * @param _surname   Prijmeni uzivatele
      * @param _email     Email uzivatele
-     * @param _password  Heslo uzivatele
      * @param _birthDate Datum narozeni
      * @param _role      Vsechny role uzivatele (enum)
      */
-    public UserRC(String _name, String _surname, String _email, String _password, Date _birthDate, List<ERole> _roles) {
+    public UserRC(String _name, String _surname, String _email, Date _birthDate, List<ERole> _roles) {
         this.name = _name;
         this.surname = _surname;
         this.email = _email;
-        this.setPassword(_password);
         this.setBirthDate(_birthDate);
         RoleRepository roleRepository = (RoleRepository) AppInit.contextProvider().getApplicationContext()
                 .getBean("roleRepository");
@@ -193,55 +187,6 @@ public class UserRC {
      */
     public void setEmail(String _email) {
         this.email = _email;
-    }
-
-    /**
-     * Navrati cas posledniho pristupu
-     * 
-     * @return
-     */
-    @JsonIgnore
-    public Date getLastAccessTime() {
-        return this.lastAccessTime;
-    }
-
-    /**
-     * Nastavi cas posledniho pristupu uzivatele na server
-     * 
-     * @param _time Cas
-     */
-    public void setLastAccessTime(Date _time) {
-        this.lastAccessTime = _time;
-    }
-
-    /**
-     * Navrati heslo uzivatel (HASH)
-     * 
-     * @return String
-     */
-    @JsonIgnore
-    @JsonProperty(access = Access.WRITE_ONLY)
-    public String getPassword() {
-        return this.password;
-    }
-
-    /**
-     * Nastavi nove heslo pro uzivatel
-     * 
-     * @param _password Nove heslo (plain text)
-     */
-    public void setPassword(String _password) {
-        this.password = GlobalConfig.PASSWORD_ENCODER.encode(_password);
-    }
-
-    /**
-     * Ovari zda se heslo shoduje z heslem uzivatele
-     * 
-     * @param password Heslo
-     * @return Heslo je/neni stejne
-     */
-    public boolean passwordMatch(String password) {
-        return GlobalConfig.PASSWORD_ENCODER.matches(password, this.getPassword());
     }
 
     /**

@@ -56,26 +56,35 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         };
 
         @Autowired
+        private KeycloakJwtConverter keycloakJwtConverter;
+
+        @Autowired
         private UserRepository repository;
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
                 // token authorization filter
+                /* 
                 TokenAuthorization tokenAuthorizationFilter = new TokenAuthorization(
                                 GlobalConfig.HEADER_FIELD_TOKEN,
                                 repository, NOT_SECURED);
+                */
 
                 // povoli Pre-flight Request
                 http.cors();
 
                 // konfigurace zabezpeceni
-                http.csrf().disable()
-                                .requiresChannel(channel -> channel.anyRequest().requiresSecure())
-                                .addFilterAfter(tokenAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
-                                .authorizeRequests()
-                                .antMatchers(NOT_SECURED)
-                                .permitAll()
-                                .anyRequest().authenticated();
+                http.cors()
+                    .and()
+                    .csrf().disable()
+                    .authorizeRequests()
+                        .antMatchers(NOT_SECURED).permitAll()
+                        .anyRequest().authenticated()
+                    .and()
+                    // Tímto říkáme: chovej se jako Resource Server a ověřuj JWT
+                    .oauth2ResourceServer()
+                        .jwt()
+                        .jwtAuthenticationConverter(keycloakJwtConverter);
         }
 
 }
