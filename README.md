@@ -52,16 +52,16 @@ The project is containerized and can be run using Docker Compose.
 2.  **Create an environment file:**
     Create a `.env` file in the root directory. This file holds all necessary configurations and secrets.
     ```env
-    # Database Credentials
+    # --- Database Credentials ---
     MYSQL_ROOT_PASSWORD=yourSecretRootPassword
     DB_DATABASE=robocup
     DB_USER=robocup_user
     DB_PASSWORD=a63W9bXZYhcwAT9B
 
-    # Application Port
+    # --- Application Config ---
     APP_PORT=8080
 
-    # SSL Secrets
+    # --- SSL Secrets ---
     KEY_STORE_PASSWORD=f4R03eRRG3
     KEY_PASSWORD=f4R03eRRG3
 
@@ -74,11 +74,11 @@ The project is containerized and can be run using Docker Compose.
     KEYCLOAK_CLIENT_ID=robocup-backend
     KEYCLOAK_CLIENT_SECRET=your_client_secret
 
-    # Keycloak Database
+    # Keycloak Database Configuration
     KEYCLOAK_DB_DATABASE=keycloak
     KEYCLOAK_DB_USER=keycloak
-    KEYCLOAK_DB_PASSWORD=keycloak_db_pass
-    KEYCLOAK_DB_ROOT_PASSWORD=keycloak_root_pass
+    KEYCLOAK_DB_PASSWORD=keycloak_db_pass_123
+    KEYCLOAK_DB_ROOT_PASSWORD=keycloak_root_pass_456
     ```
 
 3.  **Build and run the application:**
