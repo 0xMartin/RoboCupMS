@@ -17,6 +17,7 @@ public interface UserRepository extends JpaRepository<UserRC, Long> {
 
     Boolean existsByEmail(String email);
 
-    Optional<UserRC> findByToken(String token);
+    // Token-based auth has been replaced by Keycloak JWT authentication
+    // Optional<UserRC> findByToken(String token);
 
 }
