@@ -1,21 +1,24 @@
-// package com.robogames.RoboCupMS.Business.Security;
+package com.robogames.RoboCupMS.Business.Security;
 
-// import java.util.ArrayList;
-// import java.util.List;
-// // import java.util.Optional;
-// import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
+// import java.util.Optional;
+import java.util.regex.Pattern;
 
-// import com.robogames.RoboCupMS.Business.Enum.ERole;
-// import com.robogames.RoboCupMS.Entity.UserRC;
+import com.robogames.RoboCupMS.ResponseHandler;
+import com.robogames.RoboCupMS.Business.Enum.ERole;
+import com.robogames.RoboCupMS.Entity.UserRC;
 
-// import org.springframework.security.core.context.SecurityContextHolder;
-// import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
 
-// /**
-//  * Zajistuje autentizaci a registraci uzivatelu
-//  */
-// @Service
-// public class AuthService extends OAuth2Service {
+import org.springframework.security.oauth2.jwt.Jwt;
+
+/**
+ * Zajistuje autentizaci a registraci uzivatelu
+ */
+@Service
+public class AuthService {
 
 //     /**
 //      * Prihlaseni uzivatele do systemu (pokud je email a heslo spravne tak
@@ -112,4 +115,34 @@
 //         repository.save(u);
 //     }
 
-// }
+    /**
+     * Vymeni kod ziskany z Keycloaku za pristupovy token
+     * 
+     * @param code Kod ziskany z Keycloaku
+     * @return Pristupovy token
+     */
+    public String exchange(String code) throws Exception {
+        if (code == null) {
+            throw new Exception("code is missing");
+        }
+
+        //TODO: send POST request to Keycloak
+        String token = "";
+
+        return token;
+    }
+
+    /**
+     * 
+     * 
+     * @param token
+     * @return
+     */
+    public Jwt decode(String token) throws Exception {
+        if (token == null) {
+            throw new Exception("token is missing");
+        }
+
+        return;
+    }
+}

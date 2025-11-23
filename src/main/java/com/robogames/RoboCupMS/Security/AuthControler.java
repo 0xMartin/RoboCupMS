@@ -3,26 +3,30 @@ package com.robogames.RoboCupMS.Security;
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Response;
 import com.robogames.RoboCupMS.ResponseHandler;
-// import com.robogames.RoboCupMS.Business.Security.AuthService;
+import com.robogames.RoboCupMS.Business.Security.AuthService;
 // import com.robogames.RoboCupMS.Business.Security.LoginObj;
-import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
+// import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
+// import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+// import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping(GlobalConfig.AUTH_PREFIX)
 public class AuthControler {
 
-//     @Autowired
-//     private AuthService authService;
+    @Autowired
+    private AuthService authService;
+
+    @Autowired
+    private KeycloakJwtConverter keycloakJwtConverter;
 
 //     /**
 //      * Prihlaseni uzivatele do systemu (pokud je email a heslo spravne tak
@@ -117,5 +121,25 @@ public class AuthControler {
 //             return ResponseHandler.error(ex.getMessage());
 //         }
 //     }
+
+    /**
+     * Vymeni code prijaty z Keycloaku za pristupovy token prihlaseneho 
+     * uzivatele, overi platnost tokenu a vyhodnoti data ziskana z tokenu
+     * 
+     * @param code
+     * @return Status
+     */
+    @PostMapping("/validate")
+    public Response validate(@RequestBody String code){
+        try {
+            String token = this.authService.exchange(code);
+            Jwt jwt = this.authService.decode(token);
+            this.keycloakJwtConverter.convert(jwt);
+
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
 
 }
