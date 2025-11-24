@@ -7,6 +7,8 @@ import com.robogames.RoboCupMS.Business.Security.AuthService;
 // import com.robogames.RoboCupMS.Business.Security.LoginObj;
 // import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 // import org.springframework.web.bind.annotation.GetMapping;
@@ -130,11 +132,12 @@ public class AuthControler {
      * @return Status
      */
     @PostMapping("/validate")
-    public Response validate(@RequestBody String code){
+   public Response validate(@RequestBody Map<String, String> json) {
+        String code = json.get("code");        
         try {
             String token = this.authService.exchange(code);
-            Jwt jwt = this.authService.decode(token);
-            this.keycloakJwtConverter.convert(jwt);
+            // Jwt jwt = this.authService.decode(token);
+            // this.keycloakJwtConverter.convert(jwt);
 
             return ResponseHandler.response("success");
         } catch (Exception ex) {

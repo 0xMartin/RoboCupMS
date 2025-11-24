@@ -1,17 +1,28 @@
 package com.robogames.RoboCupMS.Business.Security;
 
-import java.util.ArrayList;
-import java.util.List;
+// import java.util.ArrayList;
+// import java.util.List;
 // import java.util.Optional;
-import java.util.regex.Pattern;
+// import java.util.regex.Pattern;
 
-import com.robogames.RoboCupMS.ResponseHandler;
-import com.robogames.RoboCupMS.Business.Enum.ERole;
-import com.robogames.RoboCupMS.Entity.UserRC;
+// import com.robogames.RoboCupMS.ResponseHandler;
+// import com.robogames.RoboCupMS.Business.Enum.ERole;
+// import com.robogames.RoboCupMS.Entity.UserRC;
 
-import org.springframework.security.core.context.SecurityContextHolder;
+// import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
@@ -115,6 +126,18 @@ public class AuthService {
 //         repository.save(u);
 //     }
 
+    @Value("${keycloak.client-id}")
+    private String clientId;
+
+    @Value("${keycloak.client-secret}")
+    private String clientSecret;
+
+    @Value("${keycloak.token-uri}")
+    private String tokenUri;
+
+    @Value("${keycloak.redirect-uri}")
+    private String redirectUri;
+
     /**
      * Vymeni kod ziskany z Keycloaku za pristupovy token
      * 
@@ -126,16 +149,46 @@ public class AuthService {
             throw new Exception("code is missing");
         }
 
-        //TODO: send POST request to Keycloak
-        String token = "";
+        // create request body
+        String form = "grant_type=authorization_code"
+                + "&code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
+                + "&client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
+                + "&client_secret=" + URLEncoder.encode(clientSecret, StandardCharsets.UTF_8)
+                + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
 
-        return token;
+        HttpClient client = HttpClient.newHttpClient();
+
+        // create POST request
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(tokenUri))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(form))
+                .build();
+
+        HttpResponse<String> response =
+                client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new Exception("Keycloak token exchange failed: " + response.body());
+        }
+
+        // parse response JSON
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode json = mapper.readTree(response.body());
+
+        // get access_token from token JSON
+        JsonNode tokenNode = json.get("access_token");
+        if (tokenNode == null) {
+            throw new Exception("No access_token in response");
+        }
+        
+        return tokenNode.asText();
     }
 
     /**
      * 
      * 
-     * @param token
+     * @param token Pristupovy token ziskany z Keycloaku
      * @return
      */
     public Jwt decode(String token) throws Exception {
@@ -143,6 +196,9 @@ public class AuthService {
             throw new Exception("token is missing");
         }
 
-        return;
+        // TODO: jwt parameters
+        Jwt jwt = new Jwt(token, null, null, null, null);
+
+        return jwt;
     }
 }
