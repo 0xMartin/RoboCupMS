@@ -19,20 +19,17 @@ import com.robogames.RoboCupMS.Repository.UserRepository;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
-@Service
+// @Service - Temporarily disabled, using Keycloak OAuth2 instead
 public class OAuth2Service {
 
-    @Value("${oauth2.google.client-id}")
+    // @Value("${oauth2.google.client-id}")
     private String client_id;
 
-    @Value("${oauth2.google.client-secret}")
+    // @Value("${oauth2.google.client-secret}")
     private String client_secret;
 
-    @Autowired
+    // @Autowired
     protected UserRepository repository;
 
     /**

@@ -88,10 +88,8 @@ services:
       KEYCLOAK_AUTH_SERVER_URL: ${KEYCLOAK_AUTH_SERVER_URL:-http://keycloak:8080}
       KEYCLOAK_RESOURCE: ${KEYCLOAK_CLIENT_ID:-robocup-backend}
       KEYCLOAK_CREDENTIALS_SECRET: ${KEYCLOAK_CLIENT_SECRET}
-
-      # Google OAuth2 proměnné pro Spring (deprecated - přesuňte do Keycloak)
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-robocup-backend}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
     networks:
       - robocup-network
 
