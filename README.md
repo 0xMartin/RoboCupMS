@@ -8,6 +8,7 @@ A server application for managing robotics competitions. This project is current
 
 ---
 
+
 ## About The Project
 
 **RoboCupMS** is a backend system for handling the organization of robotics tournaments. It provides functionalities for user management, team creation, and the setup of competition elements like disciplines, robots, and matches.
@@ -16,7 +17,7 @@ The system supports score evaluation and scheduling of matches.
 
 ### Key Features
 
-* 🔑 **Authentication:** Standard registration and login with email/password and Google OAuth2.
+* 🔑 **Authentication:** Keycloak-based OAuth2/OIDC authentication with JWT tokens
 * 🏆 **Competition Management:** Tools to create and manage teams, disciplines, robots, and competition seasons.
 * 📊 **Scoring & Scheduling:** Functionality for score evaluation and match scheduling.
 
@@ -26,6 +27,7 @@ The system supports score evaluation and scheduling of matches.
 
 * **Backend:** Java, Spring Boot, Hibernate (JPA)
 * **Database:** MariaDB
+* **Authentication:** Keycloak (OAuth2/OIDC)
 * **Build Tool:** Gradle
 * **Containerization:** Docker
 
@@ -50,48 +52,66 @@ The project is containerized and can be run using Docker Compose.
 2.  **Create an environment file:**
     Create a `.env` file in the root directory. This file holds all necessary configurations and secrets.
     ```env
-    # Database Credentials
+    # --- Database Credentials ---
     MYSQL_ROOT_PASSWORD=yourSecretRootPassword
     DB_DATABASE=robocup
-    DB_USER=robocup_root
+    DB_USER=robocup_user
     DB_PASSWORD=a63W9bXZYhcwAT9B
 
-    # Application Port
+    # --- Application Config ---
     APP_PORT=8080
 
-    # SSL Secrets
+    # --- SSL Secrets ---
     KEY_STORE_PASSWORD=f4R03eRRG3
     KEY_PASSWORD=f4R03eRRG3
 
-    # Google OAuth2 Secrets
-    GOOGLE_CLIENT_ID=your_google_client_id
-    GOOGLE_CLIENT_SECRET=your_google_client_secret
+    # Keycloak Configuration
+    KEYCLOAK_PORT=8180
+    KEYCLOAK_ADMIN_USER=admin
+    KEYCLOAK_ADMIN_PASSWORD=admin
+    KEYCLOAK_REALM=RoboCupRealm
+    KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
+    KEYCLOAK_CLIENT_ID=robocup-backend
+    KEYCLOAK_CLIENT_SECRET=your_client_secret
+
+    # Keycloak Database Configuration
+    KEYCLOAK_DB_DATABASE=keycloak
+    KEYCLOAK_DB_USER=keycloak
+    KEYCLOAK_DB_PASSWORD=keycloak_db_pass_123oehrtč 
     ```
 
 3.  **Build and run the application:**
     ```bash
-    docker compose up --build
+    docker-compose up --build
     ```
     The application will be running at `https://localhost:8080`.
+    Keycloak admin console will be available at `http://localhost:8180`.
+
+4.  **Configure Keycloak:**
+    Follow the detailed setup guide in [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) to:
+    - Create the RoboCupRealm
+    - Configure the robocup-backend client
+    - Create test users
+    - Set up authentication flow
 
 ---
 
-## Running in the Background
 
-For regular use, you typically want to run the application in "detached" mode (in the background). Use the `-d` flag for this:
-```bash
-docker compose up -d
+## Architecture Overview ⚙️
 ```
-The application will be running at `https://localhost:8080`
-
-## Stopping the Application
-
-To stop and remove the containers defined in your `docker-compose.yml` file, run:
-```bash
-docker compose down
+┌─────────────┐  Port 8180    ┌──────────────┐      ┌─────────────────┐
+│  Keycloak   │◄─────────────►│   Keycloak   │─────►│  Keycloak DB    │
+│   Admin     │               │   Server     │      │   (MariaDB)     │
+└─────────────┘               └──────────────┘      └─────────────────┘
+                                      │
+                                      │ JWT Validation
+                                      ▼
+                              ┌──────────────┐      ┌─────────────────┐
+                              │   RoboCupMS  │─────►│  Application DB │
+                              │   Backend    │      │   (MariaDB)     │
+                              └──────────────┘      └─────────────────┘
+                               Port 8080 (HTTPS)
 ```
-
----
 
 ## Quick Test ✅
 

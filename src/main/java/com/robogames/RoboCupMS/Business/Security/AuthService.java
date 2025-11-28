@@ -1,13 +1,22 @@
 package com.robogames.RoboCupMS.Business.Security;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Entity.UserRC;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +25,18 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class AuthService extends OAuth2Service {
+
+    @Value("${keycloak.client-id}")
+    private String clientId;
+
+    @Value("${keycloak.client-secret}")
+    private String clientSecret;
+
+    @Value("${keycloak.token-uri}")
+    private String tokenUri;
+
+    @Value("${keycloak.redirect-uri}")
+    private String redirectUri;
 
     /**
      * Prihlaseni uzivatele do systemu (pokud je email a heslo spravne tak
@@ -131,6 +152,53 @@ public class AuthService extends OAuth2Service {
         }
 
         repository.save(u);
+    }
+
+    /**
+     * Vymeni kod ziskany z Keycloaku za pristupovy token
+     * 
+     * @param code Kod ziskany z Keycloaku
+     * @return Pristupovy token
+     */
+    public String exchange(String code) throws Exception {
+        if (code == null) {
+            throw new Exception("code is missing");
+        }
+
+        // create request body
+        String form = "grant_type=authorization_code"
+                + "&code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
+                + "&client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
+                + "&client_secret=" + URLEncoder.encode(clientSecret, StandardCharsets.UTF_8)
+                + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
+
+        HttpClient client = HttpClient.newHttpClient();
+
+        // create POST request
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(tokenUri))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(form))
+                .build();
+
+        HttpResponse<String> response =
+                client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new Exception("Keycloak token exchange failed: " + response.body());
+        }
+
+        // parse response JSON
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode json = mapper.readTree(response.body());
+
+        // get access_token from token JSON
+        JsonNode tokenNode = json.get("access_token");
+        if (tokenNode == null) {
+            throw new Exception("No access_token in response");
+        }
+        
+        return tokenNode.asText();
     }
 
 }
