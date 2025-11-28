@@ -7,8 +7,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,15 +19,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Entity.UserRC;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
+
+import com.robogames.RoboCupMS.Repository.UserRepository;
 
 /**
  * Zajistuje autentizaci a registraci uzivatelu
  */
 @Service
-public class AuthService extends OAuth2Service {
+public class AuthService {
+
+    @Autowired
+    private UserRepository repository;
 
     @Value("${keycloak.client-id}")
     private String clientId;
@@ -37,6 +48,9 @@ public class AuthService extends OAuth2Service {
 
     @Value("${keycloak.redirect-uri}")
     private String redirectUri;
+
+    @Autowired
+    JwtDecoder jwtDecoder;
 
     /**
      * Prihlaseni uzivatele do systemu (pokud je email a heslo spravne tak
@@ -198,7 +212,37 @@ public class AuthService extends OAuth2Service {
             throw new Exception("No access_token in response");
         }
         
-        return tokenNode.asText();
+        // get user info from Keycloak
+        Jwt jwt = jwtDecoder.decode(tokenNode.asText());    
+        String email = jwt.getClaimAsString("email");
+        String name = jwt.getClaimAsString("given_name");
+        String surname = jwt.getClaimAsString("family_name");
+        System.out.println("Keycloak user info: " + email + ", " + name + ", " + surname);    
+
+        // vytvoreni uzivatel / login
+        Optional<UserRC> user = this.repository.findByEmail(email);
+        String user_access_token = "";
+        if (user.isPresent()) {
+            // prihlasi uzivatele -> vygeneruje pristupovy token
+            user_access_token = TokenAuthorization.generateAccessTokenForUser(user.get(), this.repository);
+        } else {
+            // registruje uzivatele
+            List<ERole> roles = new ArrayList<ERole>();
+            roles.add(ERole.COMPETITOR);
+            UserRC newUser = new UserRC(
+                    name,
+                    surname,
+                    email,
+                    UUID.randomUUID().toString(),
+                    new GregorianCalendar(2000, Calendar.JANUARY, 1).getTime(),
+                    roles);
+            this.repository.save(newUser);
+            // prihlasi nove registrovaneho uzivatel
+            user_access_token = TokenAuthorization.generateAccessTokenForUser(newUser, this.repository);
+        }
+
+        // navrati pristupovy token
+        return user_access_token;
     }
 
 }
