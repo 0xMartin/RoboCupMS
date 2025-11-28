@@ -65,11 +65,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         @Override
         protected void configure(HttpSecurity http) throws Exception {
                 // token authorization filter
-                /* 
                 TokenAuthorization tokenAuthorizationFilter = new TokenAuthorization(
                                 GlobalConfig.HEADER_FIELD_TOKEN,
                                 repository, NOT_SECURED);
-                */
 
                 // povoli Pre-flight Request
                 http.cors();
