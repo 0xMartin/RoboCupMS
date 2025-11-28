@@ -77,8 +77,7 @@ The project is containerized and can be run using Docker Compose.
     # Keycloak Database Configuration
     KEYCLOAK_DB_DATABASE=keycloak
     KEYCLOAK_DB_USER=keycloak
-    KEYCLOAK_DB_PASSWORD=keycloak_db_pass_123
-    KEYCLOAK_DB_ROOT_PASSWORD=keycloak_root_pass_456
+    KEYCLOAK_DB_PASSWORD=keycloak_db_pass_123oehrtč 
     ```
 
 3.  **Build and run the application:**

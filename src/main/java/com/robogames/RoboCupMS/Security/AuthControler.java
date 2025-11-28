@@ -139,7 +139,7 @@ public class AuthControler {
             // Jwt jwt = this.authService.decode(token);
             // this.keycloakJwtConverter.convert(jwt);
 
-            return ResponseHandler.response("success");
+            return ResponseHandler.response(token);
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
         }

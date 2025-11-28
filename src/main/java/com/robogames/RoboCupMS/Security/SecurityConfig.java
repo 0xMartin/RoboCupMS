@@ -82,7 +82,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         .antMatchers(NOT_SECURED).permitAll()
                         .anyRequest().authenticated()
                     .and()
-                    // Tímto říkáme: chovej se jako Resource Server a ověřuj JWT
                     .oauth2ResourceServer()
                         .jwt()
                         .jwtAuthenticationConverter(keycloakJwtConverter);

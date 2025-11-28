@@ -99,6 +99,7 @@ Pro přidání custom claims jako `surname`:
 3. Nastavte:
    - **Client ID**: Váš Google Client ID
    - **Client Secret**: Váš Google Client Secret
+   - **Open ID configuration URL:** https://accounts.google.com/.well-known/openid-configuration
    - **Default Scopes**: `openid profile email`
 4. Klikněte "Save"
 
