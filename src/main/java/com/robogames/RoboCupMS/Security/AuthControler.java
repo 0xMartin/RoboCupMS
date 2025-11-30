@@ -4,18 +4,18 @@ import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Response;
 import com.robogames.RoboCupMS.ResponseHandler;
 import com.robogames.RoboCupMS.Business.Security.AuthService;
-import com.robogames.RoboCupMS.Business.Security.LoginObj;
-import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
+// import com.robogames.RoboCupMS.Business.Security.LoginObj;
+// import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
 
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
+// import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+// import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -88,21 +88,21 @@ public class AuthControler {
     //     }
     // }
 
-    // /**
-    //  * Odhlasi uzivatele ze systemu (odstrani pristupovy token z databaze)
-    //  * 
-    //  * @param email Email uzivatele
-    //  * @return Status
-    //  */
-    // @PostMapping("/logout")
-    // public Response logout() {
-    //     try {
-    //         this.authService.logout();
-    //         return ResponseHandler.response("success");
-    //     } catch (Exception ex) {
-    //         return ResponseHandler.error(ex.getMessage());
-    //     }
-    // }
+    /**
+     * Odhlasi uzivatele ze systemu (odstrani pristupovy token z databaze)
+     * 
+     * @param email Email uzivatele
+     * @return Status
+     */
+    @PostMapping("/logout")
+    public Response logout() {
+        try {
+            this.authService.logout();
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
 
     // /**
     //  * Registruje noveho uzivatele
