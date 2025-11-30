@@ -107,7 +107,6 @@ public class UserService {
         String email = reg.getEmail();
         String name = reg.getName();
         String surname = reg.getSurname();
-        String password = reg.getPassword();
 
         // overi delku emailu
         if (email.length() < 8) {
@@ -130,13 +129,6 @@ public class UserService {
             throw new Exception("failure, surname is too long");
         }
 
-        // overi delku hesla
-        if (password.length() < 8) {
-            throw new Exception("failure, password is too short");
-        } else if (password.length() > 30) {
-            throw new Exception("failure, password is too long");
-        }
-
         // validace emailu
         // https://mailtrap.io/blog/java-email-validation/
         Pattern pattern = Pattern
@@ -152,7 +144,6 @@ public class UserService {
                 name,
                 surname,
                 email,
-                password,
                 reg.getBirthDate(),
                 roles);
 
@@ -201,40 +192,6 @@ public class UserService {
         }
 
         this.repository.save(user);
-    }
-
-    /**
-     * Zmena uzivatelskeho hesla
-     * 
-     * @param currentPassword Aktualni heslo
-     * @param newPasword      Nove heslo
-     * @throws Exception
-     */
-    public void changePassword(String currentPassword, String newPassword) throws Exception {
-        UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (user.passwordMatch(currentPassword)) {
-            user.setPassword(newPassword);
-            this.repository.save(user);
-        } else {
-            throw new Exception("failure, your current password is invalid");
-        }
-    }
-
-    /**
-     * Nastavi uzivateli nove heslo
-     * 
-     * @param newPasword Nove heslo
-     * @param id         ID uzivatele, pro ktereho chceme heslo vygenerovat
-     * @throws Exception
-     */
-    public void setPassword(String newPassword, long id) throws Exception {
-        Optional<UserRC> user = repository.findById(id);
-        if (user.isPresent()) {
-            user.get().setPassword(newPassword);
-            this.repository.save(user.get());
-        } else {
-            throw new Exception(String.format("failure, user with ID [%d] not found", id));
-        }
     }
 
     /**
