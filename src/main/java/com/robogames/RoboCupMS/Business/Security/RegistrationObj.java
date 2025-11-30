@@ -10,23 +10,19 @@ public class RegistrationObj {
 
     private String email;
 
-    private String password;
-
     private Date birthDate;
 
     public RegistrationObj() {
         this.name = null;
         this.surname = null;
         this.email = null;
-        this.password = null;
         this.birthDate = null;
     }
 
-    public RegistrationObj(String name, String surname, String email, String password, Date birthDate) {
+    public RegistrationObj(String name, String surname, String email, Date birthDate) {
         this.name = name;
         this.surname = surname;
         this.email = email;
-        this.password = password;
         this.birthDate = birthDate;
     }
 
@@ -52,14 +48,6 @@ public class RegistrationObj {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPassword() {
-        return this.password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public Date getBirthDate() {

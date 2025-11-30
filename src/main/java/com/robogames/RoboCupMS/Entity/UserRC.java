@@ -23,8 +23,6 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.robogames.RoboCupMS.AppInit;
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
@@ -60,12 +58,6 @@ public class UserRC {
      */
     @Column(name = "email", length = 120, nullable = false, unique = true)
     private String email;
-
-    /**
-     * Heslo uzivatele
-     */
-    @Column(name = "password", nullable = false, unique = false)
-    private String password;
 
     /**
      * Datum narozeni uzivatele
@@ -113,15 +105,13 @@ public class UserRC {
      * @param _name      Jmeno uzivatele
      * @param _surname   Prijmeni uzivatele
      * @param _email     Email uzivatele
-     * @param _password  Heslo uzivatele
      * @param _birthDate Datum narozeni
      * @param _role      Vsechny role uzivatele (enum)
      */
-    public UserRC(String _name, String _surname, String _email, String _password, Date _birthDate, List<ERole> _roles) {
+    public UserRC(String _name, String _surname, String _email, Date _birthDate, List<ERole> _roles) {
         this.name = _name;
         this.surname = _surname;
         this.email = _email;
-        this.setPassword(_password);
         this.setBirthDate(_birthDate);
         RoleRepository roleRepository = (RoleRepository) AppInit.contextProvider().getApplicationContext()
                 .getBean("roleRepository");
@@ -212,36 +202,6 @@ public class UserRC {
      */
     public void setLastAccessTime(Date _time) {
         this.lastAccessTime = _time;
-    }
-
-    /**
-     * Navrati heslo uzivatel (HASH)
-     * 
-     * @return String
-     */
-    @JsonIgnore
-    @JsonProperty(access = Access.WRITE_ONLY)
-    public String getPassword() {
-        return this.password;
-    }
-
-    /**
-     * Nastavi nove heslo pro uzivatel
-     * 
-     * @param _password Nove heslo (plain text)
-     */
-    public void setPassword(String _password) {
-        this.password = GlobalConfig.PASSWORD_ENCODER.encode(_password);
-    }
-
-    /**
-     * Ovari zda se heslo shoduje z heslem uzivatele
-     * 
-     * @param password Heslo
-     * @return Heslo je/neni stejne
-     */
-    public boolean passwordMatch(String password) {
-        return GlobalConfig.PASSWORD_ENCODER.matches(password, this.getPassword());
     }
 
     /**
