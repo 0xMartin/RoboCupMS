@@ -8,6 +8,8 @@
 
 A comprehensive server application for managing robotics competitions. This system provides complete tournament organization capabilities, from team registration to match scheduling and score evaluation.
 
+> **Note:** This repository contains the **Backend**. The Frontend client application can be found here: **[RoboGames Frontend](https://github.com/TMusilova/robogames)**
+
 ---
 
 ## 📋 Table of Contents
