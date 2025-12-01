@@ -129,4 +129,73 @@ To connect to the backend database, you can use the following command:
 docker exec -it robocupms-db-1 mariadb -u root -p
 ```
 Then enter the root password specified in the `.env` file when prompted.
- 
+
+## 🌐 Nginx Configuration (Reverse Proxy)
+
+This project uses Nginx as a gateway and reverse proxy. It handles SSL termination via Let's Encrypt and routes traffic to the appropriate Docker containers based on the URL path:
+
+* __/__ → Frontend (React Static Build)
+* __/api/__ → Backend (Spring Boot)
+* __/auth__ → Identity Provider (Keycloak)
+
+###  📄 Configuration File
+
+Below is the recommended configuration for /etc/nginx/sites-available/robogames.conf.
+
+```nginx
+server {
+    server_name is.robogames.utb.cz;
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/is.robogames.utb.cz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/is.robogames.utb.cz/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+    # Frontend (React)
+    location / {
+        root /var/www/html;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API (Spring Boot)
+    location /api/ {
+        proxy_pass https://127.0.0.1:8080;
+        proxy_ssl_verify off;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Keycloak (Identity Provider)
+    location /auth {
+        proxy_pass http://127.0.0.1:8180;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port 443;
+
+        proxy_buffer_size 128k;
+        proxy_buffers 4 256k;
+        proxy_busy_buffers_size 256k;
+    }
+}
+
+# HTTP -> HTTPS presmerovani
+server {
+    if ($host = is.robogames.utb.cz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80;
+    server_name is.robogames.utb.cz;
+    return 404; # managed by Certbot
+}
+``` 
