@@ -144,41 +144,6 @@ public class UserControler {
     }
 
     /**
-     * Zmena uzivatelskeho hesla
-     * 
-     * @param currentPassword Aktualni heslo
-     * @param newPasword      Nove heslo
-     * @return Informace o stavu provedeneho requestu
-     */
-    @PutMapping("/changePassword")
-    Response changePassword(@RequestParam String currentPassword, @RequestParam String newPassword) {
-        try {
-            this.userService.changePassword(currentPassword, newPassword);
-            return ResponseHandler.response("success");
-        } catch (Exception ex) {
-            return ResponseHandler.error(ex.getMessage());
-        }
-    }
-
-    /**
-     * Nastavi uzivateli nove heslo
-     * 
-     * @param newPasword Nove heslo
-     * @param id         ID uzivatele, pro ktereho chceme heslo vygenerovat
-     * @return Informace o stavu provedeneho requestu
-     */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER })
-    @PutMapping("/setPassword")
-    Response setPassword(@RequestParam String newPassword, @RequestParam long id) {
-        try {
-            this.userService.setPassword(newPassword, id);
-            return ResponseHandler.response("success");
-        } catch (Exception ex) {
-            return ResponseHandler.error(ex.getMessage());
-        }
-    }
-
-    /**
      * Priradi roli uzivateli
      * 
      * @param role Nova role, kterou prideli uzivateli

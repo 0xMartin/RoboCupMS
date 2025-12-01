@@ -13,11 +13,6 @@ public class GlobalConfig {
     public static final transient String API_PREFIX = "/api";
 
     /**
-     * Prefix pouze pro sekci autentizace uzivatele
-     */
-    public static final transient String AUTH_PREFIX = "/auth";
-
-    /**
      * Module prefix
      */
     public static final transient String MODULE_PREFIX = "/module";
