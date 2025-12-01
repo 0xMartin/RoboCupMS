@@ -121,4 +121,12 @@ To verify the API is running, call a public endpoint using `curl`:
 # The -k flag bypasses the self-signed SSL certificate check
 curl -k https://localhost:8080/api/discipline/all
 ```
+
+## Connect to backend database
+
+To connect to the backend database, you can use the following command:
+```bash
+docker exec -it robocupms-db-1 mariadb -u root -p
+```
+Then enter the root password specified in the `.env` file when prompted.
  
