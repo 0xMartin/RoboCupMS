@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping(GlobalConfig.AUTH_PREFIX)
+@RequestMapping(GlobalConfig.API_PREFIX)
 public class AuthControler {
 
     @Autowired

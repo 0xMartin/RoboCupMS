@@ -25,7 +25,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         //GlobalConfig.AUTH_PREFIX + "/login",
                         //GlobalConfig.AUTH_PREFIX + "/register",
                         //GlobalConfig.AUTH_PREFIX + "/oAuth2",
-                        GlobalConfig.AUTH_PREFIX + "/validate",
+                        GlobalConfig.API_PREFIX + "/validate",
 
                         // verejnosti umozni zobrazovat vytvorene souteze a registrovane tymy
                         GlobalConfig.API_PREFIX + "/competition/all",
