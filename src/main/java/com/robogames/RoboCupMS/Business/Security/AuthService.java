@@ -1,21 +1,56 @@
 package com.robogames.RoboCupMS.Business.Security;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
+// import java.util.UUID;
+// import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Entity.UserRC;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
+
+import com.robogames.RoboCupMS.Repository.UserRepository;
 
 /**
  * Zajistuje autentizaci a registraci uzivatelu
  */
 @Service
-public class AuthService extends OAuth2Service {
+public class AuthService {
+
+    @Autowired
+    private UserRepository repository;
+
+    @Value("${keycloak.client-id}")
+    private String clientId;
+
+    @Value("${keycloak.client-secret}")
+    private String clientSecret;
+
+    @Value("${keycloak.token-uri}")
+    private String tokenUri;
+
+    @Value("${keycloak.redirect-uri}")
+    private String redirectUri;
+
+    @Autowired
+    JwtDecoder jwtDecoder;
 
     /**
      * Prihlaseni uzivatele do systemu (pokud je email a heslo spravne tak
@@ -26,25 +61,25 @@ public class AuthService extends OAuth2Service {
      * @param password Heslo uzivatele
      * @return Pristupovy token
      */
-    public String login(LoginObj login) throws Exception {
-        // validace emailu
-        // https://mailtrap.io/blog/java-email-validation/
-        Pattern pattern = Pattern
-                .compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
-        if (!pattern.matcher(login.getEmail()).matches()) {
-            throw new Exception("failure, email is invalid");
-        }
+    // public String login(LoginObj login) throws Exception {
+    //     // validace emailu
+    //     // https://mailtrap.io/blog/java-email-validation/
+    //     Pattern pattern = Pattern
+    //             .compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
+    //     if (!pattern.matcher(login.getEmail()).matches()) {
+    //         throw new Exception("failure, email is invalid");
+    //     }
 
-        // autentizace uzivatele
-        Optional<UserRC> user = repository.findByEmail(login.getEmail());
-        if (user.isPresent()) {
-            if (user.get().passwordMatch(login.getPassword())) {
-                return TokenAuthorization.generateAccessTokenForUser(user.get(), this.repository);
-            }
-        }
+    //     // autentizace uzivatele
+    //     Optional<UserRC> user = repository.findByEmail(login.getEmail());
+    //     if (user.isPresent()) {
+    //         if (user.get().passwordMatch(login.getPassword())) {
+    //             return TokenAuthorization.generateAccessTokenForUser(user.get(), this.repository);
+    //         }
+    //     }
 
-        throw new Exception("Incorrect email or password");
-    }
+    //     throw new Exception("Incorrect email or password");
+    // }
 
     /**
      * Odhlasi uzivatele ze systemu (odstrani pristupovy token z databaze)
@@ -72,65 +107,144 @@ public class AuthService extends OAuth2Service {
      * @param reg Registracni udaje noveho uzivatele
      * @return Nove vytvoreni uzivatel
      */
-    public void register(RegistrationObj reg) throws Exception {
-        // overi zda uzivatel s timto email jiz neni registrovany
-        if (this.repository.findByEmail(reg.getEmail()).isPresent()) {
-            throw new Exception("failure, user with this email already exists");
+    // public void register(RegistrationObj reg) throws Exception {
+    //     // overi zda uzivatel s timto email jiz neni registrovany
+    //     if (this.repository.findByEmail(reg.getEmail()).isPresent()) {
+    //         throw new Exception("failure, user with this email already exists");
+    //     }
+
+    //     // overi delku emailu
+    //     if (reg.getEmail().length() < 8) {
+    //         throw new Exception("failure, email is too short");
+    //     } else if (reg.getEmail().length() > 30) {
+    //         throw new Exception("failure, email is too long");
+    //     }
+
+    //     // overi delku jmena
+    //     if (reg.getName().length() < 2) {
+    //         throw new Exception("failure, name is too short");
+    //     } else if (reg.getName().length() > 20) {
+    //         throw new Exception("failure, name is too long");
+    //     }
+
+    //     // overi delku prijmeni
+    //     if (reg.getSurname().length() < 2) {
+    //         throw new Exception("failure, surname is too short");
+    //     } else if (reg.getSurname().length() > 20) {
+    //         throw new Exception("failure, surname is too long");
+    //     }
+
+    //     // overi delku hesla
+    //     if (reg.getPassword().length() < 8) {
+    //         throw new Exception("failure, password is too short");
+    //     } else if (reg.getSurname().length() > 30) {
+    //         throw new Exception("failure, password is too long");
+    //     }
+
+    //     // validace emailu
+    //     // https://mailtrap.io/blog/java-email-validation/
+    //     Pattern pattern = Pattern
+    //             .compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
+    //     if (!pattern.matcher(reg.getEmail()).matches()) {
+    //         throw new Exception("failure, email is invalid");
+    //     }
+
+    //     // registruje noveho uzivatele
+    //     List<ERole> roles = new ArrayList<ERole>();
+    //     roles.add(ERole.COMPETITOR);
+    //     UserRC u = new UserRC(
+    //             reg.getName(),
+    //             reg.getSurname(),
+    //             reg.getEmail(),
+    //             reg.getPassword(),
+    //             reg.getBirthDate(),
+    //             roles);
+
+    //     // uzivatel neni ve vekovem rozsahu definovanem v konfiguraci
+    //     if (u.getBirthDate() == null) {
+    //         throw new Exception("failure, wrong age");
+    //     }
+
+    //     repository.save(u);
+    // }
+
+    /**
+     * Vymeni kod ziskany z Keycloaku za pristupovy token, vyhodnoti ho a prihlasi
+     * nove vytvoreneho nebo stavajiciho uzivatele
+     * 
+     * @param code Kod ziskany z Keycloaku
+     * @return Pristupovy token
+     */
+    public String exchange(String code) throws Exception {
+        if (code == null) {
+            throw new Exception("code is missing");
         }
 
-        // overi delku emailu
-        if (reg.getEmail().length() < 8) {
-            throw new Exception("failure, email is too short");
-        } else if (reg.getEmail().length() > 30) {
-            throw new Exception("failure, email is too long");
+        // create request body
+        String form = "grant_type=authorization_code"
+                + "&code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
+                + "&client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
+                + "&client_secret=" + URLEncoder.encode(clientSecret, StandardCharsets.UTF_8)
+                + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
+
+        HttpClient client = HttpClient.newHttpClient();
+
+        // create POST request
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(tokenUri))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(form))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new Exception("Keycloak token exchange failed: " + response.body());
         }
 
-        // overi delku jmena
-        if (reg.getName().length() < 2) {
-            throw new Exception("failure, name is too short");
-        } else if (reg.getName().length() > 20) {
-            throw new Exception("failure, name is too long");
+        // parse response JSON
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode json = mapper.readTree(response.body());
+
+        // get access_token from token JSON
+        JsonNode tokenNode = json.get("access_token");
+        if (tokenNode == null) {
+            throw new Exception("No access_token in response");
         }
 
-        // overi delku prijmeni
-        if (reg.getSurname().length() < 2) {
-            throw new Exception("failure, surname is too short");
-        } else if (reg.getSurname().length() > 20) {
-            throw new Exception("failure, surname is too long");
+        // get user info from Keycloak
+        Jwt jwt = jwtDecoder.decode(tokenNode.asText());
+        String email = jwt.getClaimAsString("email");
+        String name = jwt.getClaimAsString("given_name");
+        String surname = jwt.getClaimAsString("family_name");
+        // String birthDate = jwt.getClaimAsString("birth_date");
+
+        // vytvoreni uzivatel / login
+        Optional<UserRC> user = this.repository.findByEmail(email);
+        String user_access_token = "";
+
+        if (user.isPresent()) {
+            // prihlasi uzivatele -> vygeneruje pristupovy token
+            user_access_token = TokenAuthorization.generateAccessTokenForUser(user.get(), this.repository);
+        } else {
+            // registruje uzivatele
+            List<ERole> roles = new ArrayList<ERole>();
+            roles.add(ERole.COMPETITOR);
+
+            UserRC newUser = new UserRC(
+                    name,
+                    surname,
+                    email,
+                    new GregorianCalendar(2000, Calendar.JANUARY, 1).getTime(),
+                    roles);
+            this.repository.save(newUser);
+
+            // prihlasi nove registrovaneho uzivatel
+            user_access_token = TokenAuthorization.generateAccessTokenForUser(newUser, this.repository);
         }
 
-        // overi delku hesla
-        if (reg.getPassword().length() < 8) {
-            throw new Exception("failure, password is too short");
-        } else if (reg.getSurname().length() > 30) {
-            throw new Exception("failure, password is too long");
-        }
-
-        // validace emailu
-        // https://mailtrap.io/blog/java-email-validation/
-        Pattern pattern = Pattern
-                .compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
-        if (!pattern.matcher(reg.getEmail()).matches()) {
-            throw new Exception("failure, email is invalid");
-        }
-
-        // registruje noveho uzivatele
-        List<ERole> roles = new ArrayList<ERole>();
-        roles.add(ERole.COMPETITOR);
-        UserRC u = new UserRC(
-                reg.getName(),
-                reg.getSurname(),
-                reg.getEmail(),
-                reg.getPassword(),
-                reg.getBirthDate(),
-                roles);
-
-        // uzivatel neni ve vekovem rozsahu definovanem v konfiguraci
-        if(u.getBirthDate() == null) {
-            throw new Exception("failure, wrong age");
-        }
-
-        repository.save(u);
+        // navrati pristupovy token
+        return user_access_token;
     }
 
 }
