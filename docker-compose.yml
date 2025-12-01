@@ -2,6 +2,7 @@ services:
 
   db:
     image: mariadb:10.6
+    command: --innodb-use-native-aio=0
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USER}
@@ -12,13 +13,15 @@ services:
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
-      timeout: 5s
+      timeout: 20s
       retries: 5
+      start_period: 300s
     networks:
       - robocup-network
 
   keycloak-db:
     image: mariadb:10.6
+    command: --innodb-use-native-aio=0
     environment:
       MYSQL_DATABASE: ${KEYCLOAK_DB_DATABASE:-keycloak}
       MYSQL_USER: ${KEYCLOAK_DB_USER:-keycloak}
@@ -29,8 +32,9 @@ services:
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${KEYCLOAK_DB_ROOT_PASSWORD}"]
       interval: 10s
-      timeout: 5s
+      timeout: 20s
       retries: 5
+      start_period: 300s
     networks:
       - robocup-network
 
@@ -43,23 +47,31 @@ services:
       KC_DB_URL: jdbc:mariadb://keycloak-db:3306/${KEYCLOAK_DB_DATABASE:-keycloak}
       KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak}
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
-      KC_HOSTNAME_STRICT: false
-      KC_HOSTNAME_STRICT_HTTPS: false
-      KC_HTTP_ENABLED: true
-      KC_HEALTH_ENABLED: true
+      
+      # Keycloaku běží za proxy (Nginx řeší SSL)
+      KC_PROXY: edge
+      # Veřejná URL, kterou vidí uživatel
+      KC_HOSTNAME_URL: https://is.robogames.utb.cz/auth
+      # Nastaví Keycloak, aby běžel na cestě /auth 
+      KC_HTTP_RELATIVE_PATH: /auth
+      
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
     command:
       - start-dev
     ports:
-      - "${KEYCLOAK_PORT:-8180}:8080"
+      # Binds to localhost only (bezpečnější, přístup jen přes Nginx)
+      - "127.0.0.1:${KEYCLOAK_PORT:-8180}:8080"
     depends_on:
       keycloak-db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;grep 'HTTP/1.1 200 OK' <&3"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /auth/health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n' >&3;grep 'HTTP/1.1 200 OK' <&3"]
       interval: 15s
       timeout: 10s
       retries: 10
-      start_period: 60s
+      start_period: 600s 
     networks:
       - robocup-network
 
@@ -72,7 +84,8 @@ services:
       keycloak:
         condition: service_healthy
     ports:
-      - "${APP_PORT}:8080"
+      # Binds to localhost only (bezpečnější, přístup jen přes Nginx)
+      - "127.0.0.1:${APP_PORT}:8080"
     environment:
       # Databázové proměnné pro Spring
       SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/${DB_DATABASE}
@@ -85,7 +98,8 @@ services:
 
       # Keycloak proměnné pro Spring
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-RoboCupRealm}
-      KEYCLOAK_AUTH_SERVER_URL: ${KEYCLOAK_AUTH_SERVER_URL:-http://keycloak:8080}
+      # Backend volá Keycloak přímo v Docker síti, ale s prefixem /auth
+      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080/auth
       KEYCLOAK_RESOURCE: ${KEYCLOAK_CLIENT_ID:-robocup-backend}
       KEYCLOAK_CREDENTIALS_SECRET: ${KEYCLOAK_CLIENT_SECRET}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-robocup-backend}
