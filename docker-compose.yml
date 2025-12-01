@@ -39,7 +39,7 @@ services:
       - robocup-network
 
   keycloak:
-    image: quay.io/keycloak/keycloak:23.0
+    image: quay.io/keycloak/keycloak:26.4
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
@@ -47,31 +47,26 @@ services:
       KC_DB_URL: jdbc:mariadb://keycloak-db:3306/${KEYCLOAK_DB_DATABASE:-keycloak}
       KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak}
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
-      
-      # Keycloaku běží za proxy (Nginx řeší SSL)
-      KC_PROXY: edge
-      # Veřejná URL, kterou vidí uživatel
       KC_HOSTNAME_URL: https://is.robogames.utb.cz/auth
-      # Nastaví Keycloak, aby běžel na cestě /auth 
       KC_HTTP_RELATIVE_PATH: /auth
-      
+      KC_PROXY_HEADERS: xforwarded
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
+      KC_LOG_LEVEL: INFO
     command:
       - start-dev
     ports:
-      # Binds to localhost only (bezpečnější, přístup jen přes Nginx)
       - "127.0.0.1:${KEYCLOAK_PORT:-8180}:8080"
     depends_on:
       keycloak-db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /auth/health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n' >&3;grep 'HTTP/1.1 200 OK' <&3"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 600s 
+       test: ["CMD", "/bin/bash", "-c", "> /dev/tcp/127.0.0.1/9000"]
+       interval: 10s
+       timeout: 5s
+       retries: 20
+       start_period: 300s
     networks:
       - robocup-network
 
@@ -84,21 +79,16 @@ services:
       keycloak:
         condition: service_healthy
     ports:
-      # Binds to localhost only (bezpečnější, přístup jen přes Nginx)
       - "127.0.0.1:${APP_PORT}:8080"
     environment:
-      # Databázové proměnné pro Spring
       SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/${DB_DATABASE}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       
-      # SSL proměnné pro Spring
       KEY_STORE_PASSWORD: ${KEY_STORE_PASSWORD}
       KEY_PASSWORD: ${KEY_PASSWORD}
 
-      # Keycloak proměnné pro Spring
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-RoboCupRealm}
-      # Backend volá Keycloak přímo v Docker síti, ale s prefixem /auth
       KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080/auth
       KEYCLOAK_RESOURCE: ${KEYCLOAK_CLIENT_ID:-robocup-backend}
       KEYCLOAK_CREDENTIALS_SECRET: ${KEYCLOAK_CLIENT_SECRET}
