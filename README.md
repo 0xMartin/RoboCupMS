@@ -78,7 +78,7 @@ cd RoboCupMS
 
 #### 2️⃣ Configure Environment Variables
 
-Create a `.env` file in the project root directory with the following configuration:
+Create a `.env` file in the project root directory with the following configuration (you can copy from `.env.example`):
 
 ```env
 # ===========================================
