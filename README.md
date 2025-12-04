@@ -85,7 +85,7 @@ Create a `.env` file in the project root directory with the following configurat
 # DATABASE CONFIGURATION
 # ===========================================
 # Main Application Database
-MYSQL_ROOT_PASSWORD=yourSecureRootPassword123!
+MYSQL_ROOT_PASSWORD=yourSecureRootPassword123
 DB_DATABASE=robocup
 DB_USER=robocup_user
 DB_PASSWORD=yourSecureDbPassword456!
@@ -93,8 +93,8 @@ DB_PASSWORD=yourSecureDbPassword456!
 # Keycloak Database
 KEYCLOAK_DB_DATABASE=keycloak
 KEYCLOAK_DB_USER=keycloak
-KEYCLOAK_DB_PASSWORD=keycloakSecurePassword789!
-KEYCLOAK_DB_ROOT_PASSWORD=keycloakRootPassword012!
+KEYCLOAK_DB_PASSWORD=keycloak_db_pass_123
+KEYCLOAK_DB_ROOT_PASSWORD=keycloak_root_pass_456
 
 # ===========================================
 # APPLICATION CONFIGURATION
@@ -106,8 +106,8 @@ APP_FRONTEND_URL=https://is.robogames.utb.cz
 # SSL/TLS CONFIGURATION
 # ===========================================
 # These passwords protect the SSL keystore
-KEY_STORE_PASSWORD=yourKeystorePassword345!
-KEY_PASSWORD=yourKeyPassword678!
+KEY_STORE_PASSWORD=f4R03eRRG3
+KEY_PASSWORD=f4R03eRRG3
 
 # ===========================================
 # KEYCLOAK CONFIGURATION
@@ -115,13 +115,13 @@ KEY_PASSWORD=yourKeyPassword678!
 # Admin Console Access
 KEYCLOAK_PORT=8180
 KEYCLOAK_ADMIN_USER=admin
-KEYCLOAK_ADMIN_PASSWORD=adminSecurePassword901!
+KEYCLOAK_ADMIN_PASSWORD=yourSecureRootPassword123
 
 # Realm & Client Configuration
 KEYCLOAK_REALM=RoboCupRealm
-KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
+KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080/auth
 KEYCLOAK_CLIENT_ID=robocup-backend
-KEYCLOAK_CLIENT_SECRET=your_generated_client_secret_from_keycloak
+KEYCLOAK_CLIENT_SECRET=yourAppSecret
 ```
 
 > [!WARNING]
