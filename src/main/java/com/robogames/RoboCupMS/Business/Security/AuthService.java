@@ -6,9 +6,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 // import java.util.UUID;
@@ -217,7 +218,11 @@ public class AuthService {
         String email = jwt.getClaimAsString("email");
         String name = jwt.getClaimAsString("given_name");
         String surname = jwt.getClaimAsString("family_name");
-        // String birthDate = jwt.getClaimAsString("birth_date");
+        String _birthDate = jwt.getClaimAsString("birthdate");
+
+        // prevedeni data narozeni ze String na Date
+        LocalDate localDate = LocalDate.parse(_birthDate);
+        Date birthDate = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
         // vytvoreni uzivatel / login
         Optional<UserRC> user = this.repository.findByEmail(email);
@@ -235,9 +240,11 @@ public class AuthService {
                     name,
                     surname,
                     email,
-                    new GregorianCalendar(2000, Calendar.JANUARY, 1).getTime(),
+                    birthDate,
                     roles);
             this.repository.save(newUser);
+
+            System.out.println("user: " + newUser);
 
             // prihlasi nove registrovaneho uzivatel
             user_access_token = TokenAuthorization.generateAccessTokenForUser(newUser, this.repository);
