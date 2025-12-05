@@ -9,7 +9,7 @@ public class LoginObj {
         this.email = null;
     }
 
-    public LoginObj(String email, String password) {
+    public LoginObj(String email) {
         this.email = email;
     }
 
