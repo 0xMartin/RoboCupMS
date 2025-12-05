@@ -13,72 +13,72 @@ components:
       type: http
       scheme: bearer
 paths:
-  /login:
-    post:
-      summary: Přihlásí uživatele do systému
-      description:
-        Uživatel, který se chce přihlásit do systému odešle svůj email a heslo. Pokud jsou přihlašovací údaje platné tak vygeneruje přistupový token.
-        Token je platný do doby dokud se uživatel znovu nepřihlásí z jíného zařízení nebo se neodhlásí.
-        Token se stavá automaticky neplatným po uplynutí definovaneho casu.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                password:
-                  type: string
-              required:
-                - email
-                - password
-      responses:
-        "200":
-          description: Uživatel je přihlášen a získá přistupový token. V opačném připádě je typ odpovědi "ERROR"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  type:
-                    type: string
-                    example: "RESPONSE"
-                  data:
-                    type: string
-                    format: uuid
+  # /login:
+  #   post:
+  #     summary: Přihlásí uživatele do systému
+  #     description:
+  #       Uživatel, který se chce přihlásit do systému odešle svůj email a heslo. Pokud jsou přihlašovací údaje platné tak vygeneruje přistupový token.
+  #       Token je platný do doby dokud se uživatel znovu nepřihlásí z jíného zařízení nebo se neodhlásí.
+  #       Token se stavá automaticky neplatným po uplynutí definovaneho casu.
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: object
+  #             properties:
+  #               email:
+  #                 type: string
+  #               password:
+  #                 type: string
+  #             required:
+  #               - email
+  #               - password
+  #     responses:
+  #       "200":
+  #         description: Uživatel je přihlášen a získá přistupový token. V opačném připádě je typ odpovědi "ERROR"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 type:
+  #                   type: string
+  #                   example: "RESPONSE"
+  #                 data:
+  #                   type: string
+  #                   format: uuid
 
-  /oAuth2:
-    get:
-      summary: Vygeneruje odkaz pro autorizaci uživatele
-      description:
-        Vygeneruje odkaz pro autorizaci uživatele. Po uspěšné autorizaci je uživatel
-        přesměrován na specifikovanou adresu. Zde musí být
-        odeslán POST request na endpoint serveru "/auth/oAuth2GenerateToken" s
-        parametrem "code" a "redirectURI" jejihž hodnutu získá z aktualní URL. "redirectURI" bude předán parametrem "state".
-      parameters:
-        - in: query
-          name: redirectURI
-          required: false
-          description: URL andresa, na kterou bude uživatel přesmerovan z autorizacniho serveru. (default https://localhost/auth/oauth2/code)
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: URL odkaz pro autorizaci uzivatele pomoci oAuth2
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  type:
-                    type: string
-                    example: "RESPONSE"
-                  data:
-                    type: string
-                    format: url
-                    example: https://accounts.google.com/o/oauth2/v2/auth?scope=https://www.googleapis.com/auth/userinfo.profile&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=https://localhost/auth/oauth2/code&client_id=XX
+  # /oAuth2:
+  #   get:
+  #     summary: Vygeneruje odkaz pro autorizaci uživatele
+  #     description:
+  #       Vygeneruje odkaz pro autorizaci uživatele. Po uspěšné autorizaci je uživatel
+  #       přesměrován na specifikovanou adresu. Zde musí být
+  #       odeslán POST request na endpoint serveru "/auth/oAuth2GenerateToken" s
+  #       parametrem "code" a "redirectURI" jejihž hodnutu získá z aktualní URL. "redirectURI" bude předán parametrem "state".
+  #     parameters:
+  #       - in: query
+  #         name: redirectURI
+  #         required: false
+  #         description: URL andresa, na kterou bude uživatel přesmerovan z autorizacniho serveru. (default https://localhost/auth/oauth2/code)
+  #         schema:
+  #           type: integer
+  #     responses:
+  #       "200":
+  #         description: URL odkaz pro autorizaci uzivatele pomoci oAuth2
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 type:
+  #                   type: string
+  #                   example: "RESPONSE"
+  #                 data:
+  #                   type: string
+  #                   format: url
+  #                   example: https://accounts.google.com/o/oauth2/v2/auth?scope=https://www.googleapis.com/auth/userinfo.profile&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=https://localhost/auth/oauth2/code&client_id=XX
 
   /logout:
     post:
@@ -149,15 +149,12 @@ paths:
                   type: string
                 email:
                   type: string
-                password:
-                  type: string
                 birthDate:
                   type: string
               required:
                 - name
                 - surname
                 - email
-                - password
                 - birthDate
       responses:
         "200":

@@ -275,15 +275,12 @@ paths:
                   type: string
                 email:
                   type: string
-                password:
-                  type: string
                 birthDate:
                   type: string
               required:
                 - name
                 - surname
                 - email
-                - password
                 - birthDate
       security:
         - ApiKeyAuth: []
@@ -322,7 +319,6 @@ paths:
               required:
                 - name
                 - surname
-                - password
       security:
         - ApiKeyAuth: []
       responses:
