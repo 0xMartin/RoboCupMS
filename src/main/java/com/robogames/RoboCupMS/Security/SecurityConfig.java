@@ -5,6 +5,7 @@ import com.robogames.RoboCupMS.Business.Security.TokenAuthorization;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,6 +20,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true, jsr250Enabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+        @Value("${APP_FRONTEND_URL:http://localhost:3000}")
+        private String frontendUrl;
 
         private static final String[] NOT_SECURED = new String[] {
                         // sekce prihlasovani a registrace

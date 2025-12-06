@@ -220,9 +220,15 @@ public class AuthService {
         String surname = jwt.getClaimAsString("family_name");
         String _birthDate = jwt.getClaimAsString("birthdate");
 
-        // prevedeni data narozeni ze String na Date
-        LocalDate localDate = LocalDate.parse(_birthDate);
-        Date birthDate = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        // prevedeni data narozeni ze String na Date (pokud je uvedeno)
+        Date birthDate = null;
+        if (_birthDate != null && !_birthDate.isEmpty()) {
+            LocalDate localDate = LocalDate.parse(_birthDate);
+            birthDate = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        } else {
+            // pokud neni birthdate v tokenu, pouzijeme vychozi datum (napr. 2000-01-01)
+            birthDate = Date.from(LocalDate.of(2000, 1, 1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+        }
 
         // vytvoreni uzivatel / login
         Optional<UserRC> user = this.repository.findByEmail(email);

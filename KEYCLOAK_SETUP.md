@@ -117,14 +117,6 @@ curl -X POST "http://localhost:8180/realms/RoboCupRealm/protocol/openid-connect/
   -d "grant_type=password"
 ```
 
-### Použití Tokenu v API Requestech
-
-```bash
-curl -X GET "https://localhost:8080/api/competition/all" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -k
-```
-
 ## Workflow Autentizace
 
 1. **Uživatel se přihlásí** do Keycloaku
