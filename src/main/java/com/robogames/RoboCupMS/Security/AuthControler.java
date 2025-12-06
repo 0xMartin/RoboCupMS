@@ -134,6 +134,7 @@ public class AuthControler {
             String token = this.authService.exchange(code);
             return ResponseHandler.response(token);
         } catch (Exception ex) {
+            ex.printStackTrace();
             return ResponseHandler.error(ex.getMessage());
         }
     }
