@@ -6,7 +6,8 @@ plugins {
 
 group = 'com.robogames'
 version = '2.3.0'
-sourceCompatibility = '11'
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
 repositories {
 	mavenCentral()
@@ -19,7 +20,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
-    implementation 'org.keycloak:keycloak-admin-client:26.0.7'
+	
+	// Keycloak Admin Client - verze 21.x je kompatibilní s Java 17
+    implementation 'org.keycloak:keycloak-admin-client:21.1.2'
+    implementation 'org.jboss.resteasy:resteasy-client:4.7.7.Final'
+    implementation 'org.jboss.resteasy:resteasy-jackson2-provider:4.7.7.Final'
 
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 

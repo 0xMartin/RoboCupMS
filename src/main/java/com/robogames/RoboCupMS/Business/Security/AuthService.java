@@ -248,9 +248,10 @@ public class AuthService {
                     email,
                     birthDate,
                     roles);
+            if (newUser.getBirthDate() == null) {
+                throw new Exception("failure, wrong age");
+            }
             this.repository.save(newUser);
-
-            System.out.println("user: " + newUser);
 
             // prihlasi nove registrovaneho uzivatel
             user_access_token = TokenAuthorization.generateAccessTokenForUser(newUser, this.repository);
