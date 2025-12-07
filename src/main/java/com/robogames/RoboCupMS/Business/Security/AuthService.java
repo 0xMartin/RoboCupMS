@@ -218,9 +218,9 @@ public class AuthService {
         String email = jwt.getClaimAsString("email");
         String name = jwt.getClaimAsString("given_name");
         String surname = jwt.getClaimAsString("family_name");
-        String _birthDate = jwt.getClaimAsString("birthdate");
 
         // prevedeni data narozeni ze String na Date (pokud je uvedeno)
+        String _birthDate = jwt.getClaimAsString("birthdate");
         Date birthDate = null;
         if (_birthDate != null && !_birthDate.isEmpty()) {
             LocalDate localDate = LocalDate.parse(_birthDate);
