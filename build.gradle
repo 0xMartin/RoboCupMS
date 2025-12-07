@@ -19,6 +19,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+    implementation 'org.keycloak:keycloak-admin-client:26.0.7'
 
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
