@@ -1,12 +1,15 @@
 package com.robogames.RoboCupMS.Business.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.robogames.RoboCupMS.GlobalConfig;
+import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Object.RobotObj;
+import com.robogames.RoboCupMS.Business.Object.RobotProfile;
 import com.robogames.RoboCupMS.Entity.Discipline;
 import com.robogames.RoboCupMS.Entity.Robot;
 import com.robogames.RoboCupMS.Entity.Team;
@@ -52,6 +55,79 @@ public class RobotService {
         } else {
             throw new Exception(String.format("failure, robot with ID [%d] not exists", id));
         }
+    }
+
+    /**
+     * Navrati podrobny profil robota podle id
+     * 
+     * @param id ID robota
+     * @return Profil robota (podrobnejsni info)
+     */
+    public RobotProfile getRobotProfile(Long id) throws Exception {
+        // Ziska robota podle ID
+        Optional<Robot> robotOpt = this.robotRepository.findById(id);
+        if (!robotOpt.isPresent()) {
+            throw new Exception(String.format("failure, robot with ID [%d] not exists", id));
+        }
+        Robot robot = robotOpt.get();
+
+        // Ziska registraci tymu
+        TeamRegistration teamRegistration = robot.getTeamRegistration();
+        if (teamRegistration == null) {
+            throw new Exception(String.format("failure, robot with ID [%d] has no team registration", id));
+        }
+
+        // Ziska tym
+        Team team = teamRegistration.getTeam();
+        if (team == null) {
+            throw new Exception(String.format("failure, team registration has no team", id));
+        }
+
+        // Ziska jmeno robota
+        String robotName = robot.getName();
+
+        // Ziska cislo robota
+        Long robotNumber = robot.getNumber();
+
+        // Ziska disciplinu (muze byt null pokud robot neni registrovan)
+        String discipline = robot.getDiscipline() != null ? robot.getDiscipline().getName() : "";
+
+        // Ziska kategorii
+        ECategory category = robot.getCategory();
+
+        // Ziska nazev tymu
+        String teamName = team.getName();
+
+        // Ziska ID tymu
+        Long teamId = team.getID();
+
+        // Ziska seznam clenu tymu
+        List<RobotProfile.TeamMemberInfo> teamMembers = new ArrayList<>();
+        for (UserRC member : team.getMembers()) {
+            teamMembers.add(new RobotProfile.TeamMemberInfo(
+                member.getName(),
+                member.getSurname()
+            ));
+        }
+
+        // Ziska informace o uciteli z registrace tymu
+        String teacherName = teamRegistration.getTeacherName();
+        String teacherSurname = teamRegistration.getTeacherSurname();
+        String teacherContact = teamRegistration.getTeacherContact();
+
+        // Vytvori a navrati profil robota
+        return new RobotProfile(
+            robotName,
+            robotNumber,
+            discipline,
+            category,
+            teamName,
+            teamId,
+            teamMembers,
+            teacherName,
+            teacherSurname,
+            teacherContact
+        );
     }
 
     /**

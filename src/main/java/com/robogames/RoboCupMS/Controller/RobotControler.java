@@ -7,6 +7,7 @@ import com.robogames.RoboCupMS.Response;
 import com.robogames.RoboCupMS.ResponseHandler;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Business.Object.RobotObj;
+import com.robogames.RoboCupMS.Business.Object.RobotProfile;
 import com.robogames.RoboCupMS.Business.Service.RobotService;
 import com.robogames.RoboCupMS.Entity.Robot;
 
@@ -45,6 +46,23 @@ public class RobotControler {
             return ResponseHandler.error(ex.getMessage());
         }
         return ResponseHandler.response(robot);
+    }
+    
+    /**
+     * Navrati podrobny profil robota podle id
+     * 
+     * @param id ID robota
+     * @return Profil robota (podrobnejsni info)
+     */
+    @GetMapping("/profile")
+    Response getRobotProfile(@RequestParam Long id) {
+        RobotProfile profile;
+        try {
+            profile = this.robotService.getRobotProfile(id);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+        return ResponseHandler.response(profile);
     }
 
     /**
