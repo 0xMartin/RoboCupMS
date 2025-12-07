@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Enum.EMatchState;
@@ -191,15 +193,17 @@ public class AppInit {
      * Email administrátorského účtu, který bude povýšen na roli ADMIN
      * 
      * @param userRepository UserRepository 
+     * @param repository RoleRepository
      */
     @Bean
-    public ApplicationRunner initAdmin(UserRepository userRepository) {
+    public ApplicationRunner initAdmin(UserRepository userRepository, RoleRepository roleRepository) {
         return args -> {
+            Optional<Role> optRole = roleRepository.findByName(ERole.ADMIN);
             Optional<UserRC> user = userRepository.findByEmail(adminEmail);
             if (user.isPresent()) {
                 UserRC admin = user.get();
                 if (!admin.getRoles().contains(ERole.ADMIN)) {
-                    admin.getRoles().add(ERole.ADMIN);
+                    admin.getRoles().add(optRole.get());
                     userRepository.save(admin);
                     System.out.println("User " + adminEmail + " was promoted to ADMIN.");
                 }

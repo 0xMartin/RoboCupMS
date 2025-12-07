@@ -90,6 +90,8 @@ services:
       
       KEY_STORE_PASSWORD: ${KEY_STORE_PASSWORD}
       KEY_PASSWORD: ${KEY_PASSWORD}
+      
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL}
 
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-RoboCupRealm}
       KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080/auth
