@@ -55,7 +55,7 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_LOG_LEVEL: INFO
     command:
-      - start-dev
+      - start
     ports:
       - "127.0.0.1:${KEYCLOAK_PORT:-8180}:8080"
     depends_on:
