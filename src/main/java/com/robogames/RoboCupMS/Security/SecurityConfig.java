@@ -7,6 +7,7 @@ import com.robogames.RoboCupMS.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,6 +24,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         @Value("${APP_FRONTEND_URL:http://localhost:3000}")
         private String frontendUrl;
+
+        @Autowired
+        private Environment environment;
 
         private static final String[] NOT_SECURED = new String[] {
                         // sekce prihlasovani a registrace
@@ -72,14 +76,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // povoli Pre-flight Request
                 http.cors();
 
+                // Check if we're running in local profile (without SSL)
+                boolean isLocalProfile = environment != null && 
+                        java.util.Arrays.asList(environment.getActiveProfiles()).contains("local");
+
                 // konfigurace zabezpeceni
-                http.csrf().disable()
-                                .requiresChannel(channel -> channel.anyRequest().requiresSecure())
-                                .addFilterAfter(tokenAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
-                                .authorizeRequests()
-                                .antMatchers(NOT_SECURED)
-                                .permitAll()
-                                .anyRequest().authenticated();
+                if (!isLocalProfile) {
+                        // Require HTTPS for production
+                        http.csrf().disable()
+                                        .requiresChannel(channel -> channel.anyRequest().requiresSecure())
+                                        .addFilterAfter(tokenAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
+                                        .authorizeRequests()
+                                        .antMatchers(NOT_SECURED)
+                                        .permitAll()
+                                        .anyRequest().authenticated();
+                } else {
+                        // Allow HTTP for local development
+                        http.csrf().disable()
+                                        .addFilterAfter(tokenAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
+                                        .authorizeRequests()
+                                        .antMatchers(NOT_SECURED)
+                                        .permitAll()
+                                        .anyRequest().authenticated();
+                }
         }
 
 }

@@ -29,6 +29,12 @@ public class TeamRegistrationObj {
         this.year = year;
     }
 
+    public TeamRegistrationObj(String teacherName, String teacherSurname, String teacherContact) {
+        this.teacherName = teacherName;
+        this.teacherSurname = teacherSurname;
+        this.teacherContact = teacherContact;
+    }
+
     public int getYear() {
         return this.year;
     }

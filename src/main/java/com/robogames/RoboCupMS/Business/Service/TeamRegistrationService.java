@@ -256,4 +256,70 @@ public class TeamRegistrationService {
         });
     }
 
+    /**
+     * Ziska registraci tymu pro dany rocnik souteze
+     * 
+     * @param year Rocnik souteze
+     * @return Registrace tymu
+     * @throws Exception
+     */
+    public TeamRegistration getRegistration(int year) throws Exception {
+        UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        // id tymu, ve kterem se uzivatel nachazi
+        long team_id = user.getTeamID();
+        if (team_id == Team.NOT_IN_TEAM) {
+            throw new Exception("failure, you are not a member of any team");
+        }
+
+        // najde tym v databazi
+        Optional<Team> t = this.teamRepository.findById(team_id);
+        if (!t.isPresent()) {
+            throw new Exception("failure, team not exists");
+        }
+
+        // najde registraci tymu pro dany rocnik souteze
+        Optional<TeamRegistration> registration = t.get().getRegistrations().stream()
+                .filter((r) -> (r.getCompatitionYear() == year)).findFirst();
+        if (!registration.isPresent()) {
+            throw new Exception(
+                    String.format("failure, team registration not exists for year [%d]", year));
+        }
+
+        return registration.get();
+    }
+
+    /**
+     * Aktualizuje informace o uciteli pro registraci tymu v danem rocniku
+     * 
+     * @param year                Rocnik souteze
+     * @param teamRegistrationObj Nove udaje o uciteli
+     * @throws Exception
+     */
+    public void updateTeacherInfo(int year, TeamRegistrationObj teamRegistrationObj) throws Exception {
+        // ziska registraci tymu pro dany rocnik
+        TeamRegistration registration = this.getRegistration(year);
+
+        // overi zda soutez jiz nezacala
+        if (registration.getCompatition().getStarted()) {
+            throw new Exception("failure, competition has already begun");
+        }
+
+        // validace udaju o uciteli (pokud je LOW_AGE_CATEGORY)
+        if (registration.getCategory() == ECategory.LOW_AGE_CATEGORY) {
+            if (teamRegistrationObj.getTeacherName() == null || teamRegistrationObj.getTeacherName().isEmpty() ||
+                teamRegistrationObj.getTeacherSurname() == null || teamRegistrationObj.getTeacherSurname().isEmpty() ||
+                teamRegistrationObj.getTeacherContact() == null || teamRegistrationObj.getTeacherContact().isEmpty()) {
+                throw new Exception("failure, teacher data must be provided for low age category");
+            }
+        }
+
+        // aktualizuje udaje o uciteli
+        registration.setTeacherName(teamRegistrationObj.getTeacherName());
+        registration.setTeacherSurname(teamRegistrationObj.getTeacherSurname());
+        registration.setTeacherContact(teamRegistrationObj.getTeacherContact());
+
+        this.registrationRepository.save(registration);
+    }
+
 }

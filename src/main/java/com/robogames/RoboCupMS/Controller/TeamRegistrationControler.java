@@ -122,4 +122,42 @@ public class TeamRegistrationControler {
         }
     }
 
+    /**
+     * Ziska informace o uciteli pro registraci tymu v danem rocniku
+     * 
+     * @param year Rocnik souteze
+     * @return Informace o uciteli
+     */
+    @GetMapping("/teacherInfo")
+    Response getTeacherInfo(@RequestParam int year) {
+        try {
+            TeamRegistration registration = this.registrationService.getRegistration(year);
+            TeamRegistrationObj teacherInfo = new TeamRegistrationObj(
+                registration.getTeacherName(),
+                registration.getTeacherSurname(),
+                registration.getTeacherContact()
+            );
+            return ResponseHandler.response(teacherInfo);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Aktualizuje informace o uciteli pro registraci tymu v danem rocniku
+     * 
+     * @param year                Rocnik souteze
+     * @param teamRegistrationObj Nove udaje o uciteli
+     * @return Informace o stavu provedeneho requestu
+     */
+    @PutMapping("/updateTeacherInfo")
+    Response updateTeacherInfo(@RequestParam int year, @RequestBody TeamRegistrationObj teamRegistrationObj) {
+        try {
+            this.registrationService.updateTeacherInfo(year, teamRegistrationObj);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
 }
