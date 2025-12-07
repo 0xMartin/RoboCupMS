@@ -78,11 +78,22 @@ public class TeamRegistrationService {
             throw new Exception("failure, category not exists");
         }
 
+        // pokud je katagorie LOW_AGE_CATEGORY, overi zda byli zadany i udaje o ucitele
+        if (cat_name == ECategory.LOW_AGE_CATEGORY) {
+            if (teamRegistrationObj.getTeacherName().isEmpty() || teamRegistrationObj.getTeacherSurname().isEmpty()
+                    || teamRegistrationObj.getTeacherContact().isEmpty()) {
+                throw new Exception("failure, teacher data must be provided for low age category");
+            }   
+        }
+
         // registruje tym do souteze
         TeamRegistration r = new TeamRegistration(
                 t.get(),
                 c.get(),
                 cat.get());
+        r.setTeacherName(teamRegistrationObj.getTeacherName());
+        r.setTeacherSurname(teamRegistrationObj.getTeacherSurname());
+        r.setTeacherContact(teamRegistrationObj.getTeacherContact());
 
         this.registrationRepository.save(r);
     }
@@ -157,6 +168,40 @@ public class TeamRegistrationService {
 
         // navrati vsechny registrace
         return t.get().getRegistrations();
+    }
+
+    /**
+     * Navrati registraci tymu pro aktualni rocnik souteze
+     * 
+     * @return Aktualni registrace tymu
+     * @throws Exception
+     */
+    public TeamRegistration getCurrent() throws Exception {
+        UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        // id tymu, ve kterem se uzivatel nachazi
+        long team_id = user.getTeamID();
+        if (team_id == Team.NOT_IN_TEAM) {
+            throw new Exception("failure, you are not a member of any team");
+        }
+
+        // najde tym v datavazi
+        Optional<Team> t = this.teamRepository.findById(team_id);
+        if (!t.isPresent()) {
+            throw new Exception("failure, team not exists");
+        }
+
+        // ziska aktualni rocnik souteze
+        Integer maxYear = competitionRepository.findMaxYear();
+        int current_year = (maxYear != null) ? maxYear : 2000; 
+        
+        // najde registraci tymu pro aktualni rocnik
+        TeamRegistration reg = t.get().getRegistrations().stream()
+            .filter((r) -> r.getCompatitionYear() == current_year)
+            .findFirst().orElseThrow(() -> new Exception("failure, team is not registered for the current year"));
+
+        // navrati vsechny registrace
+        return reg;
     }
 
     /**

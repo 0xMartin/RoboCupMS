@@ -49,6 +49,22 @@ public class TeamRegistrationControler {
     }
 
     /**
+     * Navrati registraci tymu pro aktualni rocnik souteze
+     * 
+     * @return Aktualni registrace tymu
+     */
+    @GetMapping("/current")
+    Response getCurrent() {
+        TeamRegistration reg = null;
+        try {
+            reg = this.registrationService.getCurrent();
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+        return ResponseHandler.response(reg);
+    }
+
+    /**
      * Registruje tym do souteze (registrovat muze pouze vedouci tymu!!!!!)
      * 
      * @param teamRegistrationObj Parametry nove registrace tymu

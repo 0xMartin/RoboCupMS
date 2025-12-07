@@ -60,7 +60,7 @@ public class UserControler {
      * 
      * @return Vsichni uzivatele v databazi
      */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT, ERole.Names.COMPETITOR })
+    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT })
     @GetMapping("/all")
     Response getAll() {
         List<UserRC> all = this.userService.getAll();
