@@ -39,6 +39,9 @@ public class AppInit {
 
     private static final Logger logger = LoggerFactory.getLogger(AppInit.class);
 
+    @Value("${app.super-admin.email}")
+    private String adminEmail;
+
     /**
      * Navrati poskotovatele aplikacniho kontextu
      * 
@@ -185,37 +188,24 @@ public class AppInit {
     }
 
     /**
-     * Prvni inicializace uzivatelu (administratori)
+     * Email administrátorského účtu, který bude povýšen na roli ADMIN
      * 
-     * @param repository RoleRepository
+     * @param userRepository UserRepository 
      */
     @Bean
-    public ApplicationRunner initUsers(UserRepository repository) {
-        if (repository.count() == 0) {
-            List<ERole> admin_role = Arrays.asList(new ERole[] { ERole.ADMIN });
-            return args -> repository.saveAll(Arrays.asList(
-                    new UserRC(
-                            "Martin",
-                            "Krcma",
-                            "m1_krcma@utb.cz",
-                            new GregorianCalendar(1999, Calendar.OCTOBER, 17).getTime(),
-                            admin_role),
-                    new UserRC(
-                            "Pavel",
-                            "Sevcik",
-                            "p_sevcik@utb.cz",
-                            new GregorianCalendar(1999, Calendar.NOVEMBER, 12).getTime(),
-                            admin_role),
-                    new UserRC(
-                            "Eliska",
-                            "Obadalova",
-                            "e_obadalova@utb.cz",
-                            new GregorianCalendar(1999, Calendar.NOVEMBER, 6).getTime(),
-                            admin_role)));
-        } else {
-            return null;
-        }
-    }
+    public ApplicationRunner initAdmin(UserRepository userRepository) {
+        return args -> {
+            Optional<UserRC> user = userRepository.findByEmail(adminEmail);
+            if (user.isPresent()) {
+                UserRC admin = user.get();
+                if (!admin.getRoles().contains(ERole.ADMIN)) {
+                    admin.getRoles().add(ERole.ADMIN);
+                    userRepository.save(admin);
+                    System.out.println("User " + adminEmail + " was promoted to ADMIN.");
+                }
+            }
+        };
+    }  
 
     /**
      * Prvni inicializace zakladnich disciplin
