@@ -22,9 +22,9 @@ dependencies {
 	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 	
 	// Keycloak Admin Client - verze 21.x je kompatibilní s Java 17
-    implementation 'org.keycloak:keycloak-admin-client:21.1.2'
-    implementation 'org.jboss.resteasy:resteasy-client:4.7.7.Final'
-    implementation 'org.jboss.resteasy:resteasy-jackson2-provider:4.7.7.Final'
+    //implementation 'org.keycloak:keycloak-admin-client:21.1.2'
+    //implementation 'org.jboss.resteasy:resteasy-client:4.7.7.Final'
+    //implementation 'org.jboss.resteasy:resteasy-jackson2-provider:4.7.7.Final'
 
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 

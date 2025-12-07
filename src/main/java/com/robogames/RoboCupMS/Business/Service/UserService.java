@@ -18,16 +18,17 @@ import com.robogames.RoboCupMS.Repository.RoleRepository;
 import com.robogames.RoboCupMS.Repository.TeamInvitationRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.admin.client.resource.UsersResource;
-import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+
+//import org.keycloak.admin.client.Keycloak;
+//import org.keycloak.admin.client.resource.RealmResource;
+//import org.keycloak.admin.client.resource.UsersResource;
+//import org.keycloak.representations.idm.UserRepresentation;
 
 /**
  * Zajistuje spravu uzivatelu v systemu
@@ -35,13 +36,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    //private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    @Value("${keycloak.realm}")
-    private String realm;
+    //@Value("${keycloak.realm}")
+    //private String realm;
 
-    @Autowired
-    private Keycloak keycloak;
+    //@Autowired
+    //private Keycloak keycloak;
 
     @Autowired
     private UserRepository repository;
@@ -265,7 +266,7 @@ public class UserService {
         }
     }
 
-    /**
+        /**
      * Odebere uzivatele
      * 
      * @param id ID uzivatele, ktery ma byt odebran
@@ -282,17 +283,17 @@ public class UserService {
             this.repository.delete(user.get());
 
             // Smazání uživatele z Keycloak ////////////////////////////////////////////////////////////
-            String email = user.get().getEmail();
-            RealmResource realmResource = keycloak.realm(realm);
-            UsersResource usersResource = realmResource.users();
-            List<UserRepresentation> users = usersResource.searchByEmail(email, true);
-            if (users != null && !users.isEmpty()) {
-                String userId = users.get(0).getId();
-                usersResource.get(userId).remove();
-                logger.info("User {} deleted from Keycloak.", email);
-            } else {
-                logger.warn("User {} not found in Keycloak.", email);
-            }
+            //String email = user.get().getEmail();
+            //RealmResource realmResource = keycloak.realm(realm);
+            //UsersResource usersResource = realmResource.users();
+            //List<UserRepresentation> users = usersResource.searchByEmail(email, true);
+            //if (users != null && !users.isEmpty()) {
+            //    String userId = users.get(0).getId();
+            //    usersResource.get(userId).remove();
+            //    logger.info("User {} deleted from Keycloak.", email);
+            //} else {
+            //    logger.warn("User {} not found in Keycloak.", email);
+            //}
         } else {
             throw new Exception(String.format("failure, user with ID [%d] not found", id));
         }

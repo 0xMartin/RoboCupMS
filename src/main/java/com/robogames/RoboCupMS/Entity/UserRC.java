@@ -93,15 +93,6 @@ public class UserRC {
     @Column(name = "last_access_time", nullable = true, unique = false)
     private Date lastAccessTime;
 
-    @Column(name = "teacher_name", length = 40, nullable = true, unique = false)
-    private String teacherName;
-
-    @Column(name = "teacher_surname", length = 60, nullable = true, unique = false)
-    private String teacherSurname;
-
-    @Column(name = "teacher_contact", length = 120, nullable = true, unique = false)
-    private String teacherContact;
-
     /**
      * Vytvori noveho uzivatele robosouteze
      */
@@ -329,30 +320,6 @@ public class UserRC {
      */
     public void setToken(String _token) {
         this.token = _token;
-    }
-
-    public String getTeacherName() {
-        return teacherName;
-    }
-
-    public void setTeacherName(String teacherName) {
-        this.teacherName = teacherName;
-    }
-
-    public String getTeacherSurname() {
-        return teacherSurname;
-    }
-
-    public void setTeacherSurname(String teacherSurname) {
-        this.teacherSurname = teacherSurname;
-    }
-
-    public String getTeacherContact() {
-        return teacherContact;
-    }
-
-    public void setTeacherContact(String teacherContact) {
-        this.teacherContact = teacherContact;
     }
 
 }

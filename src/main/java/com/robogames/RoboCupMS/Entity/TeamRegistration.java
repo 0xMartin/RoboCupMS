@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -43,6 +44,24 @@ public class TeamRegistration {
     private Category category;
 
     /**
+     * Jmeno ucitele
+     */
+    @Column(name = "teacher_name", length = 40, nullable = true, unique = false)
+    private String teacherName;
+
+    /**
+     * Prijmeni ucitele
+     */
+    @Column(name = "teacher_surname", length = 60, nullable = true, unique = false)
+    private String teacherSurname;
+
+    /**
+     * Kontakt na ucitele
+     */
+    @Column(name = "teacher_contact", length = 120, nullable = true, unique = false)
+    private String teacherContact;
+
+    /**
      * Roboti, kteri jsou vytvoreni na tuto registraci tymu
      */
     @OneToMany(mappedBy = "teamRegistration", cascade = CascadeType.REMOVE)
@@ -54,6 +73,9 @@ public class TeamRegistration {
      */
     public TeamRegistration() {
         this.robots = new ArrayList<Robot>();
+        this.teacherName = "";
+        this.teacherSurname = "";
+        this.teacherContact = "";
     }
 
     /**
@@ -69,6 +91,9 @@ public class TeamRegistration {
         this.competition = _competition;
         this.category = _category;
         this.robots = new ArrayList<Robot>();
+        this.teacherName = "";
+        this.teacherSurname = "";
+        this.teacherContact = "";
     }
 
     /**
@@ -153,6 +178,30 @@ public class TeamRegistration {
      */
     public void setCategory(Category _category) {
         this.category = _category;
+    }
+
+     public String getTeacherName() {
+        return teacherName;
+    }
+
+    public void setTeacherName(String teacherName) {
+        this.teacherName = teacherName;
+    }
+
+    public String getTeacherSurname() {
+        return teacherSurname;
+    }
+
+    public void setTeacherSurname(String teacherSurname) {
+        this.teacherSurname = teacherSurname;
+    }
+
+    public String getTeacherContact() {
+        return teacherContact;
+    }
+
+    public void setTeacherContact(String teacherContact) {
+        this.teacherContact = teacherContact;
     }
 
 }
