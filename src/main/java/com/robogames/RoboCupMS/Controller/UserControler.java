@@ -144,6 +144,24 @@ public class UserControler {
     }
 
     /**
+     * Editace udaju vybraneho uzivatele
+     * 
+     * @param userEditObj Nove parametry uzivatele
+     * @param id Id uzivatele
+     * @return Informace o stavu provedeneho requestu
+     */
+    @Secured({ ERole.Names.ADMIN })
+    @PutMapping("/editById")
+    Response editById(@RequestBody UserEditObj userEditObj, @RequestParam long id) {
+        try {
+            this.userService.editById(userEditObj, id);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
      * Priradi roli uzivateli
      * 
      * @param role Nova role, kterou prideli uzivateli
