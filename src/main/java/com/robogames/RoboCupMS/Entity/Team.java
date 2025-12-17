@@ -136,6 +136,32 @@ public class Team {
     }
 
     /**
+     * Navrati jmeno vedouciho tymu
+     * 
+     * @return Jmeno vedouciho tymu
+     */
+    public String getLeaderName(){
+        if (this.leader == null) {
+            return null;
+        } else {
+            return this.leader.getName();
+        }
+    }
+
+    /**
+     * Navrati prijmeni vedouciho tymu
+     * 
+     * @return Prijmeni vedouciho tymu
+     */
+    public String getLeaderSurname(){
+        if (this.leader == null) {
+            return null;
+        } else {
+            return this.leader.getSurname();
+        }
+    }
+
+    /**
      * Navrati ID vsech registraci
      * 
      * @return Registrace
