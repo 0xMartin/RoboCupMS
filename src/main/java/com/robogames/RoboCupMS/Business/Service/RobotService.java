@@ -83,6 +83,11 @@ public class RobotService {
             throw new Exception(String.format("failure, team registration has no team", id));
         }
 
+        // Ziska informace o vedoucim tymu
+        Long leaderId = team.getLeaderID();
+        String leaderName = team.getLeaderName();
+        String leaderSurname = team.getLeaderSurname();
+
         // Ziska jmeno robota
         String robotName = robot.getName();
 
@@ -123,6 +128,9 @@ public class RobotService {
             category,
             teamName,
             teamId,
+            leaderId,
+            leaderName,
+            leaderSurname,
             teamMembers,
             teacherName,
             teacherSurname,

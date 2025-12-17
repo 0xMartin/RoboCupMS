@@ -4,13 +4,16 @@ import java.util.List;
 import com.robogames.RoboCupMS.Business.Enum.ECategory;
 
 public class RobotProfile {
-    
+
     private String robotName;
     private Long robotNumber;
     private String discipline;
     private ECategory category;
     private String teamName;
     private Long teamId;
+    private Long leaderId;
+    private String leaderName;
+    private String leaderSurname;
     private List<TeamMemberInfo> teamMembers;
     private String teacherName;
     private String teacherSurname;
@@ -20,14 +23,17 @@ public class RobotProfile {
     }
 
     public RobotProfile(String robotName, Long robotNumber, String discipline, ECategory category,
-                        String teamName, Long teamId, List<TeamMemberInfo> teamMembers,
-                        String teacherName, String teacherSurname, String teacherContact) {
+            String teamName, Long teamId, Long leaderId, String leaderName, String leaderSurname,
+            List<TeamMemberInfo> teamMembers, String teacherName, String teacherSurname, String teacherContact) {
         this.robotName = robotName;
         this.robotNumber = robotNumber;
         this.discipline = discipline;
         this.category = category;
         this.teamName = teamName;
         this.teamId = teamId;
+        this.leaderId = leaderId;
+        this.leaderName = leaderName;
+        this.leaderSurname = leaderSurname;
         this.teamMembers = teamMembers;
         this.teacherName = teacherName;
         this.teacherSurname = teacherSurname;
@@ -80,6 +86,30 @@ public class RobotProfile {
 
     public void setTeamId(Long teamId) {
         this.teamId = teamId;
+    }
+
+    public Long getLeaderId() {
+        return leaderId;
+    }
+
+    public void setLeaderId(Long leaderId) {
+        this.leaderId = leaderId;
+    }
+
+    public String getLeaderName() {
+        return leaderName;
+    }
+
+    public void setLeaderName(String leaderName) {
+        this.leaderName = leaderName;
+    }
+
+    public String getLeaderSurname() {
+        return leaderSurname;
+    }
+
+    public void setLeaderSurname(String leaderSurname) {
+        this.leaderSurname = leaderSurname;
     }
 
     public List<TeamMemberInfo> getTeamMembers() {
