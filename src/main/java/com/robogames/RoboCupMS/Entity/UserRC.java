@@ -87,6 +87,12 @@ public class UserRC {
     private String token;
 
     /**
+     * Keycloak refresh token pro odhlaseni z Keycloaku
+     */
+    @Column(name = "keycloak_refresh_token", nullable = true, unique = false, length = 4096)
+    private String keycloakRefreshToken;
+
+    /**
      * Cas posledniho pristupu uzivatele na server (pouziva se pro zneplatneni
      * pristupoveho tokenu po uplinuti prednastaveneho casu)
      */
@@ -202,6 +208,25 @@ public class UserRC {
      */
     public void setLastAccessTime(Date _time) {
         this.lastAccessTime = _time;
+    }
+
+    /**
+     * Navrati Keycloak refresh token
+     * 
+     * @return Keycloak refresh token
+     */
+    @JsonIgnore
+    public String getKeycloakRefreshToken() {
+        return this.keycloakRefreshToken;
+    }
+
+    /**
+     * Nastavi Keycloak refresh token
+     * 
+     * @param _token Keycloak refresh token
+     */
+    public void setKeycloakRefreshToken(String _token) {
+        this.keycloakRefreshToken = _token;
     }
 
     /**

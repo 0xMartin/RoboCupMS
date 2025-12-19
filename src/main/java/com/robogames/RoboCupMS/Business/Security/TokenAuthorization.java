@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.robogames.RoboCupMS.GlobalConfig;
-import com.robogames.RoboCupMS.ResponseHandler;
+import com.robogames.RoboCupMS.AppInit;
 import com.robogames.RoboCupMS.Entity.Role;
 import com.robogames.RoboCupMS.Entity.UserRC;
 import com.robogames.RoboCupMS.Repository.UserRepository;
@@ -54,6 +54,15 @@ public class TokenAuthorization extends OncePerRequestFilter {
 		this.ignoredEndpoints = _ignoredEndpoints;
 	}
 
+	// Konstanty pro rozliseni duvodu chyby autentizace
+	private static final String ERROR_TOKEN_MISSING = "TOKEN_MISSING";
+	private static final String ERROR_TOKEN_EXPIRED = "TOKEN_EXPIRED";
+	private static final String ERROR_TOKEN_INVALID = "TOKEN_INVALID";
+	private static final String ERROR_NO_ROLE = "NO_ROLE";
+
+	// Flag pro rozliseni expirovaneho tokenu
+	private boolean tokenExpired = false;
+
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
 			throws ServletException, IOException {
@@ -68,23 +77,50 @@ public class TokenAuthorization extends OncePerRequestFilter {
 			}
 		}
 
+		// reset flag
+		this.tokenExpired = false;
+
 		// validace tokenu
+		String errorCode;
 		String msg;
+		int httpStatus;
 		UserRC user = null;
+		
 		if ((user = validateToken(request)) != null) {
 			if (setUpSpringAuthentication(user, request.getHeader(this.x_token))) {
 				chain.doFilter(request, response);
 				return;
 			}
+			// Uzivatel nema zadnou roli - 403 Forbidden (je prihlasen, ale nema opravneni)
+			errorCode = ERROR_NO_ROLE;
 			msg = "You have no role";
+			httpStatus = HttpServletResponse.SC_FORBIDDEN;
 		} else {
-			msg = "Access token is invalid";
+			// Token je neplatny - zjistime proc
+			String accessToken = request.getHeader(this.x_token);
+			if (accessToken == null || accessToken.isEmpty()) {
+				errorCode = ERROR_TOKEN_MISSING;
+				msg = "Access token is missing";
+				httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
+			} else if (this.tokenExpired) {
+				errorCode = ERROR_TOKEN_EXPIRED;
+				msg = "Access token has expired";
+				httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
+			} else {
+				errorCode = ERROR_TOKEN_INVALID;
+				msg = "Access token is invalid";
+				httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
+			}
 		}
+		
 		// pristup zamitnut
 		SecurityContextHolder.clearContext();
-		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+		response.setStatus(httpStatus);
+		response.setContentType("application/json");
+		response.setCharacterEncoding("UTF-8");
 		ServletOutputStream outputStream = response.getOutputStream();
-		outputStream.println(ResponseHandler.error(msg).toString());
+		// Pridame errorCode do odpovedi pro frontend
+		outputStream.println("{\"type\":\"ERROR\",\"errorCode\":\"" + errorCode + "\",\"data\":\"" + msg + "\"}");
 		outputStream.flush();
 	}
 
@@ -157,8 +193,13 @@ public class TokenAuthorization extends OncePerRequestFilter {
 		if (user.get().getLastAccessTime() != null) {
 			long diff = now.getTime() - user.get().getLastAccessTime().getTime();
 			if (diff / (60 * 1000) > GlobalConfig.TOKEN_VALIDITY_DURATION) {
+				// Token expiroval - odhlasime uzivatele i z Keycloaku
+				logoutUserFromKeycloak(user.get());
+				
 				user.get().setToken(null);
 				this.repository.save(user.get());
+				// Oznacime ze token expiroval (pro lepsi error message)
+				this.tokenExpired = true;
 				return null;
 			}
 		}
@@ -221,6 +262,22 @@ public class TokenAuthorization extends OncePerRequestFilter {
 		byte bytes[] = new byte[64];
 		secureRandom.nextBytes(bytes);
 		return base64Encoder.encodeToString(bytes);
+	}
+
+	/**
+	 * Odhlasi uzivatele z Keycloaku pri expiraci tokenu
+	 * 
+	 * @param user Uzivatel k odhlaseni
+	 */
+	private void logoutUserFromKeycloak(UserRC user) {
+		try {
+			AuthService authService = (AuthService) AppInit.contextProvider()
+					.getApplicationContext()
+					.getBean("authService");
+			authService.logoutFromKeycloak(user);
+		} catch (Exception e) {
+			System.err.println("Failed to get AuthService for Keycloak logout: " + e.getMessage());
+		}
 	}
 
 }

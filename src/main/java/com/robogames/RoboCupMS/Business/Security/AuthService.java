@@ -50,6 +50,9 @@ public class AuthService {
     @Value("${keycloak.redirect-uri}")
     private String redirectUri;
 
+    @Value("${keycloak.logout-uri}")
+    private String logoutUri;
+
     @Autowired
     JwtDecoder jwtDecoder;
 
@@ -213,6 +216,10 @@ public class AuthService {
             throw new Exception("No access_token in response");
         }
 
+        // get refresh_token from token JSON (pro pozdejsi odhlaseni z Keycloaku)
+        JsonNode refreshTokenNode = json.get("refresh_token");
+        String refreshToken = refreshTokenNode != null ? refreshTokenNode.asText() : null;
+
         // get user info from Keycloak
         Jwt jwt = jwtDecoder.decode(tokenNode.asText());
         String email = jwt.getClaimAsString("email");
@@ -234,10 +241,12 @@ public class AuthService {
         // vytvoreni uzivatel / login
         Optional<UserRC> user = this.repository.findByEmail(email);
         String user_access_token = "";
+        UserRC targetUser = null;
 
         if (user.isPresent()) {
+            targetUser = user.get();
             // prihlasi uzivatele -> vygeneruje pristupovy token
-            user_access_token = TokenAuthorization.generateAccessTokenForUser(user.get(), this.repository);
+            user_access_token = TokenAuthorization.generateAccessTokenForUser(targetUser, this.repository);
         } else {
             // registruje uzivatele
             List<ERole> roles = new ArrayList<ERole>();
@@ -253,13 +262,64 @@ public class AuthService {
                 throw new Exception("failure, wrong age");
             }
             this.repository.save(newUser);
+            targetUser = newUser;
 
             // prihlasi nove registrovaneho uzivatel
-            user_access_token = TokenAuthorization.generateAccessTokenForUser(newUser, this.repository);
+            user_access_token = TokenAuthorization.generateAccessTokenForUser(targetUser, this.repository);
+        }
+
+        // ulozime refresh token pro pozdejsi odhlaseni z Keycloaku
+        if (refreshToken != null && targetUser != null) {
+            targetUser.setKeycloakRefreshToken(refreshToken);
+            this.repository.save(targetUser);
         }
 
         // navrati pristupovy token
         return user_access_token;
+    }
+
+    /**
+     * Odhlasi uzivatele z Keycloaku pomoci refresh tokenu
+     * Tato metoda je volana automaticky pri expiraci tokenu
+     * 
+     * @param user Uzivatel k odhlaseni
+     */
+    public void logoutFromKeycloak(UserRC user) {
+        if (user == null || user.getKeycloakRefreshToken() == null) {
+            return;
+        }
+
+        try {
+            String refreshToken = user.getKeycloakRefreshToken();
+            
+            // create request body pro Keycloak logout
+            String form = "client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
+                    + "&client_secret=" + URLEncoder.encode(clientSecret, StandardCharsets.UTF_8)
+                    + "&refresh_token=" + URLEncoder.encode(refreshToken, StandardCharsets.UTF_8);
+
+            HttpClient client = HttpClient.newHttpClient();
+
+            // create POST request na Keycloak logout endpoint
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(logoutUri))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(HttpRequest.BodyPublishers.ofString(form))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200 || response.statusCode() == 204) {
+                System.out.println("User " + user.getEmail() + " successfully logged out from Keycloak");
+            } else {
+                System.err.println("Keycloak logout failed for user " + user.getEmail() + ": " + response.body());
+            }
+        } catch (Exception e) {
+            System.err.println("Error during Keycloak logout for user " + user.getEmail() + ": " + e.getMessage());
+        } finally {
+            // vzdy smazeme refresh token z databaze
+            user.setKeycloakRefreshToken(null);
+            repository.save(user);
+        }
     }
 
 }
