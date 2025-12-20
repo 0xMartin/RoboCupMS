@@ -138,7 +138,7 @@ public class TeamRegistration {
      * 
      * @return Rocnik souteze
      */
-    public int getCompatitionYear() {
+    public int getCompetitionYear() {
         return this.competition.getYear();
     }
 
@@ -148,7 +148,7 @@ public class TeamRegistration {
      * @return Rocnik souteze
      */
     @JsonIgnore
-    public Competition getCompatition() {
+    public Competition getCompetition() {
         return this.competition;
     }
 

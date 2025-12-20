@@ -1,8 +1,5 @@
 package com.robogames.RoboCupMS;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 public class GlobalConfig {
 
     // -CONFIG-START------------------------------------------------------------------
@@ -54,14 +51,19 @@ public class GlobalConfig {
     public static int MAX_ROBOTS_IN_DISCIPLINE = 1;
 
     /**
+     * Minimalni delka nazvu tymu
+     */
+    public static int MIN_TEAM_NAME_LENGTH = 2;
+
+    /**
+     * Maximalni delka nazvu tymu
+     */
+    public static int MAX_TEAM_NAME_LENGTH = 30;
+
+    /**
      * Maximalni pocet clenu v jednom tymu
      */
     public static int MAX_TEAM_MEMBERS = 4;
-
-    /**
-     * Enkoder hesel
-     */
-    public static transient PasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
 
     // -CONFIG-END--------------------------------------------------------------------
 

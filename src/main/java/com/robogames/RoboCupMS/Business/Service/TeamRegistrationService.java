@@ -67,7 +67,7 @@ public class TeamRegistrationService {
 
         // overi zda tym jiz neni prihlasen do tohoto rocniku
         List<TeamRegistration> registrations = t.get().getRegistrations();
-        if (registrations.stream().anyMatch((r) -> (r.getCompatitionYear() == c.get().getYear()))) {
+        if (registrations.stream().anyMatch((r) -> (r.getCompetitionYear() == c.get().getYear()))) {
             throw new Exception("failure, team is already registred in this year of compatition");
         }
 
@@ -127,7 +127,7 @@ public class TeamRegistrationService {
 
         // najde registraci tymu v seznamu registraci daneho tymu
         List<TeamRegistration> registrations = t.get().getRegistrations();
-        Optional<TeamRegistration> registration = registrations.stream().filter(r -> (r.getCompatitionYear() == year))
+        Optional<TeamRegistration> registration = registrations.stream().filter(r -> (r.getCompetitionYear() == year))
                 .findFirst();
         if (!registration.isPresent()) {
             throw new Exception("failure, team registration not exists");
@@ -194,7 +194,7 @@ public class TeamRegistrationService {
 
         // najde registraci tymu pro dany rocnik
         Optional<TeamRegistration> reg = t.get().getRegistrations().stream()
-                .filter((r) -> (r.getCompatitionYear() == year)).findFirst();
+                .filter((r) -> (r.getCompetitionYear() == year)).findFirst();
         if (!reg.isPresent()) {
             throw new Exception(
                     String.format("failure, team with ID [%d] is not registered for the year [%d]", id, year));
@@ -202,7 +202,7 @@ public class TeamRegistrationService {
 
         // overi zda soutez jiz nezacala (registrace je mozna jen pokud soutez jeste
         // nezacala)
-        if (reg.get().getCompatition().getStarted()) {
+        if (reg.get().getCompetition().getStarted()) {
             throw new Exception("failure, competition has already begun");
         }
 
@@ -280,7 +280,7 @@ public class TeamRegistrationService {
 
         // najde registraci tymu pro dany rocnik souteze
         Optional<TeamRegistration> registration = t.get().getRegistrations().stream()
-                .filter((r) -> (r.getCompatitionYear() == year)).findFirst();
+                .filter((r) -> (r.getCompetitionYear() == year)).findFirst();
         if (!registration.isPresent()) {
             throw new Exception(
                     String.format("failure, team registration not exists for year [%d]", year));
@@ -301,7 +301,7 @@ public class TeamRegistrationService {
         TeamRegistration registration = this.getRegistration(year);
 
         // overi zda soutez jiz nezacala
-        if (registration.getCompatition().getStarted()) {
+        if (registration.getCompetition().getStarted()) {
             throw new Exception("failure, competition has already begun");
         }
 

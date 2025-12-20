@@ -46,7 +46,11 @@ public class TeamService {
 
         if (user.getTeamID() != Team.NOT_IN_TEAM) {
             Optional<Team> team = this.teamRepository.findById(user.getTeamID());
-            return team.get();
+            if (team.isPresent()) {
+                return team.get();
+            } else {
+                throw new Exception(String.format("failure, team with ID [%d] not found", user.getTeamID()));
+            }
         } else {
             throw new Exception("failure, you are not a member of any team");
         }
@@ -95,6 +99,20 @@ public class TeamService {
     }
 
     /**
+     * Overi, zda ma nazev tymu spravnou delku
+     * 
+     * @param name Nazev tymu
+     * @throws Exception
+     */
+    private void validateName(String name) throws Exception {
+        if (name.length() < GlobalConfig.MIN_TEAM_NAME_LENGTH) {
+            throw new Exception("failure, name is too short");
+        } else if (name.length() > GlobalConfig.MAX_TEAM_NAME_LENGTH) {
+            throw new Exception("failure, name is too long");
+        }
+    }
+
+    /**
      * Vytvori novy tym. Uzivatel, ktery tym vytvari se stava jeho vedoucim.
      * 
      * @param teamObj Parametry noveho tymu
@@ -105,11 +123,7 @@ public class TeamService {
         String name = teamObj.getName();
 
         // overi delku nazvu tymu
-        if(name.length() < 3){
-            throw new Exception("failure, name is too short");
-        } else if (name.length() > 15) {
-            throw new Exception("failure, name is too long");
-        }
+        validateName(name);
 
         // overi zda uzivatel jiz neni clenem tymu
         if (leader.getTeamID() != Team.NOT_IN_TEAM) {
@@ -140,7 +154,7 @@ public class TeamService {
                 // overi zda jiz tento tym neni registrovan v nejakem rocnik, ktery jit zacal.
                 // Pak v tom pripade neni mozne jiz tym odstranit, jelikoz system zaznamenava i
                 // zapasy z minulych rocniku
-                if (reg.getCompatition().getStarted()) {
+                if (reg.getCompetition().getStarted()) {
                     throw new Exception(
                             "failure, it is not possible to remove the team because it is already registred in a competition that has already started");
                 }
@@ -176,11 +190,7 @@ public class TeamService {
         UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         // overi delku nazvu tymu
-        if(name.length() < 3){
-            throw new Exception("failure, name is too short");
-        } else if (name.length() > 15) {
-            throw new Exception("failure, name is too long");
-        }
+        validateName(name);
 
         Optional<Team> t = this.teamRepository.findAllByLeader(leader).stream().findFirst();
         if (t.isPresent()) {
@@ -275,7 +285,7 @@ public class TeamService {
             // odstraneni z databaze
             this.invitationRepository.delete(invitation.get());
         } else {
-            throw new Exception(String.format("failure, invitaton with ID [%s] not found", id));
+            throw new Exception(String.format("failure, invitation with ID [%s] not found", id));
         }
     }
 

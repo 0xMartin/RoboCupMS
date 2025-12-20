@@ -112,7 +112,7 @@ public class CompetitionEvaluationService {
 
         // najde registraci pro dany rocnik souteze
         Optional<TeamRegistration> registration = team.get().getRegistrations().stream()
-                .filter((r) -> (r.getCompatitionYear() == year)).findFirst();
+                .filter((r) -> (r.getCompetitionYear() == year)).findFirst();
         if (!registration.isPresent()) {
             throw new Exception(String.format("failure, registration for year [%d] not exists", year));
         }
@@ -160,7 +160,7 @@ public class CompetitionEvaluationService {
         }
 
         // overi rocnik souteze
-        if (robot.get().getTeamRegistration().getCompatitionYear() != year) {
+        if (robot.get().getTeamRegistration().getCompetitionYear() != year) {
             throw new Exception(String.format("failure, this robot is not registed in year [%d]", year));
         }
 
@@ -200,7 +200,7 @@ public class CompetitionEvaluationService {
 
         // najde vsechny roboty v discipline, kteri hrali v danem roce
         Stream<Robot> robots = discipline.get().getRobots().stream()
-                .filter((r) -> (r.getTeamRegistration().getCompatitionYear() == year));
+                .filter((r) -> (r.getTeamRegistration().getCompetitionYear() == year));
 
         // agregacni funkce skore
         ScoreAggregation ag = discipline.get().getScoreAggregation();
