@@ -161,7 +161,7 @@ public class RobotService {
 
         // najde registraci tymu pro dany rocnik souteze
         List<TeamRegistration> registrations = t.get().getRegistrations();
-        Optional<TeamRegistration> registration = registrations.stream().filter(r -> (r.getCompatitionYear() == year))
+        Optional<TeamRegistration> registration = registrations.stream().filter(r -> (r.getCompetitionYear() == year))
                 .findFirst();
         if (!registration.isPresent()) {
             throw new Exception(String.format("failure, team registration not exists for year [%d]", year));
@@ -179,14 +179,14 @@ public class RobotService {
      */
     public List<Robot> getAllConfirmed(int year) throws Exception {
         Stream<Robot> robots = this.robotRepository.findAll().stream()
-                .filter((r) -> (r.getConfirmed() && r.getTeamRegistration().getCompatitionYear() == year));
+                .filter((r) -> (r.getConfirmed() && r.getTeamRegistration().getCompetitionYear() == year));
 
         return robots.collect(Collectors.toList());
     }
 
     public List<Robot> allForYear(int year) throws Exception {
         Stream<Robot> robots = this.robotRepository.findAll().stream()
-                .filter((r) -> (r.getTeamRegistration().getCompatitionYear() == year));
+                .filter((r) -> (r.getTeamRegistration().getCompetitionYear() == year));
         return robots.collect(Collectors.toList());
     }
 
@@ -462,14 +462,14 @@ public class RobotService {
 
         // najde registraci tymu pro dany rocnik souteze
         List<TeamRegistration> registrations = t.get().getRegistrations();
-        Optional<TeamRegistration> registration = registrations.stream().filter(r -> (r.getCompatitionYear() == year))
+        Optional<TeamRegistration> registration = registrations.stream().filter(r -> (r.getCompetitionYear() == year))
                 .findFirst();
         if (!registration.isPresent()) {
             throw new Exception(String.format("failure, team registration not exists for year [%d]", year));
         }
 
         // robota je mozne registrovat jen pokud soutez jeste nezacala
-        if (registration.get().getCompatition().getStarted()) {
+        if (registration.get().getCompetition().getStarted()) {
             throw new Exception("failure, competition has already begun");
         }
 

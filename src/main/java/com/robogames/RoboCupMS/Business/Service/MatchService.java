@@ -73,7 +73,7 @@ public class MatchService {
      */
     public List<RobotMatch> allByYear(int year) {
         Stream<RobotMatch> filter = this.robotMatchRepository.findAll().stream()
-                .filter((m) -> (m.getRobot().getTeamRegistration().getCompatitionYear() == year));
+                .filter((m) -> (m.getRobot().getTeamRegistration().getCompetitionYear() == year));
         List<RobotMatch> out = new ArrayList<RobotMatch>();
         filter.forEach((m) -> {
             out.add(m);
