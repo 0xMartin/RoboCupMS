@@ -110,9 +110,8 @@ public class RobotService {
         List<RobotProfile.TeamMemberInfo> teamMembers = new ArrayList<>();
         for (UserRC member : team.getMembers()) {
             teamMembers.add(new RobotProfile.TeamMemberInfo(
-                member.getName(),
-                member.getSurname()
-            ));
+                    member.getName(),
+                    member.getSurname()));
         }
 
         // Ziska informace o uciteli z registrace tymu
@@ -122,20 +121,19 @@ public class RobotService {
 
         // Vytvori a navrati profil robota
         return new RobotProfile(
-            robotName,
-            robotNumber,
-            discipline,
-            category,
-            teamName,
-            teamId,
-            leaderId,
-            leaderName,
-            leaderSurname,
-            teamMembers,
-            teacherName,
-            teacherSurname,
-            teacherContact
-        );
+                robotName,
+                robotNumber,
+                discipline,
+                category,
+                teamName,
+                teamId,
+                leaderId,
+                leaderName,
+                leaderSurname,
+                teamMembers,
+                teacherName,
+                teacherSurname,
+                teacherContact);
     }
 
     /**
@@ -191,7 +189,21 @@ public class RobotService {
     }
 
     /**
-     * Vytvori noveho robata. Robot je vytvaren na registraci tymu v urcitem
+     * Overi delku nazvu robota
+     * 
+     * @param name Jmeno robota
+     * @throws Exception
+     */
+    private void validateRobotName(String name) throws Exception {
+        if (name.length() < GlobalConfig.MIN_ROBOT_NAME_LENGTH) {
+            throw new Exception("failure, name is too short");
+        } else if (name.length() > GlobalConfig.MAX_ROBOT_NAME_LENGTH) {
+            throw new Exception("failure, name is too long");
+        }
+    }
+
+    /**
+     * Vytvori noveho robota. Robot je vytvaren na registraci tymu v urcitem
      * rocniku souteze.
      * 
      * @param year     Rocnik souteze
@@ -209,11 +221,7 @@ public class RobotService {
         String name = robotObj.getName();
 
         // overi delku nazvu robota
-        if(name.length() < 3){
-            throw new Exception("failure, name is too short");
-        } else if (name.length() > 15) {
-            throw new Exception("failure, name is too long");
-        }
+        validateRobotName(name);
 
         // overeni unikatnosti jmena robota v ramci rocniku souteze
         if (this.robotRepository.findByName(name).isPresent()) {
@@ -277,11 +285,7 @@ public class RobotService {
         }
 
         // overi delku nazvu robota
-        if(name.length() < 3){
-            throw new Exception("failure, name is too short");
-        } else if (name.length() > 15) {
-            throw new Exception("failure, name is too long");
-        }
+        validateRobotName(name);
 
         // overeni unikatnosti jmena robota v ramci rocniku souteze
         if (this.robotRepository.findByName(name).isPresent()) {
