@@ -51,6 +51,16 @@ public class GlobalConfig {
     public static int MAX_ROBOTS_IN_DISCIPLINE = 1;
 
     /**
+     * Minimalni delka nazvu robota
+     */
+    public static int MIN_ROBOT_NAME_LENGTH = 2;
+
+    /**
+     * Maximalni delka nazvu robota
+     */
+    public static int MAX_ROBOT_NAME_LENGTH = 30;
+
+    /**
      * Minimalni delka nazvu tymu
      */
     public static int MIN_TEAM_NAME_LENGTH = 2;
