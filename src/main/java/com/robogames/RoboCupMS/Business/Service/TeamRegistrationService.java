@@ -2,7 +2,9 @@ package com.robogames.RoboCupMS.Business.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
+import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Object.TeamRegistrationObj;
 import com.robogames.RoboCupMS.Entity.Category;
@@ -37,6 +39,51 @@ public class TeamRegistrationService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    /**
+     * Overi platnost udaju o uciteli pro registraci tymu v pripade nizke vekove
+     * kategorie. Pokud jsou udaje platne, ulozi je do registrace
+     * 
+     * @param teamRegistrationObj Parametry nove registrace tymu
+     * @param reg                 Registrace tymu
+     * @throws Exception
+     */
+    private void validateTeacherInfo(TeamRegistrationObj teamRegistrationObj, TeamRegistration reg) throws Exception {
+        String name = teamRegistrationObj.getTeacherName();
+        String surname = teamRegistrationObj.getTeacherSurname();
+        String contact = teamRegistrationObj.getTeacherContact();
+
+        if (name == null || name.isEmpty() || surname == null || surname.isEmpty() || contact == null
+                || contact.isEmpty()) {
+            throw new Exception("failure, teacher data must be provided for low age category");
+        }
+
+        // overeni delky udaju
+        if (name.length() < GlobalConfig.MIN_TEACHER_NAME_LENGTH
+                || name.length() > GlobalConfig.MAX_TEACHER_NAME_LENGTH) {
+            throw new Exception("failure, teacher name length is invalid");
+        }
+        if (surname.length() < GlobalConfig.MIN_TEACHER_SURNAME_LENGTH
+                || surname.length() > GlobalConfig.MAX_TEACHER_SURNAME_LENGTH) {
+            throw new Exception("failure, teacher surname length is invalid");
+        }
+        if (contact.length() < GlobalConfig.MIN_TEACHER_CONTACT_LENGTH
+                || contact.length() > GlobalConfig.MAX_TEACHER_CONTACT_LENGTH) {
+            throw new Exception("failure, teacher contact length is invalid");
+        }
+
+        // overeni formatu kontaktu (e-mail nebo telefon)
+        Pattern pattern = Pattern
+                .compile("^(?:[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|\\d{9}|\\d{3} \\d{3} \\d{3})$");
+        if (!pattern.matcher(contact).matches()) {
+            throw new Exception("failure, contact is invalid");
+        }
+
+        // ulozi udaje o uciteli
+        reg.setTeacherName(teamRegistrationObj.getTeacherName());
+        reg.setTeacherSurname(teamRegistrationObj.getTeacherSurname());
+        reg.setTeacherContact(teamRegistrationObj.getTeacherContact());
+    }
 
     /**
      * Registruje tym do souteze (registrovat muze pouze vedouci tymu!!!!!)
@@ -78,22 +125,16 @@ public class TeamRegistrationService {
             throw new Exception("failure, category not exists");
         }
 
-        // pokud je katagorie LOW_AGE_CATEGORY, overi zda byli zadany i udaje o ucitele
-        if (cat_name == ECategory.LOW_AGE_CATEGORY) {
-            if (teamRegistrationObj.getTeacherName().isEmpty() || teamRegistrationObj.getTeacherSurname().isEmpty()
-                    || teamRegistrationObj.getTeacherContact().isEmpty()) {
-                throw new Exception("failure, teacher data must be provided for low age category");
-            }   
-        }
-
         // registruje tym do souteze
         TeamRegistration r = new TeamRegistration(
                 t.get(),
                 c.get(),
                 cat.get());
-        r.setTeacherName(teamRegistrationObj.getTeacherName());
-        r.setTeacherSurname(teamRegistrationObj.getTeacherSurname());
-        r.setTeacherContact(teamRegistrationObj.getTeacherContact());
+
+        // pokud je katagorie LOW_AGE_CATEGORY, overi zda byli zadany i udaje o ucitele
+        if (cat_name == ECategory.LOW_AGE_CATEGORY) {
+            validateTeacherInfo(teamRegistrationObj, r);
+        }
 
         this.registrationRepository.save(r);
     }
@@ -307,17 +348,8 @@ public class TeamRegistrationService {
 
         // validace udaju o uciteli (pokud je LOW_AGE_CATEGORY)
         if (registration.getCategory() == ECategory.LOW_AGE_CATEGORY) {
-            if (teamRegistrationObj.getTeacherName() == null || teamRegistrationObj.getTeacherName().isEmpty() ||
-                teamRegistrationObj.getTeacherSurname() == null || teamRegistrationObj.getTeacherSurname().isEmpty() ||
-                teamRegistrationObj.getTeacherContact() == null || teamRegistrationObj.getTeacherContact().isEmpty()) {
-                throw new Exception("failure, teacher data must be provided for low age category");
-            }
+            validateTeacherInfo(teamRegistrationObj, registration);
         }
-
-        // aktualizuje udaje o uciteli
-        registration.setTeacherName(teamRegistrationObj.getTeacherName());
-        registration.setTeacherSurname(teamRegistrationObj.getTeacherSurname());
-        registration.setTeacherContact(teamRegistrationObj.getTeacherContact());
 
         this.registrationRepository.save(registration);
     }

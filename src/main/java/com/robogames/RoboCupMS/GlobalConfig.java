@@ -51,29 +51,32 @@ public class GlobalConfig {
     public static int MAX_ROBOTS_IN_DISCIPLINE = 1;
 
     /**
-     * Minimalni delka nazvu robota
+     * Omezeni delky nazvu robota
      */
     public static int MIN_ROBOT_NAME_LENGTH = 2;
-
-    /**
-     * Maximalni delka nazvu robota
-     */
     public static int MAX_ROBOT_NAME_LENGTH = 30;
 
     /**
-     * Minimalni delka nazvu tymu
+     * Omezeni delky nazvu tymu
      */
     public static int MIN_TEAM_NAME_LENGTH = 2;
-
-    /**
-     * Maximalni delka nazvu tymu
-     */
     public static int MAX_TEAM_NAME_LENGTH = 30;
 
     /**
      * Maximalni pocet clenu v jednom tymu
      */
     public static int MAX_TEAM_MEMBERS = 4;
+
+    /**
+     * Omezeni delky udaju ucitele
+     */
+    public static int MIN_TEACHER_NAME_LENGTH = 2;
+    public static int MAX_TEACHER_NAME_LENGTH = 40;
+    public static int MIN_TEACHER_SURNAME_LENGTH = 2;
+    public static int MAX_TEACHER_SURNAME_LENGTH = 60;
+    public static int MIN_TEACHER_CONTACT_LENGTH = 9;
+    public static int MAX_TEACHER_CONTACT_LENGTH = 120;
+
 
     // -CONFIG-END--------------------------------------------------------------------
 
