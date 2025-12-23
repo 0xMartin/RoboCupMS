@@ -25,6 +25,16 @@ public class GlobalConfig {
     public static int TOKEN_VALIDITY_DURATION = 30;
 
     /**
+     * Omezeni delky udaju uzivatele
+     */
+    public static int USER_NAME_MIN_LENGTH = 2;
+    public static int USER_NAME_MAX_LENGTH = 40;
+    public static int USER_SURNAME_MIN_LENGTH = 2;
+    public static int USER_SURNAME_MAX_LENGTH = 60;
+    public static int USER_EMAIL_MIN_LENGTH = 8;
+    public static int USER_EMAIL_MAX_LENGTH = 120;
+
+    /**
      * Minimalni vek uzivatele
      */
     public static int USER_MIN_AGE = 6;

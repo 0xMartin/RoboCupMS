@@ -115,7 +115,7 @@ public class TeamRegistrationService {
         // overi zda tym jiz neni prihlasen do tohoto rocniku
         List<TeamRegistration> registrations = t.get().getRegistrations();
         if (registrations.stream().anyMatch((r) -> (r.getCompetitionYear() == c.get().getYear()))) {
-            throw new Exception("failure, team is already registred in this year of compatition");
+            throw new Exception("failure, team is already registred in this year of competition");
         }
 
         // urci kategorii tymu

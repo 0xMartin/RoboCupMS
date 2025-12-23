@@ -1,16 +1,17 @@
 package com.robogames.RoboCupMS.Business.Service;
 
-import java.util.ArrayList;
+// import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
+// import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Business.Object.UserEditObj;
-import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
+// import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
 import com.robogames.RoboCupMS.Entity.Role;
 import com.robogames.RoboCupMS.Entity.TeamInvitation;
 import com.robogames.RoboCupMS.Entity.UserRC;
@@ -114,63 +115,63 @@ public class UserService {
         }
     }
 
-    /**
-     * Prida do databaze noveho uzivatele
-     * 
-     * @param reg Registracni udaje noveho uzivatele
-     * @throws Exception
-     */
-    public void add(RegistrationObj reg) throws Exception {
-        String email = reg.getEmail();
-        String name = reg.getName();
-        String surname = reg.getSurname();
+    // /**
+    // * Prida do databaze noveho uzivatele
+    // *
+    // * @param reg Registracni udaje noveho uzivatele
+    // * @throws Exception
+    // */
+    // public void add(RegistrationObj reg) throws Exception {
+    // String email = reg.getEmail();
+    // String name = reg.getName();
+    // String surname = reg.getSurname();
 
-        // overi delku emailu
-        if (email.length() < 8) {
-            throw new Exception("failure, email is too short");
-        } else if (email.length() > 30) {
-            throw new Exception("failure, email is too long");
-        }
+    // // overi delku emailu
+    // if (email.length() < 8) {
+    // throw new Exception("failure, email is too short");
+    // } else if (email.length() > 30) {
+    // throw new Exception("failure, email is too long");
+    // }
 
-        // overi delku jmena
-        if (name.length() < 2) {
-            throw new Exception("failure, name is too short");
-        } else if (name.length() > 20) {
-            throw new Exception("failure, name is too long");
-        }
+    // // overi delku jmena
+    // if (name.length() < 2) {
+    // throw new Exception("failure, name is too short");
+    // } else if (name.length() > 20) {
+    // throw new Exception("failure, name is too long");
+    // }
 
-        // overi delku prijmeni
-        if (surname.length() < 2) {
-            throw new Exception("failure, surname is too short");
-        } else if (surname.length() > 20) {
-            throw new Exception("failure, surname is too long");
-        }
+    // // overi delku prijmeni
+    // if (surname.length() < 2) {
+    // throw new Exception("failure, surname is too short");
+    // } else if (surname.length() > 20) {
+    // throw new Exception("failure, surname is too long");
+    // }
 
-        // validace emailu
-        // https://mailtrap.io/blog/java-email-validation/
-        Pattern pattern = Pattern
-                .compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
-        if (!pattern.matcher(email).matches()) {
-            throw new Exception("failure, email is invalid");
-        }
+    // // validace emailu
+    // // https://mailtrap.io/blog/java-email-validation/
+    // Pattern pattern = Pattern
+    // .compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
+    // if (!pattern.matcher(email).matches()) {
+    // throw new Exception("failure, email is invalid");
+    // }
 
-        // vytvori noveho uzivatele
-        List<ERole> roles = new ArrayList<ERole>();
-        roles.add(ERole.COMPETITOR);
-        UserRC user = new UserRC(
-                name,
-                surname,
-                email,
-                reg.getBirthDate(),
-                roles);
+    // // vytvori noveho uzivatele
+    // List<ERole> roles = new ArrayList<ERole>();
+    // roles.add(ERole.COMPETITOR);
+    // UserRC user = new UserRC(
+    // name,
+    // surname,
+    // email,
+    // reg.getBirthDate(),
+    // roles);
 
-        // uzivatel neni ve vekovem rozsahu definovanem v konfiguraci
-        if (user.getBirthDate() == null) {
-            throw new Exception("failure, wrong age");
-        }
+    // // uzivatel neni ve vekovem rozsahu definovanem v konfiguraci
+    // if (user.getBirthDate() == null) {
+    // throw new Exception("failure, wrong age");
+    // }
 
-        this.repository.save(user);
-    }
+    // this.repository.save(user);
+    // }
 
     /**
      * Overi platnost novych udaju a pokud jsou platne, ulozi je uzivateli
@@ -185,21 +186,21 @@ public class UserService {
         Date birthDate = userEditObj.getBirthDate();
 
         // overi delku jmena
-        if (name.length() < 2) {
+        if (name.length() < GlobalConfig.USER_NAME_MIN_LENGTH) {
             throw new Exception("failure, name is too short");
-        } else if (name.length() > 20) {
+        } else if (name.length() > GlobalConfig.USER_NAME_MAX_LENGTH) {
             throw new Exception("failure, name is too long");
         }
 
         // overi delku prijmeni
-        if (surname.length() < 2) {
+        if (surname.length() < GlobalConfig.USER_SURNAME_MIN_LENGTH) {
             throw new Exception("failure, surname is too short");
-        } else if (surname.length() > 20) {
+        } else if (surname.length() > GlobalConfig.USER_SURNAME_MAX_LENGTH) {
             throw new Exception("failure, surname is too long");
         }
 
         // overi, ze uzivatel je ve vekovem rozsahu definovanem v konfiguraci
-        if (birthDate == null) {
+        if (birthDate == null || user.isValidAge(user.getAge()) == false) {
             throw new Exception("failure, wrong age");
         }
 
