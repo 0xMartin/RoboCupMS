@@ -2,9 +2,9 @@ package com.robogames.RoboCupMS;
 
 import java.io.FileReader;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.List;
+// import java.util.Calendar;
+// import java.util.GregorianCalendar;
+// import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -77,6 +77,13 @@ public class AppInit {
             if (TOKEN_VALIDITY_DURATION != null) {
                 GlobalConfig.TOKEN_VALIDITY_DURATION = (int) TOKEN_VALIDITY_DURATION.longValue();
                 logger.info("TOKEN_VALIDITY_DURATION set on: " + TOKEN_VALIDITY_DURATION);
+            }
+
+            // interval (s) pro ukladani posledniho pristupu do DB
+            Long TOKEN_REFRESH_SAVE_INTERVAL_SECONDS = (Long) obj.get("TOKEN_REFRESH_SAVE_INTERVAL_SECONDS");
+            if (TOKEN_REFRESH_SAVE_INTERVAL_SECONDS != null) {
+                GlobalConfig.TOKEN_REFRESH_SAVE_INTERVAL_SECONDS = (int) TOKEN_REFRESH_SAVE_INTERVAL_SECONDS.longValue();
+                logger.info("TOKEN_REFRESH_SAVE_INTERVAL_SECONDS set on: " + TOKEN_REFRESH_SAVE_INTERVAL_SECONDS);
             }
 
             // minimalni vek uzivatele

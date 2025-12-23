@@ -346,7 +346,7 @@ public class UserRC {
      */
     @JsonIgnore
     public String getToken() {
-        return this.getToken();
+        return this.token;
     }
 
     /**

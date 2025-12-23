@@ -25,6 +25,11 @@ public class GlobalConfig {
     public static int TOKEN_VALIDITY_DURATION = 30;
 
     /**
+     * Interval (s) pro ukladani posledniho pristupu do DB
+     */
+    public static int TOKEN_REFRESH_SAVE_INTERVAL_SECONDS = 60;
+
+    /**
      * Omezeni delky udaju uzivatele
      */
     public static int USER_NAME_MIN_LENGTH = 2;
