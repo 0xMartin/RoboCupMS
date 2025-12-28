@@ -24,7 +24,7 @@ import com.robogames.RoboCupMS.Entity.UserRC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
+// import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +47,9 @@ public class AuthService {
 
     @Value("${keycloak.token-uri}")
     private String tokenUri;
+
+    @Value("${keycloak.user-info-uri}")
+    private String userInfoUri;
 
     @Value("${keycloak.redirect-uri}")
     private String redirectUri;
@@ -165,8 +168,8 @@ public class AuthService {
         JsonNode json = mapper.readTree(response.body());
 
         // get access_token from token JSON
-        JsonNode tokenNode = json.get("access_token");
-        if (tokenNode == null) {
+        JsonNode accessToken = json.get("access_token");
+        if (accessToken == null) {
             throw new Exception("No access_token in response");
         }
 
@@ -174,20 +177,38 @@ public class AuthService {
         JsonNode refreshTokenNode = json.get("refresh_token");
         String refreshToken = refreshTokenNode != null ? refreshTokenNode.asText() : null;
 
-        // get user info from Keycloak
-        Jwt jwt = jwtDecoder.decode(tokenNode.asText());
-        String email = jwt.getClaimAsString("email");
-        String name = jwt.getClaimAsString("given_name");
-        String surname = jwt.getClaimAsString("family_name");
+        // get user profile from Keycloak userinfo endpoint
+        String accessTokenValue = accessToken.asText();
+        HttpRequest userInfoRequest = HttpRequest.newBuilder()
+                .uri(URI.create(userInfoUri))
+                .header("Authorization", "Bearer " + accessTokenValue)
+                .GET()
+                .build();
+        
+        HttpResponse<String> userInfoResponse = client.send(userInfoRequest, HttpResponse.BodyHandlers.ofString());
+        if (userInfoResponse.statusCode() != 200) {
+            throw new Exception("Failed to load userinfo from Keycloak");
+        }
+
+        JsonNode userInfo = mapper.readTree(userInfoResponse.body());
+
+        // get user info from Keycloak response
+        String email = userInfo.get("email").asText(null);
+        String name = userInfo.get("given_name").asText(null);
+        String surname = userInfo.get("family_name").asText(null);
+
+        if(email == null || name == null || surname == null) {
+            throw new Exception("User profile has missing information from Keycloak");
+        }
 
         // prevedeni data narozeni ze String na Date (pokud je uvedeno)
-        String _birthDate = jwt.getClaimAsString("birthdate");
+        JsonNode _birthDate = userInfo.get("birthdate");
         Date birthDate = null;
-        if (_birthDate != null && !_birthDate.isEmpty()) {
-            LocalDate localDate = LocalDate.parse(_birthDate);
+        if (_birthDate != null && !_birthDate.isNull()) {
+            LocalDate localDate = LocalDate.parse(_birthDate.asText(null));
             birthDate = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
         } else {
-            birthDate = Date.from(LocalDate.of(2000, 1, 1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            throw new Exception("birthdate is missing");
         }
 
         // vytvoreni uzivatele / login
