@@ -110,9 +110,8 @@ public class RobotService {
         List<RobotProfile.TeamMemberInfo> teamMembers = new ArrayList<>();
         for (UserRC member : team.getMembers()) {
             teamMembers.add(new RobotProfile.TeamMemberInfo(
-                member.getName(),
-                member.getSurname()
-            ));
+                    member.getName(),
+                    member.getSurname()));
         }
 
         // Ziska informace o uciteli z registrace tymu
@@ -122,20 +121,19 @@ public class RobotService {
 
         // Vytvori a navrati profil robota
         return new RobotProfile(
-            robotName,
-            robotNumber,
-            discipline,
-            category,
-            teamName,
-            teamId,
-            leaderId,
-            leaderName,
-            leaderSurname,
-            teamMembers,
-            teacherName,
-            teacherSurname,
-            teacherContact
-        );
+                robotName,
+                robotNumber,
+                discipline,
+                category,
+                teamName,
+                teamId,
+                leaderId,
+                leaderName,
+                leaderSurname,
+                teamMembers,
+                teacherName,
+                teacherSurname,
+                teacherContact);
     }
 
     /**
@@ -161,7 +159,7 @@ public class RobotService {
 
         // najde registraci tymu pro dany rocnik souteze
         List<TeamRegistration> registrations = t.get().getRegistrations();
-        Optional<TeamRegistration> registration = registrations.stream().filter(r -> (r.getCompatitionYear() == year))
+        Optional<TeamRegistration> registration = registrations.stream().filter(r -> (r.getCompetitionYear() == year))
                 .findFirst();
         if (!registration.isPresent()) {
             throw new Exception(String.format("failure, team registration not exists for year [%d]", year));
@@ -179,19 +177,33 @@ public class RobotService {
      */
     public List<Robot> getAllConfirmed(int year) throws Exception {
         Stream<Robot> robots = this.robotRepository.findAll().stream()
-                .filter((r) -> (r.getConfirmed() && r.getTeamRegistration().getCompatitionYear() == year));
+                .filter((r) -> (r.getConfirmed() && r.getTeamRegistration().getCompetitionYear() == year));
 
         return robots.collect(Collectors.toList());
     }
 
     public List<Robot> allForYear(int year) throws Exception {
         Stream<Robot> robots = this.robotRepository.findAll().stream()
-                .filter((r) -> (r.getTeamRegistration().getCompatitionYear() == year));
+                .filter((r) -> (r.getTeamRegistration().getCompetitionYear() == year));
         return robots.collect(Collectors.toList());
     }
 
     /**
-     * Vytvori noveho robata. Robot je vytvaren na registraci tymu v urcitem
+     * Overi delku nazvu robota
+     * 
+     * @param name Jmeno robota
+     * @throws Exception
+     */
+    private void validateRobotName(String name) throws Exception {
+        if (name.length() < GlobalConfig.MIN_ROBOT_NAME_LENGTH) {
+            throw new Exception("failure, name is too short");
+        } else if (name.length() > GlobalConfig.MAX_ROBOT_NAME_LENGTH) {
+            throw new Exception("failure, name is too long");
+        }
+    }
+
+    /**
+     * Vytvori noveho robota. Robot je vytvaren na registraci tymu v urcitem
      * rocniku souteze.
      * 
      * @param year     Rocnik souteze
@@ -209,11 +221,7 @@ public class RobotService {
         String name = robotObj.getName();
 
         // overi delku nazvu robota
-        if(name.length() < 3){
-            throw new Exception("failure, name is too short");
-        } else if (name.length() > 15) {
-            throw new Exception("failure, name is too long");
-        }
+        validateRobotName(name);
 
         // overeni unikatnosti jmena robota v ramci rocniku souteze
         if (this.robotRepository.findByName(name).isPresent()) {
@@ -277,11 +285,7 @@ public class RobotService {
         }
 
         // overi delku nazvu robota
-        if(name.length() < 3){
-            throw new Exception("failure, name is too short");
-        } else if (name.length() > 15) {
-            throw new Exception("failure, name is too long");
-        }
+        validateRobotName(name);
 
         // overeni unikatnosti jmena robota v ramci rocniku souteze
         if (this.robotRepository.findByName(name).isPresent()) {
@@ -462,14 +466,14 @@ public class RobotService {
 
         // najde registraci tymu pro dany rocnik souteze
         List<TeamRegistration> registrations = t.get().getRegistrations();
-        Optional<TeamRegistration> registration = registrations.stream().filter(r -> (r.getCompatitionYear() == year))
+        Optional<TeamRegistration> registration = registrations.stream().filter(r -> (r.getCompetitionYear() == year))
                 .findFirst();
         if (!registration.isPresent()) {
             throw new Exception(String.format("failure, team registration not exists for year [%d]", year));
         }
 
         // robota je mozne registrovat jen pokud soutez jeste nezacala
-        if (registration.get().getCompatition().getStarted()) {
+        if (registration.get().getCompetition().getStarted()) {
             throw new Exception("failure, competition has already begun");
         }
 

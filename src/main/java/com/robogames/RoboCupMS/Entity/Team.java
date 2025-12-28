@@ -172,7 +172,7 @@ public class Team {
             yearObjs.add(
                     new YearObj(
                             r.getID(),
-                            r.getCompatitionYear()));
+                            r.getCompetitionYear()));
         });
         return yearObjs;
     }

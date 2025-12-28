@@ -13,17 +13,18 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 // import java.util.UUID;
-// import java.util.regex.Pattern;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Entity.UserRC;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
+// import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,9 @@ public class AuthService {
     @Value("${keycloak.token-uri}")
     private String tokenUri;
 
+    @Value("${keycloak.user-info-uri}")
+    private String userInfoUri;
+
     @Value("${keycloak.redirect-uri}")
     private String redirectUri;
 
@@ -55,35 +59,6 @@ public class AuthService {
 
     @Autowired
     JwtDecoder jwtDecoder;
-
-    /**
-     * Prihlaseni uzivatele do systemu (pokud je email a heslo spravne tak
-     * vygeneruje, navrati a zapise do databaze pristupovy token pro tohoto
-     * uzivatele)
-     * 
-     * @param email    Email uzivatele
-     * @param password Heslo uzivatele
-     * @return Pristupovy token
-     */
-    // public String login(LoginObj login) throws Exception {
-    //     // validace emailu
-    //     // https://mailtrap.io/blog/java-email-validation/
-    //     Pattern pattern = Pattern
-    //             .compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
-    //     if (!pattern.matcher(login.getEmail()).matches()) {
-    //         throw new Exception("failure, email is invalid");
-    //     }
-
-    //     // autentizace uzivatele
-    //     Optional<UserRC> user = repository.findByEmail(login.getEmail());
-    //     if (user.isPresent()) {
-    //         if (user.get().passwordMatch(login.getPassword())) {
-    //             return TokenAuthorization.generateAccessTokenForUser(user.get(), this.repository);
-    //         }
-    //     }
-
-    //     throw new Exception("Incorrect email or password");
-    // }
 
     /**
      * Odhlasi uzivatele ze systemu (odstrani pristupovy token z databaze)
@@ -106,71 +81,53 @@ public class AuthService {
     }
 
     /**
-     * Registruje noveho uzivatele
+     * Validuje udaje uzivatele pri registraci
      * 
-     * @param reg Registracni udaje noveho uzivatele
-     * @return Nove vytvoreni uzivatel
+     * @param email     E-mail
+     * @param name      Jmeno
+     * @param surname   Prijmeni
+     * @param birthDate Datum narozeni
+     * @throws Exception
      */
-    // public void register(RegistrationObj reg) throws Exception {
-    //     // overi zda uzivatel s timto email jiz neni registrovany
-    //     if (this.repository.findByEmail(reg.getEmail()).isPresent()) {
-    //         throw new Exception("failure, user with this email already exists");
-    //     }
+    private void validateUserData(String email, String name, String surname, Date birthDate) throws Exception {
+        // overi zda uzivatel s timto email jiz neni registrovany
+        if (this.repository.findByEmail(email).isPresent()) {
+            throw new Exception("failure, user with this email already exists");
+        }
 
-    //     // overi delku emailu
-    //     if (reg.getEmail().length() < 8) {
-    //         throw new Exception("failure, email is too short");
-    //     } else if (reg.getEmail().length() > 30) {
-    //         throw new Exception("failure, email is too long");
-    //     }
+        // overi delku emailu
+        if (email.length() < GlobalConfig.USER_EMAIL_MIN_LENGTH) {
+            throw new Exception("failure, email is too short");
+        } else if (email.length() > GlobalConfig.USER_EMAIL_MAX_LENGTH) {
+            throw new Exception("failure, email is too long");
+        }
 
-    //     // overi delku jmena
-    //     if (reg.getName().length() < 2) {
-    //         throw new Exception("failure, name is too short");
-    //     } else if (reg.getName().length() > 20) {
-    //         throw new Exception("failure, name is too long");
-    //     }
+        // validace emailu
+        // https://mailtrap.io/blog/java-email-validation/
+        Pattern pattern = Pattern
+                .compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
+        if (!pattern.matcher(email).matches()) {
+            throw new Exception("failure, email is invalid");
+        }
 
-    //     // overi delku prijmeni
-    //     if (reg.getSurname().length() < 2) {
-    //         throw new Exception("failure, surname is too short");
-    //     } else if (reg.getSurname().length() > 20) {
-    //         throw new Exception("failure, surname is too long");
-    //     }
+        // overi delku jmena
+        if (name.length() < GlobalConfig.USER_NAME_MIN_LENGTH) {
+            throw new Exception("failure, name is too short");
+        } else if (name.length() > GlobalConfig.USER_NAME_MAX_LENGTH) {
+            throw new Exception("failure, name is too long");
+        }
 
-    //     // overi delku hesla
-    //     if (reg.getPassword().length() < 8) {
-    //         throw new Exception("failure, password is too short");
-    //     } else if (reg.getSurname().length() > 30) {
-    //         throw new Exception("failure, password is too long");
-    //     }
+        // overi delku prijmeni
+        if (surname.length() < GlobalConfig.USER_SURNAME_MIN_LENGTH) {
+            throw new Exception("failure, surname is too short");
+        } else if (surname.length() > GlobalConfig.USER_SURNAME_MAX_LENGTH) {
+            throw new Exception("failure, surname is too long");
+        }
 
-    //     // validace emailu
-    //     // https://mailtrap.io/blog/java-email-validation/
-    //     Pattern pattern = Pattern
-    //             .compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
-    //     if (!pattern.matcher(reg.getEmail()).matches()) {
-    //         throw new Exception("failure, email is invalid");
-    //     }
-
-    //     // registruje noveho uzivatele
-    //     List<ERole> roles = new ArrayList<ERole>();
-    //     roles.add(ERole.COMPETITOR);
-    //     UserRC u = new UserRC(
-    //             reg.getName(),
-    //             reg.getSurname(),
-    //             reg.getEmail(),
-    //             reg.getPassword(),
-    //             reg.getBirthDate(),
-    //             roles);
-
-    //     // uzivatel neni ve vekovem rozsahu definovanem v konfiguraci
-    //     if (u.getBirthDate() == null) {
-    //         throw new Exception("failure, wrong age");
-    //     }
-
-    //     repository.save(u);
-    // }
+        if (birthDate == null) {
+            throw new Exception("failure, birth date is missing");
+        }
+    }
 
     /**
      * Vymeni kod ziskany z Keycloaku za pristupovy token, vyhodnoti ho a prihlasi
@@ -211,8 +168,8 @@ public class AuthService {
         JsonNode json = mapper.readTree(response.body());
 
         // get access_token from token JSON
-        JsonNode tokenNode = json.get("access_token");
-        if (tokenNode == null) {
+        JsonNode accessToken = json.get("access_token");
+        if (accessToken == null) {
             throw new Exception("No access_token in response");
         }
 
@@ -220,25 +177,41 @@ public class AuthService {
         JsonNode refreshTokenNode = json.get("refresh_token");
         String refreshToken = refreshTokenNode != null ? refreshTokenNode.asText() : null;
 
-        // get user info from Keycloak
-        Jwt jwt = jwtDecoder.decode(tokenNode.asText());
-        String email = jwt.getClaimAsString("email");
-        String name = jwt.getClaimAsString("given_name");
-        String surname = jwt.getClaimAsString("family_name");
-
-        // prevedeni data narozeni ze String na Date (pokud je uvedeno)
-        String _birthDate = jwt.getClaimAsString("birthdate");
-        Date birthDate = null;
-        if (_birthDate != null && !_birthDate.isEmpty()) {
-            LocalDate localDate = LocalDate.parse(_birthDate);
-            birthDate = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        } else {
-            birthDate = Date.from(LocalDate.of(2000, 1, 1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+        // get user profile from Keycloak userinfo endpoint
+        String accessTokenValue = accessToken.asText();
+        HttpRequest userInfoRequest = HttpRequest.newBuilder()
+                .uri(URI.create(userInfoUri))
+                .header("Authorization", "Bearer " + accessTokenValue)
+                .GET()
+                .build();
+        
+        HttpResponse<String> userInfoResponse = client.send(userInfoRequest, HttpResponse.BodyHandlers.ofString());
+        if (userInfoResponse.statusCode() != 200) {
+            throw new Exception("Failed to load userinfo from Keycloak");
         }
 
-        
+        JsonNode userInfo = mapper.readTree(userInfoResponse.body());
 
-        // vytvoreni uzivatel / login
+        // get user info from Keycloak response
+        String email = userInfo.get("email").asText(null);
+        String name = userInfo.get("given_name").asText(null);
+        String surname = userInfo.get("family_name").asText(null);
+
+        if(email == null || name == null || surname == null) {
+            throw new Exception("User profile has missing information from Keycloak");
+        }
+
+        // prevedeni data narozeni ze String na Date (pokud je uvedeno)
+        JsonNode _birthDate = userInfo.get("birthdate");
+        Date birthDate = null;
+        if (_birthDate != null && !_birthDate.isNull()) {
+            LocalDate localDate = LocalDate.parse(_birthDate.asText(null));
+            birthDate = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        } else {
+            throw new Exception("birthdate is missing");
+        }
+
+        // vytvoreni uzivatele / login
         Optional<UserRC> user = this.repository.findByEmail(email);
         String user_access_token = "";
         UserRC targetUser = null;
@@ -248,6 +221,9 @@ public class AuthService {
             // prihlasi uzivatele -> vygeneruje pristupovy token
             user_access_token = TokenAuthorization.generateAccessTokenForUser(targetUser, this.repository);
         } else {
+            // overi udaje noveho uzivatele
+            validateUserData(email, name, surname, birthDate);
+
             // registruje uzivatele
             List<ERole> roles = new ArrayList<ERole>();
             roles.add(ERole.COMPETITOR);
@@ -291,7 +267,7 @@ public class AuthService {
 
         try {
             String refreshToken = user.getKeycloakRefreshToken();
-            
+
             // create request body pro Keycloak logout
             String form = "client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
                     + "&client_secret=" + URLEncoder.encode(clientSecret, StandardCharsets.UTF_8)

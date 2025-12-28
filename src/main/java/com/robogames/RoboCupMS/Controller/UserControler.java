@@ -9,7 +9,7 @@ import com.robogames.RoboCupMS.ResponseHandler;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Business.Object.TeamInvitationObj;
 import com.robogames.RoboCupMS.Business.Object.UserEditObj;
-import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
+// import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
 import com.robogames.RoboCupMS.Business.Service.UserService;
 import com.robogames.RoboCupMS.Entity.TeamInvitation;
 import com.robogames.RoboCupMS.Entity.UserRC;
@@ -19,7 +19,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+// import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -110,22 +110,22 @@ public class UserControler {
         return ResponseHandler.response(user);
     }
 
-    /**
-     * Prida do databaze noveho uzivatele
-     * 
-     * @param newUser Registracni udaje noveho uzivatele
-     * @return Informace o stavu provedeneho requestu
-     */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER })
-    @PostMapping("/add")
-    Response add(@RequestBody RegistrationObj newUser) {
-        try {
-            this.userService.add(newUser);
-            return ResponseHandler.response("success");
-        } catch (Exception ex) {
-            return ResponseHandler.error(ex.getMessage());
-        }
-    }
+    // /**
+    //  * Prida do databaze noveho uzivatele
+    //  * 
+    //  * @param newUser Registracni udaje noveho uzivatele
+    //  * @return Informace o stavu provedeneho requestu
+    //  */
+    // @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER })
+    // @PostMapping("/add")
+    // Response add(@RequestBody RegistrationObj newUser) {
+    //     try {
+    //         this.userService.add(newUser);
+    //         return ResponseHandler.response("success");
+    //     } catch (Exception ex) {
+    //         return ResponseHandler.error(ex.getMessage());
+    //     }
+    // }
 
     /**
      * Editace udaju prihlaseneho uzivatele
