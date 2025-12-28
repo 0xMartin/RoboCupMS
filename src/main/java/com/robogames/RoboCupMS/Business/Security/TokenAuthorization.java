@@ -85,7 +85,7 @@ public class TokenAuthorization extends OncePerRequestFilter {
 		String msg;
 		int httpStatus;
 		UserRC user = null;
-		
+
 		if ((user = validateToken(request)) != null) {
 			if (setUpSpringAuthentication(user, request.getHeader(this.x_token))) {
 				chain.doFilter(request, response);
@@ -112,7 +112,7 @@ public class TokenAuthorization extends OncePerRequestFilter {
 				httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
 			}
 		}
-		
+
 		// pristup zamitnut
 		SecurityContextHolder.clearContext();
 		response.setStatus(httpStatus);
@@ -189,13 +189,12 @@ public class TokenAuthorization extends OncePerRequestFilter {
 		}
 		// overi casovou platnost
 		Date now = new java.util.Date(Calendar.getInstance().getTime().getTime());
-
+		long diff = now.getTime() - user.get().getLastAccessTime().getTime();
 		if (user.get().getLastAccessTime() != null) {
-			long diff = now.getTime() - user.get().getLastAccessTime().getTime();
 			if (diff / (60 * 1000) > GlobalConfig.TOKEN_VALIDITY_DURATION) {
 				// Token expiroval - odhlasime uzivatele i z Keycloaku
 				logoutUserFromKeycloak(user.get());
-				
+
 				user.get().setToken(null);
 				this.repository.save(user.get());
 				// Oznacime ze token expiroval (pro lepsi error message)
@@ -204,9 +203,11 @@ public class TokenAuthorization extends OncePerRequestFilter {
 			}
 		}
 
-		// refresh casu
-		user.get().setLastAccessTime(now);
-		this.repository.save(user.get());
+		// aktualizuje cas posledniho pristupu, pokud uplynul definovany interval
+		if (diff > ((long) GlobalConfig.TOKEN_REFRESH_SAVE_INTERVAL_SECONDS * 1000L)) {
+			user.get().setLastAccessTime(now);
+			this.repository.save(user.get());
+		}
 
 		return user.get();
 	}

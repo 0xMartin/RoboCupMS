@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.CascadeType; 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -255,11 +255,26 @@ public class UserRC {
     }
 
     /**
+     * Overni, zda je vek uzivatele v povolenem rozmezi
+     * 
+     * @param age Vek uzivatele
+     * @return True, pokud je vek v povolenem rozmezi, jinak false
+     */
+    public boolean isValidAge(int age) {
+        if (age >= GlobalConfig.USER_MIN_AGE &&
+                age <= GlobalConfig.USER_MAX_AGE) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * Nastavi datum narozeni
      * 
      * @param _age Vek uzivatele
      */
-    public boolean setBirthDate(Date _birthDate) {
+    public void setBirthDate(Date _birthDate) {
         // z datumu narozeni vypocit vek uzivatele
         LocalDate currentDate = LocalDate.now();
         LocalDate bd = _birthDate.toInstant()
@@ -268,12 +283,8 @@ public class UserRC {
         int age = Period.between(bd, currentDate).getYears();
 
         // vek musi splnovat omezeni
-        if (age >= GlobalConfig.USER_MIN_AGE &&
-                age <= GlobalConfig.USER_MAX_AGE) {
+        if (isValidAge(age)) {
             this.birthDate = _birthDate;
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -335,7 +346,7 @@ public class UserRC {
      */
     @JsonIgnore
     public String getToken() {
-        return this.getToken();
+        return this.token;
     }
 
     /**

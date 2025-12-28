@@ -259,7 +259,7 @@ public class OrderManagementService {
                 throw new Exception(String.format("failure, registration of robot with ID [%d] is not confirmed", id));
             }
             // overeni zda je robot registrovan v danem rocniku souteze
-            if (robot.get().getTeamRegistration().getCompatitionYear() != multiMatchGroupObj.getYear()) {
+            if (robot.get().getTeamRegistration().getCompetitionYear() != multiMatchGroupObj.getYear()) {
                 throw new Exception(String.format("failure, registration of robot with ID [%d] is not confirmed", id));
             }
             // prvotni inicializace kategorie a discipliny vsech robotu
@@ -331,7 +331,7 @@ public class OrderManagementService {
 
         // prida vsechny zapasy, ktere cekaji na odehrani
         Stream<RobotMatch> matches = this.robotMatchRepository.findAll().stream()
-                .filter((m) -> (m.getRobot().getTeamRegistration().getCompatitionYear() == YEAR));
+                .filter((m) -> (m.getRobot().getTeamRegistration().getCompetitionYear() == YEAR));
         matches.forEach((m) -> {
             MatchQueue queue = OrderManagementService.MATCH_GUEUES.get(m.getPlayground().getID());
             if (queue == null) {
