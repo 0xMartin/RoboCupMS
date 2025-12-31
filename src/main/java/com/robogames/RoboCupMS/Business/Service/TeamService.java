@@ -192,6 +192,11 @@ public class TeamService {
         // overi delku nazvu tymu
         validateName(name);
 
+        // overeni unikatnosti nazvu tymu
+        if(this.teamRepository.findByName(name).isPresent()) {
+            throw new Exception("failure, team with this name already exists");
+        }
+
         Optional<Team> t = this.teamRepository.findAllByLeader(leader).stream().findFirst();
         if (t.isPresent()) {
             t.get().setName(name);
