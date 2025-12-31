@@ -209,7 +209,7 @@ public class AppInit {
             Optional<UserRC> user = userRepository.findByEmail(adminEmail);
             if (user.isPresent()) {
                 UserRC admin = user.get();
-                if (!admin.getRoles().contains(ERole.ADMIN)) {
+                if (!admin.getRoles().contains(optRole.get())) {
                     admin.getRoles().add(optRole.get());
                     userRepository.save(admin);
                     System.out.println("User " + adminEmail + " was promoted to ADMIN.");
