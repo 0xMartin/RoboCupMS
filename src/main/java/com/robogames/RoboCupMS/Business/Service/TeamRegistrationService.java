@@ -48,7 +48,7 @@ public class TeamRegistrationService {
      * @param reg                 Registrace tymu
      * @throws Exception
      */
-    private void validateTeacherInfo(TeamRegistrationObj teamRegistrationObj, TeamRegistration reg) throws Exception {
+    private void validateTeacherInfo(TeamRegistrationObj teamRegistrationObj) throws Exception {
         String name = teamRegistrationObj.getTeacherName();
         String surname = teamRegistrationObj.getTeacherSurname();
         String contact = teamRegistrationObj.getTeacherContact();
@@ -78,11 +78,6 @@ public class TeamRegistrationService {
         if (!pattern.matcher(contact).matches()) {
             throw new Exception("failure, contact is invalid");
         }
-
-        // ulozi udaje o uciteli
-        reg.setTeacherName(teamRegistrationObj.getTeacherName());
-        reg.setTeacherSurname(teamRegistrationObj.getTeacherSurname());
-        reg.setTeacherContact(teamRegistrationObj.getTeacherContact());
     }
 
     /**
@@ -131,10 +126,13 @@ public class TeamRegistrationService {
                 c.get(),
                 cat.get());
 
-        // pokud je katagorie LOW_AGE_CATEGORY, overi zda byli zadany i udaje o ucitele
-        if (cat_name == ECategory.LOW_AGE_CATEGORY) {
-            validateTeacherInfo(teamRegistrationObj, r);
-        }
+        // ulozi udaje o uciteli
+        r.setTeacherName(teamRegistrationObj.getTeacherName());
+        r.setTeacherSurname(teamRegistrationObj.getTeacherSurname());
+        r.setTeacherContact(teamRegistrationObj.getTeacherContact());
+
+        // overi udaje o ucitele
+        validateTeacherInfo(teamRegistrationObj);
 
         this.registrationRepository.save(r);
     }
@@ -346,10 +344,13 @@ public class TeamRegistrationService {
             throw new Exception("failure, competition has already begun");
         }
 
-        // validace udaju o uciteli (pokud je LOW_AGE_CATEGORY)
-        if (registration.getCategory() == ECategory.LOW_AGE_CATEGORY) {
-            validateTeacherInfo(teamRegistrationObj, registration);
-        }
+        // ulozi udaje o uciteli
+        registration.setTeacherName(teamRegistrationObj.getTeacherName());
+        registration.setTeacherSurname(teamRegistrationObj.getTeacherSurname());
+        registration.setTeacherContact(teamRegistrationObj.getTeacherContact());
+
+        // validace udaju o uciteli
+        validateTeacherInfo(teamRegistrationObj);
 
         this.registrationRepository.save(registration);
     }
