@@ -101,6 +101,8 @@ KEYCLOAK_DB_ROOT_PASSWORD=keycloak_root_pass_456
 # ===========================================
 APP_PORT=8080
 APP_FRONTEND_URL=https://is.robogames.utb.cz
+SPRING_PROFILES_ACTIVE=
+SUPER_ADMIN_EMAIL=admin@example.com
 
 # ===========================================
 # SSL/TLS CONFIGURATION
@@ -116,6 +118,11 @@ KEY_PASSWORD=f4R03eRRG3
 KEYCLOAK_PORT=8180
 KEYCLOAK_ADMIN_USER=admin
 KEYCLOAK_ADMIN_PASSWORD=yourSecureRootPassword123
+
+# Keycloak Hostname (public URL for tokens - must match the URL used by the frontend)
+# For production: https://is.robogames.utb.cz/auth
+# For localhost: http://localhost:8180/auth
+KC_HOSTNAME=http://localhost:8180/auth
 
 # Realm & Client Configuration
 KEYCLOAK_REALM=RoboCupRealm
