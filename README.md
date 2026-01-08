@@ -37,7 +37,6 @@ A comprehensive server application for managing robotics competitions. This syst
 * 🎯 **Match Scheduling:** Automated match scheduling with playground allocation
 * 👥 **Team Management:** Team invitations, registration, and member management with configurable limits
 * 🤖 **Robot Registration:** Multi-robot support per team with discipline-specific constraints
-* 📱 **RESTful API:** Well-documented OpenAPI 3.0 specification for easy integration
 
 ---
 
@@ -51,7 +50,6 @@ A comprehensive server application for managing robotics competitions. This syst
 | **Database** | MariaDB 10.6 |
 | **Authentication** | Keycloak 26.4 (OAuth2/OIDC) |
 | **Build Tool** | Gradle |
-| **API Documentation** | OpenAPI 3.0 |
 | **Containerization** | Docker & Docker Compose |
 | **Security** | SSL/TLS (HTTPS) |
 
@@ -101,6 +99,8 @@ KEYCLOAK_DB_ROOT_PASSWORD=keycloak_root_pass_456
 # ===========================================
 APP_PORT=8080
 APP_FRONTEND_URL=https://is.robogames.utb.cz
+SPRING_PROFILES_ACTIVE=
+SUPER_ADMIN_EMAIL=admin@example.com
 
 # ===========================================
 # SSL/TLS CONFIGURATION
@@ -116,6 +116,11 @@ KEY_PASSWORD=f4R03eRRG3
 KEYCLOAK_PORT=8180
 KEYCLOAK_ADMIN_USER=admin
 KEYCLOAK_ADMIN_PASSWORD=yourSecureRootPassword123
+
+# Keycloak Hostname (public URL for tokens - must match the URL used by the frontend)
+# For production: https://is.robogames.utb.cz/auth
+# For localhost: http://localhost:8180/auth
+KC_HOSTNAME=http://localhost:8180/auth
 
 # Realm & Client Configuration
 KEYCLOAK_REALM=RoboCupRealm
@@ -563,7 +568,6 @@ sudo certbot renew --dry-run
 
 - 📖 **[Keycloak Setup Guide](KEYCLOAK_SETUP.md)** - Detailed Keycloak configuration steps
 - 🔐 **[OAuth2 Integration Guide](OAUTH.md)** - OAuth2 implementation details
-- 📁 **[OpenAPI Specifications](OpenAPI/)** - Complete API documentation
 
 ### Database
 
@@ -633,4 +637,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-

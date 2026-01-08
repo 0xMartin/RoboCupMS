@@ -270,9 +270,10 @@ public class UserRC {
     }
 
     /**
-     * Nastavi datum narozeni
+     * Nastavi datum narozeni. Pokud vek presahuje povolene rozmezi,
+     * datum se upravi tak, aby spadalo do limitu (USER_MIN_AGE - USER_MAX_AGE).
      * 
-     * @param _age Vek uzivatele
+     * @param _birthDate Datum narozeni uzivatele
      */
     public void setBirthDate(Date _birthDate) {
         // z datumu narozeni vypocit vek uzivatele
@@ -282,10 +283,17 @@ public class UserRC {
                 .toLocalDate();
         int age = Period.between(bd, currentDate).getYears();
 
-        // vek musi splnovat omezeni
-        if (isValidAge(age)) {
-            this.birthDate = _birthDate;
+        // pokud vek presahuje povolene rozmezi, upravime datum narozeni
+        if (age < GlobalConfig.USER_MIN_AGE) {
+            // prilis mlady - nastavime datum tak, aby mel minimalni povoleny vek
+            bd = currentDate.minusYears(GlobalConfig.USER_MIN_AGE);
+        } else if (age > GlobalConfig.USER_MAX_AGE) {
+            // prilis stary - nastavime datum tak, aby mel maximalni povoleny vek
+            bd = currentDate.minusYears(GlobalConfig.USER_MAX_AGE);
         }
+
+        // prevedeme LocalDate zpet na Date a ulozime
+        this.birthDate = Date.from(bd.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     /**
