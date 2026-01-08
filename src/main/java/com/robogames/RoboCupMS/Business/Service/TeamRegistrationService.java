@@ -1,5 +1,8 @@
 package com.robogames.RoboCupMS.Business.Service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -99,6 +102,19 @@ public class TeamRegistrationService {
         Optional<Competition> c = competitionRepository.findByYear(teamRegistrationObj.getYear());
         if (!c.isPresent()) {
             throw new Exception(String.format("failure, compatition [%d] not exists", teamRegistrationObj.getYear()));
+        }
+
+        // overeni, zda registrace neni uzavrena (den pred zacatkem souteze do 12:00)
+        Date competitionDate = c.get().getDate();
+        LocalDateTime registrationEnd = competitionDate.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+                .minusDays(1)
+                .atTime(12, 0);
+
+        LocalDateTime now = LocalDateTime.now();
+        if (!now.isBefore(registrationEnd)) {
+            throw new Exception("failure, registration for this competition year is closed");
         }
 
         // overi zda soutez jiz nezacala (registrace je mozna jen pokud soutez jeste
