@@ -216,7 +216,8 @@ public class Team {
     }
 
     /**
-     * Do tymu prida noveho clena
+     * Do tymu prida noveho clena.
+     * Pokud tym nema vedouciho, novy clen se jím automaticky stane.
      * 
      * @param _member Novy clen
      */
@@ -224,18 +225,29 @@ public class Team {
         if (_member != null) {
             this.members.add(_member);
             _member.setTeam(this);
+            
+            // pokud tym nema vedouciho, novy clen se jim stane
+            if (this.leader == null) {
+                this.leader = _member;
+            }
         }
     }
 
     /**
      * Z tymu odebere clena
+     * Pokud je odebírany clen vedoucim tymu, vedouci bude nastaven na null.
      * 
-     * @param _member Novy clen
+     * @param _member Clen k odebrani
      */
     public void removeMember(UserRC _member) {
         if (_member != null) {
             this.members.remove(_member);
             _member.setTeam(null);
+            
+            // pokud byl odebírany clen vedoucim, zrusi vazbu na vedouciho
+            if (this.leader != null && this.leader.getID() == _member.getID()) {
+                this.leader = null;
+            }
         }
     }
 

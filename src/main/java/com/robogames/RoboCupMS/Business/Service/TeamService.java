@@ -281,9 +281,8 @@ public class TeamService {
                 throw new Exception("failure, this is not your invitation");
             }
 
-            // prida uzivatele do tymu a ulozi zmeni v databazi pro tym i pro uzivatele
-            t.getMembers().add(u);
-            u.setTeam(t);
+            // prida uzivatele do tymu (automaticky nastavi vedouciho pokud tym zadneho nema)
+            t.addMember(u);
             this.teamRepository.save(t);
             this.userRepository.save(u);
 

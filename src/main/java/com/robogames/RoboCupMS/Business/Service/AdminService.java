@@ -117,8 +117,13 @@ public class AdminService {
         if (leader.getTeamID() != Team.NOT_IN_TEAM) {
             Optional<Team> oldTeam = this.teamRepository.findById(leader.getTeamID());
             if (oldTeam.isPresent()) {
-                oldTeam.get().removeMember(leader);
-                this.teamRepository.save(oldTeam.get());
+                Team old = oldTeam.get();
+                // pokud byl vedoucim stareho tymu, zrusi vazbu
+                if (old.getLeaderID() == leader.getID()) {
+                    old.setLeader(null);
+                }
+                old.removeMember(leader);
+                this.teamRepository.save(old);
             }
         }
 
@@ -145,8 +150,13 @@ public class AdminService {
                 if (member.getTeamID() != Team.NOT_IN_TEAM) {
                     Optional<Team> oldTeam = this.teamRepository.findById(member.getTeamID());
                     if (oldTeam.isPresent()) {
-                        oldTeam.get().removeMember(member);
-                        this.teamRepository.save(oldTeam.get());
+                        Team old = oldTeam.get();
+                        // pokud byl vedoucim stareho tymu, zrusi vazbu
+                        if (old.getLeaderID() == member.getID()) {
+                            old.setLeader(null);
+                        }
+                        old.removeMember(member);
+                        this.teamRepository.save(old);
                     }
                 }
 
@@ -241,8 +251,13 @@ public class AdminService {
                 if (newLeader.getTeamID() != Team.NOT_IN_TEAM) {
                     Optional<Team> oldTeam = this.teamRepository.findById(newLeader.getTeamID());
                     if (oldTeam.isPresent()) {
-                        oldTeam.get().removeMember(newLeader);
-                        this.teamRepository.save(oldTeam.get());
+                        Team old = oldTeam.get();
+                        // pokud byl vedoucim stareho tymu, zrusi vazbu
+                        if (old.getLeaderID() == newLeader.getID()) {
+                            old.setLeader(null);
+                        }
+                        old.removeMember(newLeader);
+                        this.teamRepository.save(old);
                     }
                 }
                 team.addMember(newLeader);
@@ -290,12 +305,26 @@ public class AdminService {
         if (user.getTeamID() != Team.NOT_IN_TEAM) {
             Optional<Team> oldTeam = this.teamRepository.findById(user.getTeamID());
             if (oldTeam.isPresent()) {
-                oldTeam.get().removeMember(user);
-                this.teamRepository.save(oldTeam.get());
+                Team old = oldTeam.get();
+                // pokud byl vedoucim stareho tymu, najdeme noveho vedouciho
+                if (old.getLeaderID() == user.getID()) {
+                    // najdeme jineho clena tymu
+                    Optional<UserRC> newLeader = old.getMembers().stream()
+                            .filter(m -> m.getID() != user.getID())
+                            .findFirst();
+                    
+                    if (newLeader.isPresent()) {
+                        old.setLeader(newLeader.get());
+                    } else {
+                        old.setLeader(null);
+                    }
+                }
+                old.removeMember(user);
+                this.teamRepository.save(old);
             }
         }
 
-        // pridame do noveho tymu
+        // pridame do noveho tymu (Team.addMember automaticky nastavi vedouciho pokud tym zadneho nema)
         team.addMember(user);
         this.teamRepository.save(team);
         this.userRepository.save(user);
@@ -697,8 +726,13 @@ public class AdminService {
         if (user.getTeamID() != Team.NOT_IN_TEAM) {
             Optional<Team> oldTeamOpt = this.teamRepository.findById(user.getTeamID());
             if (oldTeamOpt.isPresent()) {
-                oldTeamOpt.get().removeMember(user);
-                this.teamRepository.save(oldTeamOpt.get());
+                Team old = oldTeamOpt.get();
+                // pokud byl vedoucim stareho tymu, zrusi vazbu
+                if (old.getLeaderID() == user.getID()) {
+                    old.setLeader(null);
+                }
+                old.removeMember(user);
+                this.teamRepository.save(old);
             }
         }
 
