@@ -37,7 +37,6 @@ A comprehensive server application for managing robotics competitions. This syst
 * 🎯 **Match Scheduling:** Automated match scheduling with playground allocation
 * 👥 **Team Management:** Team invitations, registration, and member management with configurable limits
 * 🤖 **Robot Registration:** Multi-robot support per team with discipline-specific constraints
-* 📱 **RESTful API:** Well-documented OpenAPI 3.0 specification for easy integration
 
 ---
 
@@ -51,7 +50,6 @@ A comprehensive server application for managing robotics competitions. This syst
 | **Database** | MariaDB 10.6 |
 | **Authentication** | Keycloak 26.4 (OAuth2/OIDC) |
 | **Build Tool** | Gradle |
-| **API Documentation** | OpenAPI 3.0 |
 | **Containerization** | Docker & Docker Compose |
 | **Security** | SSL/TLS (HTTPS) |
 
@@ -570,7 +568,6 @@ sudo certbot renew --dry-run
 
 - 📖 **[Keycloak Setup Guide](KEYCLOAK_SETUP.md)** - Detailed Keycloak configuration steps
 - 🔐 **[OAuth2 Integration Guide](OAUTH.md)** - OAuth2 implementation details
-- 📁 **[OpenAPI Specifications](OpenAPI/)** - Complete API documentation
 
 ### Database
 
