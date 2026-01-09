@@ -6,6 +6,8 @@ public class YearObj {
 
     private int year;
 
+    private int robotCount;
+
 
     public YearObj() {
     }
@@ -13,6 +15,13 @@ public class YearObj {
     public YearObj(long id, int year) {
         this.id = id;
         this.year = year;
+        this.robotCount = 0;
+    }
+
+    public YearObj(long id, int year, int robotCount) {
+        this.id = id;
+        this.year = year;
+        this.robotCount = robotCount;
     }
 
     public long getId() {
@@ -29,6 +38,14 @@ public class YearObj {
 
     public void setYear(int year) {
         this.year = year;
+    }
+
+    public int getRobotCount() {
+        return this.robotCount;
+    }
+
+    public void setRobotCount(int robotCount) {
+        this.robotCount = robotCount;
     }
 
 }

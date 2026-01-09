@@ -15,6 +15,7 @@ public class RobotProfile {
     private String leaderName;
     private String leaderSurname;
     private List<TeamMemberInfo> teamMembers;
+    private int teamMemberCount;
     private String teacherName;
     private String teacherSurname;
     private String teacherContact;
@@ -25,7 +26,7 @@ public class RobotProfile {
 
     public RobotProfile(String robotName, Long robotNumber, String discipline, ECategory category,
             String teamName, Long teamId, Long leaderId, String leaderName, String leaderSurname,
-            List<TeamMemberInfo> teamMembers, String teacherName, String teacherSurname, String teacherContact,
+            List<TeamMemberInfo> teamMembers, int teamMemberCount, String teacherName, String teacherSurname, String teacherContact,
             Boolean confirmed) {
         this.robotName = robotName;
         this.robotNumber = robotNumber;
@@ -37,6 +38,7 @@ public class RobotProfile {
         this.leaderName = leaderName;
         this.leaderSurname = leaderSurname;
         this.teamMembers = teamMembers;
+        this.teamMemberCount = teamMemberCount;
         this.teacherName = teacherName;
         this.teacherSurname = teacherSurname;
         this.teacherContact = teacherContact;
@@ -121,6 +123,14 @@ public class RobotProfile {
 
     public void setTeamMembers(List<TeamMemberInfo> teamMembers) {
         this.teamMembers = teamMembers;
+    }
+
+    public int getTeamMemberCount() {
+        return teamMemberCount;
+    }
+
+    public void setTeamMemberCount(int teamMemberCount) {
+        this.teamMemberCount = teamMemberCount;
     }
 
     public String getTeacherName() {

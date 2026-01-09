@@ -1,7 +1,9 @@
 package com.robogames.RoboCupMS.Entity;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -54,8 +56,8 @@ public class Team {
     /**
      * Clenove tymu (pokud je tym mazan neni mozne odstrani uzivatele)
      */
-    @OneToMany(mappedBy = "team", fetch = FetchType.LAZY)
-    private List<UserRC> members;
+    @OneToMany(mappedBy = "team", fetch = FetchType.EAGER)
+    private Set<UserRC> members;
 
     /**
      * Registrace tymu do jednotlivych rocniku souteze
@@ -68,7 +70,7 @@ public class Team {
      * prihlasit samotny uzivatel, vzdy musi soutezit v nejakem tymu.
      */
     public Team() {
-        this.members = new ArrayList<UserRC>();
+        this.members = new HashSet<UserRC>();
         this.registrations = new ArrayList<TeamRegistration>();
     }
 
@@ -82,7 +84,7 @@ public class Team {
     public Team(String _name, UserRC _leader) {
         this.name = _name;
         this.leader = _leader;
-        this.members = new ArrayList<UserRC>();
+        this.members = new HashSet<UserRC>();
         this.registrations = new ArrayList<TeamRegistration>();
         this.addMember(_leader);
     }
@@ -120,6 +122,15 @@ public class Team {
                             u.getSurname()));
         });
         return userNames;
+    }
+
+    /**
+     * Navrati pocet clenu tymu
+     * 
+     * @return Pocet clenu tymu
+     */
+    public int getMemberCount() {
+        return this.members.size();
     }
 
     /**
@@ -172,7 +183,8 @@ public class Team {
             yearObjs.add(
                     new YearObj(
                             r.getID(),
-                            r.getCompetitionYear()));
+                            r.getCompetitionYear(),
+                            r.getRobots().size()));
         });
         return yearObjs;
     }
@@ -183,7 +195,7 @@ public class Team {
      * @return Clenove tymu
      */
     @JsonIgnore
-    public List<UserRC> getMembers() {
+    public Set<UserRC> getMembers() {
         return this.members;
     }
 
@@ -257,7 +269,7 @@ public class Team {
      * @return Soutezni kategorie
      */
     public ECategory determinateCategory() {
-        List<UserRC> users = this.getMembers();
+        Set<UserRC> users = this.getMembers();
 
         // vypocet veku nejstarsiho uzivatele v tymu
         int max_age = 0;

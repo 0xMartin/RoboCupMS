@@ -198,6 +198,15 @@ public class Robot {
     }
 
     /**
+     * Navrati pocet clenu tymu, ktery vlastni tohoto robota
+     * 
+     * @return Pocet clenu tymu
+     */
+    public int getTeamMemberCount() {
+        return this.teamRegistration.getTeam().getMemberCount();
+    }
+
+    /**
      * Navrati disciplinu, ve ktere robot soutezi
      * 
      * @return Discipline

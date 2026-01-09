@@ -114,6 +114,9 @@ public class RobotService {
                     member.getSurname()));
         }
 
+        // Ziska pocet clenu tymu
+        int teamMemberCount = team.getMemberCount();
+
         // Ziska informace o uciteli z registrace tymu
         String teacherName = teamRegistration.getTeacherName();
         String teacherSurname = teamRegistration.getTeacherSurname();
@@ -131,6 +134,7 @@ public class RobotService {
                 leaderName,
                 leaderSurname,
                 teamMembers,
+                teamMemberCount,
                 teacherName,
                 teacherSurname,
                 teacherContact,
