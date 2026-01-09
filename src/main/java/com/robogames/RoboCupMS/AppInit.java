@@ -2,9 +2,6 @@ package com.robogames.RoboCupMS;
 
 import java.io.FileReader;
 import java.util.Arrays;
-// import java.util.Calendar;
-// import java.util.GregorianCalendar;
-// import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -230,13 +227,13 @@ public class AppInit {
             return args -> repository.saveAll(Arrays.asList(
                     new Discipline(
                             "Robosumo",
-                            "Vítězí ten robot, který svého protivníka vytlačí ven. Rožmer: 25x25cm, Hmotnost: 1kg",
+                            "Vítězí ten robot, který svého protivníka vytlačí ven. Rožmer: 20x20cm, Hmotnost: 1kg",
                             EScoreAggregation.SUM,
                             9 * 60,
                             Discipline.NOT_LIMITED_NUMBER_OF_ROUNDS),
                     new Discipline(
                             "Mini robosumo",
-                            "Vítězí ten robot, který svého protivníka vytlačí ven. Rožmer: 15x15cm, Hmotnost: 1kg",
+                            "Vítězí ten robot, který svého protivníka vytlačí ven. Rožmer: 10x10cm, Hmotnost: 500g",
                             EScoreAggregation.SUM,
                             9 * 60,
                             Discipline.NOT_LIMITED_NUMBER_OF_ROUNDS),
