@@ -147,7 +147,7 @@ public class RobotProfile {
         this.teacherContact = teacherContact;
     }
 
-    public Boolean getConfirmed() {
+    public Boolean isConfirmed() {
         return confirmed;
     }
 

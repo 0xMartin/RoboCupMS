@@ -224,21 +224,22 @@ public class TeamService {
 
             Optional<UserRC> u = this.userRepository.findById(id);
 
+            // nejprve overi zda uzivatel existuje
+            if (!u.isPresent()) {
+                throw new Exception(String.format("failure, user with ID [%s] not found", id));
+            }
+
             // overi zda uzivatel jeste nebyl do tymu pozvan
             Optional<TeamInvitation> existingInvitation = this.invitationRepository.findByUserAndTeam(u.get(), t.get());
             if (existingInvitation.isPresent()) {
                 throw new Exception("failure, user already invited");
             }
 
-            if (u.isPresent()) {
-                // vytvori pozvanku do tymu
-                TeamInvitation invitation = new TeamInvitation();
-                invitation.setUser(u.get());
-                invitation.setTeam(t.get());
-                this.invitationRepository.save(invitation);
-            } else {
-                throw new Exception(String.format("failure, user with ID [%s] not found", id));
-            }
+            // vytvori pozvanku do tymu
+            TeamInvitation invitation = new TeamInvitation();
+            invitation.setUser(u.get());
+            invitation.setTeam(t.get());
+            this.invitationRepository.save(invitation);
         } else {
             throw new Exception("failure, you are not the leader of any existing team");
         }
