@@ -18,13 +18,15 @@ public class RobotProfile {
     private String teacherName;
     private String teacherSurname;
     private String teacherContact;
+    private Boolean confirmed;
 
     public RobotProfile() {
     }
 
     public RobotProfile(String robotName, Long robotNumber, String discipline, ECategory category,
             String teamName, Long teamId, Long leaderId, String leaderName, String leaderSurname,
-            List<TeamMemberInfo> teamMembers, String teacherName, String teacherSurname, String teacherContact) {
+            List<TeamMemberInfo> teamMembers, String teacherName, String teacherSurname, String teacherContact,
+            Boolean confirmed) {
         this.robotName = robotName;
         this.robotNumber = robotNumber;
         this.discipline = discipline;
@@ -38,6 +40,7 @@ public class RobotProfile {
         this.teacherName = teacherName;
         this.teacherSurname = teacherSurname;
         this.teacherContact = teacherContact;
+        this.confirmed = confirmed;
     }
 
     public String getRobotName() {
@@ -142,6 +145,14 @@ public class RobotProfile {
 
     public void setTeacherContact(String teacherContact) {
         this.teacherContact = teacherContact;
+    }
+
+    public Boolean getConfirmed() {
+        return confirmed;
+    }
+
+    public void setConfirmed(Boolean confirmed) {
+        this.confirmed = confirmed;
     }
 
     public static class TeamMemberInfo {

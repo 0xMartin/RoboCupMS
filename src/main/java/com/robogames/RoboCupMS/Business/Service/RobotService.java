@@ -133,7 +133,8 @@ public class RobotService {
                 teamMembers,
                 teacherName,
                 teacherSurname,
-                teacherContact);
+                teacherContact,
+                robot.getConfirmed());
     }
 
     /**
