@@ -5,14 +5,16 @@ public class UserNameObj {
     private long id;
     private String name;
     private String surname;
+    private String email;
 
     public UserNameObj() {
     }
 
-    public UserNameObj(long id, String name, String surname) {
+    public UserNameObj(long id, String name, String surname, String email) {
         this.id = id;
         this.name = name;
         this.surname = surname;
+        this.email = email;
     }
 
     public long getId() {
@@ -37,6 +39,14 @@ public class UserNameObj {
 
     public void setSurname(String surname) {
         this.surname = surname;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
 }

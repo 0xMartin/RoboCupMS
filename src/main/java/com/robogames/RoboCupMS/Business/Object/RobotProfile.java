@@ -168,13 +168,15 @@ public class RobotProfile {
     public static class TeamMemberInfo {
         private String name;
         private String surname;
+        private String email;
 
         public TeamMemberInfo() {
         }
 
-        public TeamMemberInfo(String name, String surname) {
+        public TeamMemberInfo(String name, String surname, String email) {
             this.name = name;
             this.surname = surname;
+            this.email = email;
         }
 
         public String getName() {
@@ -191,6 +193,14 @@ public class RobotProfile {
 
         public void setSurname(String surname) {
             this.surname = surname;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
         }
     }
 }

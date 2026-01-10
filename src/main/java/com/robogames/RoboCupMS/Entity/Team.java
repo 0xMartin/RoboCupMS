@@ -119,7 +119,8 @@ public class Team {
                     new UserNameObj(
                             u.getID(),
                             u.getName(),
-                            u.getSurname()));
+                            u.getSurname(),
+                            u.getEmail()));
         });
         return userNames;
     }

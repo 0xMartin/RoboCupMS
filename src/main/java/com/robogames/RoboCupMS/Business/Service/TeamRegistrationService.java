@@ -346,12 +346,21 @@ public class TeamRegistrationService {
 
     /**
      * Aktualizuje informace o uciteli pro registraci tymu v danem rocniku
+     * (pouze vedouci tymu muze aktualizovat udaje o uciteli)
      * 
      * @param year                Rocnik souteze
      * @param teamRegistrationObj Nove udaje o uciteli
      * @throws Exception
      */
     public void updateTeacherInfo(int year, TeamRegistrationObj teamRegistrationObj) throws Exception {
+        UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        // overi zda uzivatel je vedoucim nejakeho tymu
+        Optional<Team> t = this.teamRepository.findAllByLeader(user).stream().findFirst();
+        if (!t.isPresent()) {
+            throw new Exception("failure, you are not the leader of any existing team");
+        }
+
         // ziska registraci tymu pro dany rocnik
         TeamRegistration registration = this.getRegistration(year);
 

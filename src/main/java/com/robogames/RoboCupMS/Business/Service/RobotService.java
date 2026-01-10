@@ -111,7 +111,8 @@ public class RobotService {
         for (UserRC member : team.getMembers()) {
             teamMembers.add(new RobotProfile.TeamMemberInfo(
                     member.getName(),
-                    member.getSurname()));
+                    member.getSurname(),
+                    member.getEmail()));
         }
 
         // Ziska pocet clenu tymu
