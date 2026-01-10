@@ -229,10 +229,10 @@ public class RobotService {
         validateRobotName(name);
 
         // overeni unikatnosti jmena robota v ramci rocniku souteze
-        if (this.robotRepository.findByName(name).isPresent()) {
-            throw new Exception(
-                    String.format("failure, robot with name [%s] already exists in the year [%d]", name, year));
-        }
+        //if (this.robotRepository.findByName(name).isPresent()) {
+        //    throw new Exception(
+        //            String.format("failure, robot with name [%s] already exists in the year [%d]", name, year));
+        //}
 
         // ulozi robota do databaze
         Robot r = new Robot(robotObj.getName(), 0, registration);
