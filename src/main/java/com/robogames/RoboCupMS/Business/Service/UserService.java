@@ -1,17 +1,14 @@
 package com.robogames.RoboCupMS.Business.Service;
 
-// import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-// import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Business.Object.UserEditObj;
-// import com.robogames.RoboCupMS.Business.Security.RegistrationObj;
 import com.robogames.RoboCupMS.Entity.Role;
 import com.robogames.RoboCupMS.Entity.TeamInvitation;
 import com.robogames.RoboCupMS.Entity.UserRC;
@@ -22,14 +19,6 @@ import com.robogames.RoboCupMS.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-
-//import org.keycloak.admin.client.Keycloak;
-//import org.keycloak.admin.client.resource.RealmResource;
-//import org.keycloak.admin.client.resource.UsersResource;
-//import org.keycloak.representations.idm.UserRepresentation;
 
 /**
  * Zajistuje spravu uzivatelu v systemu

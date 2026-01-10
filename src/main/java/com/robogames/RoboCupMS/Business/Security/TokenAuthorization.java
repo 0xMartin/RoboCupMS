@@ -59,9 +59,13 @@ public class TokenAuthorization extends OncePerRequestFilter {
 	private static final String ERROR_TOKEN_EXPIRED = "TOKEN_EXPIRED";
 	private static final String ERROR_TOKEN_INVALID = "TOKEN_INVALID";
 	private static final String ERROR_NO_ROLE = "NO_ROLE";
+	private static final String ERROR_USER_BANNED = "USER_BANNED";
 
 	// Flag pro rozliseni expirovaneho tokenu
 	private boolean tokenExpired = false;
+
+	// Flag pro rozliseni zabanovaneho uzivatele
+	private boolean userBanned = false;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -79,6 +83,7 @@ public class TokenAuthorization extends OncePerRequestFilter {
 
 		// reset flag
 		this.tokenExpired = false;
+		this.userBanned = false;
 
 		// validace tokenu
 		String errorCode;
@@ -102,6 +107,10 @@ public class TokenAuthorization extends OncePerRequestFilter {
 				errorCode = ERROR_TOKEN_MISSING;
 				msg = "Access token is missing";
 				httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
+			} else if (this.userBanned) {
+				errorCode = ERROR_USER_BANNED;
+				msg = "Your account has been banned";
+				httpStatus = HttpServletResponse.SC_FORBIDDEN;
 			} else if (this.tokenExpired) {
 				errorCode = ERROR_TOKEN_EXPIRED;
 				msg = "Access token has expired";
@@ -187,6 +196,13 @@ public class TokenAuthorization extends OncePerRequestFilter {
 		if (!user.isPresent()) {
 			return null;
 		}
+
+		// overi zda uzivatel neni zabanovan
+		if (user.get().isBanned()) {
+			this.userBanned = true;
+			return null;
+		}
+
 		// overi casovou platnost
 		Date now = new java.util.Date(Calendar.getInstance().getTime().getTime());
 		long diff = now.getTime() - user.get().getLastAccessTime().getTime();

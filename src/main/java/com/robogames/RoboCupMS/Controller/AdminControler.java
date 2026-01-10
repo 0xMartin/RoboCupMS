@@ -330,4 +330,37 @@ public class AdminControler {
             return ResponseHandler.error(ex.getMessage());
         }
     }
+
+    // ==================== USER BAN OPERATIONS ==========================================================
+    // ===================================================================================================
+
+    /**
+     * Zabanuje uzivatele - uzivatel nebude moci pristupovat do systemu
+     * 
+     * @param id ID uzivatele
+     * @return Zabanovany uzivatel
+     */
+    @PutMapping("/user/ban")
+    Response banUser(@RequestParam Long id) {
+        try {
+            return ResponseHandler.response(this.adminService.banUser(id));
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Odbanuje uzivatele - uzivatel bude moci opet pristupovat do systemu
+     * 
+     * @param id ID uzivatele
+     * @return Odbanovany uzivatel
+     */
+    @PutMapping("/user/unban")
+    Response unbanUser(@RequestParam Long id) {
+        try {
+            return ResponseHandler.response(this.adminService.unbanUser(id));
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
 }

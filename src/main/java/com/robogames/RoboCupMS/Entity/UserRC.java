@@ -100,6 +100,12 @@ public class UserRC {
     private Date lastAccessTime;
 
     /**
+     * Priznak, zda je uzivatel zabanovan (nema pristup do systemu)
+     */
+    @Column(name = "banned", nullable = false)
+    private boolean banned = false;
+
+    /**
      * Vytvori noveho uzivatele robosouteze
      */
     public UserRC() {
@@ -364,6 +370,28 @@ public class UserRC {
      */
     public void setToken(String _token) {
         this.token = _token;
+    }
+
+    /**
+     * Zjisti, zda je uzivatel zabanovan
+     * 
+     * @return true pokud je uzivatel zabanovan
+     */
+    public boolean isBanned() {
+        return this.banned;
+    }
+
+    /**
+     * Nastavi stav banu uzivatele
+     * 
+     * @param _banned true pro zabanovat, false pro odbanovat
+     */
+    public void setBanned(boolean _banned) {
+        this.banned = _banned;
+        if (_banned) {
+            // pri banu uzivatele zneplatni jeho pristupovy token
+            this.token = null;
+        }
     }
 
 }

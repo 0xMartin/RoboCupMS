@@ -28,6 +28,7 @@ import com.robogames.RoboCupMS.Repository.TeamRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -801,5 +802,65 @@ public class AdminService {
         }
 
         return this.robotRepository.save(robot);
+    }
+
+    // ==================== USER BAN OPERATIONS ====================
+
+    /**
+     * Zabanuje uzivatele - uzivatel nebude moci pristupovat do systemu
+     * 
+     * @param userId ID uzivatele
+     * @return Zabanovany uzivatel
+     * @throws Exception
+     */
+    @Transactional
+    public UserRC banUser(Long userId) throws Exception {
+        // Ziskej aktualne prihlaseneho uzivatele
+        UserRC currentUser = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        
+        // Kontrola, ze uzivatel nebanuje sam sebe
+        if (currentUser.getID() == userId) {
+            throw new Exception("failure, you cannot ban yourself");
+        }
+
+        Optional<UserRC> userOpt = this.userRepository.findById(userId);
+        if (!userOpt.isPresent()) {
+            throw new Exception(String.format("failure, user with ID [%d] not found", userId));
+        }
+        UserRC user = userOpt.get();
+
+        if (user.isBanned()) {
+            throw new Exception("failure, user is already banned");
+        }
+
+        // Zneplatni token - okamzite odhlaseni
+        user.setToken(null);
+        user.setBanned(true);
+
+        return this.userRepository.save(user);
+    }
+
+    /**
+     * Odbanuje uzivatele - uzivatel bude moci opet pristupovat do systemu
+     * 
+     * @param userId ID uzivatele
+     * @return Odbanovany uzivatel
+     * @throws Exception
+     */
+    @Transactional
+    public UserRC unbanUser(Long userId) throws Exception {
+        Optional<UserRC> userOpt = this.userRepository.findById(userId);
+        if (!userOpt.isPresent()) {
+            throw new Exception(String.format("failure, user with ID [%d] not found", userId));
+        }
+        UserRC user = userOpt.get();
+
+        if (!user.isBanned()) {
+            throw new Exception("failure, user is not banned");
+        }
+
+        user.setBanned(false);
+
+        return this.userRepository.save(user);
     }
 }

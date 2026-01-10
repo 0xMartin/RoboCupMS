@@ -218,6 +218,19 @@ public class AuthService {
 
         if (user.isPresent()) {
             targetUser = user.get();
+            
+            // kontrola zda uzivatel neni zabanovan
+            if (targetUser.isBanned()) {
+                // ulozime refresh token aby sme mohli uzivatele odhlasit z Keycloaku
+                if (refreshToken != null) {
+                    targetUser.setKeycloakRefreshToken(refreshToken);
+                    this.repository.save(targetUser);
+                }
+                // odhlasime uzivatele z Keycloaku na pozadi
+                logoutFromKeycloak(targetUser);
+                throw new Exception("USER_BANNED");
+            }
+            
             // prihlasi uzivatele -> vygeneruje pristupovy token
             user_access_token = TokenAuthorization.generateAccessTokenForUser(targetUser, this.repository);
         } else {
