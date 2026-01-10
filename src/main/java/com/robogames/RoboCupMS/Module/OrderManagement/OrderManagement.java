@@ -5,9 +5,11 @@ import java.util.List;
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Response;
 import com.robogames.RoboCupMS.ResponseHandler;
+import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Entity.RobotMatch;
 import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.MultiMatchGroupObj;
+import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.ScheduledMatchInfo;
 import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Service.OrderManagementService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -151,6 +153,34 @@ public class OrderManagement {
             return ResponseHandler.error(ex.getMessage());
         }
         return ResponseHandler.response(creatorIdentifier);
+    }
+
+    /**
+     * Ziska seznam vsech naplanovaných zapasu (WAITING, REMATCH) pro verejne zobrazeni.
+     * Tento endpoint je verejny - neni vyzadovana autentizace.
+     * 
+     * @param disciplineIds Volitelny seznam ID disciplin pro filtrovani
+     * @param categories Volitelny seznam kategorii pro filtrovani (JUNIOR, SENIOR, OPEN)
+     * @return Seznam naplanovaných zapasu s informacemi o robotech a týmech
+     */
+    @GetMapping("/scheduledMatches")
+    Response getScheduledMatches(
+            @RequestParam(required = false) List<Long> disciplineIds,
+            @RequestParam(required = false) List<String> categories) {
+        try {
+            List<ECategory> categoryEnums = null;
+            if (categories != null && !categories.isEmpty()) {
+                categoryEnums = categories.stream()
+                        .map(c -> ECategory.valueOf(c.toUpperCase()))
+                        .toList();
+            }
+            List<ScheduledMatchInfo> matches = this.competitionEvaluationService.getAllScheduledMatches(disciplineIds, categoryEnums);
+            return ResponseHandler.response(matches);
+        } catch (IllegalArgumentException ex) {
+            return ResponseHandler.error("Invalid category value: " + ex.getMessage());
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
     }
 
 }

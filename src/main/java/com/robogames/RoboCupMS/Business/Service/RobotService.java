@@ -10,6 +10,7 @@ import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Object.RobotObj;
 import com.robogames.RoboCupMS.Business.Object.RobotProfile;
+import com.robogames.RoboCupMS.Business.Object.RobotMatchInfo;
 import com.robogames.RoboCupMS.Entity.Discipline;
 import com.robogames.RoboCupMS.Entity.Robot;
 import com.robogames.RoboCupMS.Entity.Team;
@@ -484,6 +485,20 @@ public class RobotService {
         }
 
         return registration.get();
+    }
+
+    /**
+     * Ziska seznam vsech zapasu robota
+     * 
+     * @param id ID robota
+     * @return Seznam zapasu robota
+     * @throws Exception
+     */
+    public List<RobotMatchInfo> getRobotMatches(Long id) throws Exception {
+        Robot robot = get(id);
+        return robot.getMatches().stream()
+                .map(RobotMatchInfo::new)
+                .collect(Collectors.toList());
     }
 
 }

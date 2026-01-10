@@ -8,6 +8,7 @@ import com.robogames.RoboCupMS.ResponseHandler;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Business.Object.RobotObj;
 import com.robogames.RoboCupMS.Business.Object.RobotProfile;
+import com.robogames.RoboCupMS.Business.Object.RobotMatchInfo;
 import com.robogames.RoboCupMS.Business.Service.RobotService;
 import com.robogames.RoboCupMS.Entity.Robot;
 
@@ -63,6 +64,23 @@ public class RobotControler {
             return ResponseHandler.error(ex.getMessage());
         }
         return ResponseHandler.response(profile);
+    }
+
+    /**
+     * Navrati vsechny zapasy robota (odehrane i naplanovane)
+     * 
+     * @param id ID robota
+     * @return Seznam zapasu robota
+     */
+    @GetMapping("/matches")
+    Response getRobotMatches(@RequestParam Long id) {
+        List<RobotMatchInfo> matches;
+        try {
+            matches = this.robotService.getRobotMatches(id);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+        return ResponseHandler.response(matches);
     }
 
     /**

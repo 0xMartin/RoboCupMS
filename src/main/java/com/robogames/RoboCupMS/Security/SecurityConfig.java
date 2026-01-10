@@ -60,7 +60,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                         // vysledky souteze (dostupne i pro verejnost)
                         GlobalConfig.MODULE_PREFIX + "/orderManagement/currentMatches",
-                        GlobalConfig.MODULE_PREFIX + "/orderManagement/upcommingMatches"
+                        GlobalConfig.MODULE_PREFIX + "/orderManagement/upcommingMatches",
+                        GlobalConfig.MODULE_PREFIX + "/orderManagement/scheduledMatches"
         };
 
         @Autowired

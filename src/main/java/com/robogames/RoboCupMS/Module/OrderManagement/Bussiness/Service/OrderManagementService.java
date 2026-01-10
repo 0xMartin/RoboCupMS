@@ -23,6 +23,7 @@ import com.robogames.RoboCupMS.Entity.Robot;
 import com.robogames.RoboCupMS.Entity.RobotMatch;
 import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.MatchQueue;
 import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.MultiMatchGroupObj;
+import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.ScheduledMatchInfo;
 import com.robogames.RoboCupMS.Repository.CompetitionRepository;
 import com.robogames.RoboCupMS.Repository.MatchGroupRepository;
 import com.robogames.RoboCupMS.Repository.MatchStateRepository;
@@ -33,6 +34,8 @@ import com.robogames.RoboCupMS.Repository.RobotRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -78,11 +81,11 @@ public class OrderManagementService {
                 if (sender instanceof MatchService) {
                     if (data instanceof MatchService.Message) {
                         MatchService.Message msg = (MatchService.Message) data;
-                        if (msg.equals(MatchService.Message.WRITE_SCORE)
+                        if (msg.equals(MatchService.Message.CREATE)
+                                || msg.equals(MatchService.Message.WRITE_SCORE)
                                 || msg.equals(MatchService.Message.REMATCH)
                                 || msg.equals(MatchService.Message.REMOVE)
-                                || msg.equals(MatchService.Message.REMOVE_ALL)
-                                || msg.equals(MatchService.Message.WRITE_SCORE)) {
+                                || msg.equals(MatchService.Message.REMOVE_ALL)) {
                             // refresh systemu pro rizeni poradi
                             refreshSystem();
                         }
@@ -90,6 +93,42 @@ public class OrderManagementService {
                 }
             }
         });
+    }
+
+    /**
+     * Automaticky spusti Order Management Service po startu aplikace,
+     * pokud existuje nejaka zahajene soutez.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        logger.info("Application started, checking for active competitions...");
+        
+        // Najde vsechny zahajene souteze
+        List<Competition> startedCompetitions = this.competitionRepository.findAll()
+                .stream()
+                .filter(Competition::getStarted)
+                .collect(Collectors.toList());
+        
+        if (!startedCompetitions.isEmpty()) {
+            // Vezme posledni (nejnovejsi) zahajenou soutez
+            Competition latestStarted = startedCompetitions.stream()
+                    .max((c1, c2) -> Integer.compare(c1.getYear(), c2.getYear()))
+                    .orElse(null);
+            
+            if (latestStarted != null) {
+                try {
+                    logger.info("Found active competition for year {}, starting Order Management Service...", 
+                            latestStarted.getYear());
+                    this.run(latestStarted.getYear());
+                    logger.info("Order Management Service started successfully for year {}", 
+                            latestStarted.getYear());
+                } catch (Exception e) {
+                    logger.error("Failed to start Order Management Service: {}", e.getMessage());
+                }
+            }
+        } else {
+            logger.info("No active competitions found, Order Management Service not started");
+        }
     }
 
     /**
@@ -218,6 +257,44 @@ public class OrderManagementService {
                         || m.getState().getName() == EMatchState.REMATCH));
 
         return matches.collect(Collectors.toList());
+    }
+
+    /**
+     * Navrati seznam vsech cekajicich zapasu (WAITING nebo REMATCH) pro verejne zobrazeni.
+     * Muze byt filtrovano podle disciplin a kategorii.
+     * 
+     * @param disciplineIds Seznam ID disciplin pro filtrovani (null = vsechny)
+     * @param categories    Seznam kategorii pro filtrovani (null = vsechny)
+     * @return Seznam zapasu s detailnimi informacemi
+     */
+    public List<ScheduledMatchInfo> getAllScheduledMatches(List<Long> disciplineIds, List<ECategory> categories) {
+        // Ziskame vsechny zapasy ze vsech front
+        List<ScheduledMatchInfo> result = new ArrayList<>();
+        
+        OrderManagementService.MATCH_GUEUES.forEach((playgroundId, queue) -> {
+            queue.getMatches().stream()
+                .filter(m -> m.getState().getName() == EMatchState.WAITING 
+                          || m.getState().getName() == EMatchState.REMATCH)
+                .filter(m -> disciplineIds == null || disciplineIds.isEmpty() 
+                          || disciplineIds.contains(m.getRobot().getDiscipline().getID()))
+                .filter(m -> categories == null || categories.isEmpty() 
+                          || categories.contains(m.getRobot().getCategory()))
+                .forEach(m -> result.add(new ScheduledMatchInfo(m)));
+        });
+        
+        // Pokud service nebezi, zkusime nacist primo z DB
+        if (OrderManagementService.YEAR == -1) {
+            this.robotMatchRepository.findAll().stream()
+                .filter(m -> m.getState().getName() == EMatchState.WAITING 
+                          || m.getState().getName() == EMatchState.REMATCH)
+                .filter(m -> disciplineIds == null || disciplineIds.isEmpty() 
+                          || disciplineIds.contains(m.getRobot().getDiscipline().getID()))
+                .filter(m -> categories == null || categories.isEmpty() 
+                          || categories.contains(m.getRobot().getCategory()))
+                .forEach(m -> result.add(new ScheduledMatchInfo(m)));
+        }
+        
+        return result;
     }
 
     /**
