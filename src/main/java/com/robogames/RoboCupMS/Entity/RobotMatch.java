@@ -197,6 +197,54 @@ public class RobotMatch {
     }
 
     /**
+     * Navrati nazev hriste
+     * 
+     * @return Nazev hriste
+     */
+    public String getPlaygroundName() {
+        return this.playground.getName();
+    }
+
+    /**
+     * Navrati cislo hriste
+     * 
+     * @return Cislo hriste
+     */
+    public int getPlaygroundNumber() {
+        return this.playground.getNumber();
+    }
+
+    /**
+     * Navrati nazev tymu
+     * 
+     * @return Nazev tymu
+     */
+    public String getTeamName() {
+        return this.robot.getTeamRegistration().getTeam().getName();
+    }
+
+    /**
+     * Navrati nazev discipliny
+     * 
+     * @return Nazev discipliny
+     */
+    public String getDisciplineName() {
+        if (this.robot.getDiscipline() == null) {
+            return "";
+        }
+        return this.robot.getDiscipline().getName();
+    }
+
+    /**
+     * Navrati kategorii robota
+     * 
+     * @return Kategorie robota
+     */
+    public String getCategory() {
+        return this.robot.getCategory().toString();
+    }
+
+    /**
      * Nastavi score zapasu
      * 
      * @param _score Score
