@@ -1,5 +1,7 @@
 package com.robogames.RoboCupMS.Business.Object;
 
+import java.time.LocalDateTime;
+
 import com.robogames.RoboCupMS.Business.Enum.EMatchState;
 import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
@@ -32,6 +34,7 @@ public class RobotMatchInfo {
     private String teamBName;
     
     private boolean twoRobotMatch;
+    private LocalDateTime timestamp;
     
     public RobotMatchInfo() {
     }
@@ -70,6 +73,7 @@ public class RobotMatchInfo {
         }
         
         this.twoRobotMatch = match.getRobotB() != null;
+        this.timestamp = match.getTimestamp();
     }
 
     public long getId() {
@@ -138,5 +142,9 @@ public class RobotMatchInfo {
 
     public boolean isTwoRobotMatch() {
         return twoRobotMatch;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
     }
 }

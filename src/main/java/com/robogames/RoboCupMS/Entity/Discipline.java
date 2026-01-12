@@ -17,7 +17,6 @@ import com.robogames.RoboCupMS.AppInit;
 import com.robogames.RoboCupMS.Business.Enum.EScoreAggregation;
 import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 import com.robogames.RoboCupMS.Repository.ScoreAggregationRepository;
-import com.robogames.RoboCupMS.Repository.ScoreTypeRepository;
 
 @Entity(name = "discipline")
 public class Discipline {

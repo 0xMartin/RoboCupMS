@@ -9,6 +9,7 @@ import com.robogames.RoboCupMS.Business.Enum.EMatchState;
 import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
 import com.robogames.RoboCupMS.Business.Object.MatchScoreObj;
 import com.robogames.RoboCupMS.Business.Object.RobotMatchObj;
+import com.robogames.RoboCupMS.Entity.Competition;
 import com.robogames.RoboCupMS.Entity.Discipline;
 import com.robogames.RoboCupMS.Entity.MatchState;
 import com.robogames.RoboCupMS.Entity.Playground;
@@ -143,6 +144,14 @@ public class MatchService {
                         String.format("failure, robot with ID [%d] not exists", matchObj.getRobotAID()));
             }
             robotA = robotAOpt.get();
+
+            // Check if competition has started
+            Competition competition = robotA.getTeamRegistration().getCompetition();
+            if (!competition.getStarted()) {
+                throw new Exception(
+                        String.format("failure, competition year [%d] has not started yet. Matches cannot be created before the competition starts.",
+                                competition.getYear()));
+            }
 
             // Verify robot is confirmed
             if (!robotA.getConfirmed()) {
