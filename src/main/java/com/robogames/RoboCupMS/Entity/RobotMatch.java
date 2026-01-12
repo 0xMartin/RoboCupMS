@@ -12,6 +12,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
 
@@ -148,6 +149,7 @@ public class RobotMatch {
      * 
      * @return Match ID
      */
+    @JsonProperty("id")
     public Long getID() {
         return this.id;
     }

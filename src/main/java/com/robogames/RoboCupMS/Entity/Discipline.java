@@ -12,6 +12,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.robogames.RoboCupMS.AppInit;
 import com.robogames.RoboCupMS.Business.Enum.EScoreAggregation;
 import com.robogames.RoboCupMS.Business.Enum.EScoreType;
@@ -130,6 +131,7 @@ public class Discipline {
      * 
      * @return ID
      */
+    @JsonProperty("id")
     public Long getID() {
         return this.id;
     }

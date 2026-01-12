@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 
 /**
@@ -44,6 +45,7 @@ public class ScoreType {
      * 
      * @return The ID
      */
+    @JsonProperty("id")
     public Long getID() {
         return id;
     }

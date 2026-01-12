@@ -1,6 +1,7 @@
 package com.robogames.RoboCupMS.Business.Object;
 
 import com.robogames.RoboCupMS.Business.Enum.EMatchState;
+import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
 import com.robogames.RoboCupMS.Entity.RobotMatch;
 
@@ -9,32 +10,37 @@ import com.robogames.RoboCupMS.Entity.RobotMatch;
  */
 public class RobotMatchInfo {
 
-    private long matchId;
+    private long id;
     private Float scoreA;
     private Float scoreB;
-    private EMatchState state;
+    private EMatchState stateName;
     private String playgroundName;
     private int playgroundNumber;
-    private ETournamentPhase phase;
+    private ETournamentPhase phaseName;
+    private EScoreType scoreTypeName;
     
     // Robot A info
-    private Long robotAId;
+    private Long robotAID;
+    private Long robotANumber;
     private String robotAName;
+    private String teamAName;
     
     // Robot B info (null for single-robot matches)
-    private Long robotBId;
+    private Long robotBID;
+    private Long robotBNumber;
     private String robotBName;
+    private String teamBName;
     
-    private boolean isTwoRobotMatch;
+    private boolean twoRobotMatch;
     
     public RobotMatchInfo() {
     }
 
     public RobotMatchInfo(RobotMatch match) {
-        this.matchId = match.getID();
+        this.id = match.getID();
         this.scoreA = match.getScoreA();
         this.scoreB = match.getScoreB();
-        this.state = match.getState().getName();
+        this.stateName = match.getState().getName();
         
         if (match.getPlayground() != null) {
             this.playgroundName = match.getPlayground().getName();
@@ -42,24 +48,32 @@ public class RobotMatchInfo {
         }
         
         if (match.getPhase() != null) {
-            this.phase = match.getPhase().getName();
+            this.phaseName = match.getPhase().getName();
+        }
+        
+        if (match.getScoreType() != null) {
+            this.scoreTypeName = match.getScoreType().getName();
         }
         
         if (match.getRobotA() != null) {
-            this.robotAId = match.getRobotA().getID();
+            this.robotAID = match.getRobotA().getID();
+            this.robotANumber = match.getRobotA().getNumber();
             this.robotAName = match.getRobotA().getName();
+            this.teamAName = match.getRobotA().getTeamRegistration().getTeam().getName();
         }
         
         if (match.getRobotB() != null) {
-            this.robotBId = match.getRobotB().getID();
+            this.robotBID = match.getRobotB().getID();
+            this.robotBNumber = match.getRobotB().getNumber();
             this.robotBName = match.getRobotB().getName();
+            this.teamBName = match.getRobotB().getTeamRegistration().getTeam().getName();
         }
         
-        this.isTwoRobotMatch = match.getRobotB() != null;
+        this.twoRobotMatch = match.getRobotB() != null;
     }
 
-    public long getMatchId() {
-        return matchId;
+    public long getId() {
+        return id;
     }
 
     public Float getScoreA() {
@@ -70,8 +84,8 @@ public class RobotMatchInfo {
         return scoreB;
     }
 
-    public EMatchState getState() {
-        return state;
+    public EMatchState getStateName() {
+        return stateName;
     }
 
     public String getPlaygroundName() {
@@ -82,27 +96,47 @@ public class RobotMatchInfo {
         return playgroundNumber;
     }
 
-    public ETournamentPhase getPhase() {
-        return phase;
+    public ETournamentPhase getPhaseName() {
+        return phaseName;
     }
 
-    public Long getRobotAId() {
-        return robotAId;
+    public EScoreType getScoreTypeName() {
+        return scoreTypeName;
+    }
+
+    public Long getRobotAID() {
+        return robotAID;
+    }
+
+    public Long getRobotANumber() {
+        return robotANumber;
     }
 
     public String getRobotAName() {
         return robotAName;
     }
 
-    public Long getRobotBId() {
-        return robotBId;
+    public String getTeamAName() {
+        return teamAName;
+    }
+
+    public Long getRobotBID() {
+        return robotBID;
+    }
+
+    public Long getRobotBNumber() {
+        return robotBNumber;
     }
 
     public String getRobotBName() {
         return robotBName;
     }
 
+    public String getTeamBName() {
+        return teamBName;
+    }
+
     public boolean isTwoRobotMatch() {
-        return isTwoRobotMatch;
+        return twoRobotMatch;
     }
 }
