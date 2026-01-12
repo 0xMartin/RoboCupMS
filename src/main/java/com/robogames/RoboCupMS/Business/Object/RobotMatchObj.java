@@ -38,6 +38,21 @@ public class RobotMatchObj {
      */
     private Boolean highScoreWin;
 
+    /**
+     * Group name for grouping matches (e.g., for bracket visualization)
+     */
+    private String group;
+
+    /**
+     * X position for visual representation in bracket/matrix view
+     */
+    private Integer visualX;
+
+    /**
+     * Y position for visual representation in bracket/matrix view
+     */
+    private Integer visualY;
+
     public RobotMatchObj() {
     }
 
@@ -97,6 +112,30 @@ public class RobotMatchObj {
 
     public void setHighScoreWin(Boolean highScoreWin) {
         this.highScoreWin = highScoreWin;
+    }
+
+    public String getGroup() {
+        return this.group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    public Integer getVisualX() {
+        return this.visualX;
+    }
+
+    public void setVisualX(Integer visualX) {
+        this.visualX = visualX;
+    }
+
+    public Integer getVisualY() {
+        return this.visualY;
+    }
+
+    public void setVisualY(Integer visualY) {
+        this.visualY = visualY;
     }
 
 }

@@ -35,6 +35,7 @@ public class RobotMatchInfo {
     
     private boolean twoRobotMatch;
     private LocalDateTime timestamp;
+    private String group;
     
     public RobotMatchInfo() {
     }
@@ -74,6 +75,7 @@ public class RobotMatchInfo {
         
         this.twoRobotMatch = match.getRobotB() != null;
         this.timestamp = match.getTimestamp();
+        this.group = match.getGroup();
     }
 
     public long getId() {
@@ -146,5 +148,9 @@ public class RobotMatchInfo {
 
     public LocalDateTime getTimestamp() {
         return timestamp;
+    }
+
+    public String getGroup() {
+        return group;
     }
 }

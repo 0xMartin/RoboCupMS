@@ -100,6 +100,25 @@ public class RobotMatch {
     private Boolean highScoreWin;
 
     /**
+     * Group name for grouping matches (e.g., for bracket visualization)
+     * Can be null if match is not assigned to any group
+     */
+    @Column(name = "match_group", nullable = true)
+    private String group;
+
+    /**
+     * X position for visual representation in bracket/matrix view
+     */
+    @Column(name = "visual_x", nullable = true)
+    private Integer visualX;
+
+    /**
+     * Y position for visual representation in bracket/matrix view
+     */
+    @Column(name = "visual_y", nullable = true)
+    private Integer visualY;
+
+    /**
      * Default constructor - creates a scheduled match
      */
     public RobotMatch() {
@@ -107,6 +126,9 @@ public class RobotMatch {
         this.scoreB = null;
         this.highScoreWin = true;
         this.timestamp = LocalDateTime.now();
+        this.group = null;
+        this.visualX = 0;
+        this.visualY = 0;
     }
 
     /**
@@ -134,6 +156,9 @@ public class RobotMatch {
         this.scoreA = null;
         this.scoreB = null;
         this.timestamp = LocalDateTime.now();
+        this.group = null;
+        this.visualX = 0;
+        this.visualY = 0;
     }
 
     @PrePersist
@@ -344,6 +369,33 @@ public class RobotMatch {
     }
 
     /**
+     * Get the group name for this match
+     * 
+     * @return Group name or null if not assigned to any group
+     */
+    public String getGroup() {
+        return this.group;
+    }
+
+    /**
+     * Get the visual X position for bracket/matrix view
+     * 
+     * @return X position or null if not set
+     */
+    public Integer getVisualX() {
+        return this.visualX;
+    }
+
+    /**
+     * Get the visual Y position for bracket/matrix view
+     * 
+     * @return Y position or null if not set
+     */
+    public Integer getVisualY() {
+        return this.visualY;
+    }
+
+    /**
      * Get the discipline name (from playground)
      * 
      * @return Discipline name
@@ -549,6 +601,33 @@ public class RobotMatch {
      */
     public void setHighScoreWin(Boolean highScoreWin) {
         this.highScoreWin = highScoreWin;
+    }
+
+    /**
+     * Set the group name for this match
+     * 
+     * @param group Group name or null
+     */
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    /**
+     * Set the visual X position for bracket/matrix view
+     * 
+     * @param visualX X position or null
+     */
+    public void setVisualX(Integer visualX) {
+        this.visualX = visualX;
+    }
+
+    /**
+     * Set the visual Y position for bracket/matrix view
+     * 
+     * @param visualY Y position or null
+     */
+    public void setVisualY(Integer visualY) {
+        this.visualY = visualY;
     }
 
     /**

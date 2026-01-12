@@ -101,6 +101,34 @@ public class MatchService {
     }
 
     /**
+     * Get all distinct group names for matches in a specific competition year
+     * 
+     * @param year Competition year
+     * @return List of distinct group names (excluding null)
+     */
+    public List<String> getGroupsByYear(int year) {
+        return this.allByYear(year).stream()
+                .map(RobotMatch::getGroup)
+                .filter(group -> group != null && !group.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all matches for a specific group in a competition year
+     * 
+     * @param year Competition year
+     * @param group Group name
+     * @return List of matches in that group
+     */
+    public List<RobotMatch> getByGroup(int year, String group) {
+        return this.allByYear(year).stream()
+                .filter(m -> group.equals(m.getGroup()))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Get all matches for a specific playground
      * 
      * @param playgroundID Playground ID
@@ -240,6 +268,18 @@ public class MatchService {
         // Create and save the match
         RobotMatch match = new RobotMatch(robotA, robotB, playground.get(), state,
                 scoreType, phase, nextMatch, highScoreWin);
+        
+        // Set group and visual position if provided
+        if (matchObj.getGroup() != null) {
+            match.setGroup(matchObj.getGroup());
+        }
+        if (matchObj.getVisualX() != null) {
+            match.setVisualX(matchObj.getVisualX());
+        }
+        if (matchObj.getVisualY() != null) {
+            match.setVisualY(matchObj.getVisualY());
+        }
+        
         this.robotMatchRepository.save(match);
 
         // Send message to communication system
@@ -322,6 +362,19 @@ public class MatchService {
         // Update highScoreWin if provided
         if (matchObj.getHighScoreWin() != null) {
             match.setHighScoreWin(matchObj.getHighScoreWin());
+        }
+
+        // Update group if provided (can be set to null to remove from group)
+        if (matchObj.getGroup() != null) {
+            match.setGroup(matchObj.getGroup());
+        }
+
+        // Update visual position if provided
+        if (matchObj.getVisualX() != null) {
+            match.setVisualX(matchObj.getVisualX());
+        }
+        if (matchObj.getVisualY() != null) {
+            match.setVisualY(matchObj.getVisualY());
         }
 
         this.robotMatchRepository.save(match);

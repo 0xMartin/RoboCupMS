@@ -79,6 +79,39 @@ public class MatchControler {
     }
 
     /**
+     * Get all distinct group names for matches in a specific competition year
+     * 
+     * @param year Competition year
+     * @return List of group names
+     */
+    @GetMapping("/groups")
+    Response getGroups(@RequestParam int year) {
+        try {
+            List<String> groups = this.matchService.getGroupsByYear(year);
+            return ResponseHandler.response(groups);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Get all matches for a specific group in a competition year
+     * 
+     * @param year Competition year
+     * @param group Group name
+     * @return List of matches
+     */
+    @GetMapping("/byGroup")
+    Response getByGroup(@RequestParam int year, @RequestParam String group) {
+        try {
+            List<RobotMatch> matches = this.matchService.getByGroup(year, group);
+            return ResponseHandler.response(matches);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
      * Get all matches for a specific playground
      * 
      * @param playgroundID Playground ID
