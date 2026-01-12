@@ -6,6 +6,8 @@ import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Response;
 import com.robogames.RoboCupMS.ResponseHandler;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
+import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
+import com.robogames.RoboCupMS.Business.Object.MatchScoreObj;
 import com.robogames.RoboCupMS.Business.Object.RobotMatchObj;
 import com.robogames.RoboCupMS.Business.Service.MatchService;
 import com.robogames.RoboCupMS.Entity.RobotMatch;
@@ -22,6 +24,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controller for robot match management
+ */
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping(GlobalConfig.API_PREFIX + "/match")
@@ -31,9 +36,9 @@ public class MatchControler {
     private MatchService matchService;
 
     /**
-     * Navrati vsechny zapasy
+     * Get all matches
      * 
-     * @return Seznam vsech zapasu
+     * @return List of all matches
      */
     @GetMapping("/all")
     Response getAll() {
@@ -42,33 +47,115 @@ public class MatchControler {
     }
 
     /**
-     * Navrati vsechny zapasy pro konkretni rocnik
+     * Get match by ID
      * 
-     * @param year Rocnik souteze
-     * @return Seznam vsech zapasu
+     * @param id Match ID
+     * @return The match
      */
-    @GetMapping("/allByYear")
-    Response allByYear(@RequestParam int year) {
-        List<RobotMatch> matches;
+    @GetMapping("/getByID")
+    Response getByID(@RequestParam Long id) {
         try {
-            matches = this.matchService.allByYear(year);
+            RobotMatch match = this.matchService.getByID(id);
+            return ResponseHandler.response(match);
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
         }
-        return ResponseHandler.response(matches);
     }
 
     /**
-     * Naplanuje novy zapas
+     * Get all matches for a specific competition year
      * 
-     * @param robotMatchObj Nové parametry zapasu
-     * @return Informace o stavu provedeneho requestu
+     * @param year Competition year
+     * @return List of matches
+     */
+    @GetMapping("/allByYear")
+    Response allByYear(@RequestParam int year) {
+        try {
+            List<RobotMatch> matches = this.matchService.allByYear(year);
+            return ResponseHandler.response(matches);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Get all matches for a specific playground
+     * 
+     * @param playgroundID Playground ID
+     * @return List of matches
+     */
+    @GetMapping("/byPlayground")
+    Response getByPlayground(@RequestParam Long playgroundID) {
+        try {
+            List<RobotMatch> matches = this.matchService.getByPlayground(playgroundID);
+            return ResponseHandler.response(matches);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Get all waiting/scheduled matches for a playground
+     * 
+     * @param playgroundID Playground ID
+     * @return List of waiting matches
+     */
+    @GetMapping("/waitingByPlayground")
+    Response getWaitingMatches(@RequestParam Long playgroundID) {
+        try {
+            List<RobotMatch> matches = this.matchService.getWaitingMatches(playgroundID);
+            return ResponseHandler.response(matches);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Get matches by tournament phase
+     * 
+     * @param phase Tournament phase (PRELIMINARY, SEMIFINAL, FINAL, etc.)
+     * @return List of matches
+     */
+    @GetMapping("/byPhase")
+    Response getByPhase(@RequestParam ETournamentPhase phase) {
+        try {
+            List<RobotMatch> matches = this.matchService.getByPhase(phase);
+            return ResponseHandler.response(matches);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Create a new match (schedule it)
+     * Can be created without robots (just scheduled) or with one or two robots
+     * 
+     * @param matchObj Match parameters
+     * @return Created match info
      */
     @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @PostMapping("/create")
-    Response create(@RequestBody RobotMatchObj robotMatchObj) {
+    Response create(@RequestBody RobotMatchObj matchObj) {
         try {
-            this.matchService.create(robotMatchObj);
+            RobotMatch match = this.matchService.create(matchObj);
+            return ResponseHandler.response(match);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Update an existing match
+     * 
+     * @param id Match ID
+     * @param matchObj New match parameters
+     * @return Success message
+     */
+    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
+    @PutMapping("/update")
+    Response update(@RequestParam Long id, @RequestBody RobotMatchObj matchObj) {
+        try {
+            this.matchService.update(id, matchObj);
             return ResponseHandler.response("success");
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
@@ -76,14 +163,35 @@ public class MatchControler {
     }
 
     /**
-     * Odstrani zapas
+     * Assign robots to an existing match
      * 
-     * @param id ID zapasu
-     * @return Informace o stavu provedeneho requestu
+     * @param id Match ID
+     * @param robotAID Robot A ID (optional)
+     * @param robotBID Robot B ID (optional)
+     * @return Success message
+     */
+    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
+    @PutMapping("/assignRobots")
+    Response assignRobots(@RequestParam Long id, 
+                          @RequestParam(required = false) Long robotAID,
+                          @RequestParam(required = false) Long robotBID) {
+        try {
+            this.matchService.assignRobots(id, robotAID, robotBID);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Remove a match
+     * 
+     * @param id Match ID
+     * @return Success message
      */
     @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @DeleteMapping("/remove")
-    Response remove(@RequestParam long id) {
+    Response remove(@RequestParam Long id) {
         try {
             this.matchService.remove(id);
             return ResponseHandler.response("success");
@@ -93,35 +201,17 @@ public class MatchControler {
     }
 
     /**
-     * Odstrani vsechny zapasy, ktere nalezi do urcite skupiny
+     * Write scores for a match
+     * Automatically marks the match as done and handles bracket progression
      * 
-     * @param groudID ID skupiny, jejiz zapasy maji byt odstraneni
-     * @return Informace o stavu provedeneho requestu
-     */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
-    @DeleteMapping("/removeAll")
-    Response removeAll(@RequestParam long groupID) {
-        try {
-            int cnt = this.matchService.removeAll(groupID);
-            return ResponseHandler.response("success, removed [" + cnt + "]");
-
-        } catch (Exception ex) {
-            return ResponseHandler.error(ex.getMessage());
-        }
-    }
-
-    /**
-     * Zapise vysledne skore zapasu
-     * 
-     * @param id    ID zapasu
-     * @param score Skore zapasu
-     * @return Informace o stavu provedeneho requestu
+     * @param scoreObj Score data (matchID, scoreA, scoreB)
+     * @return Success message
      */
     @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @PutMapping("/writeScore")
-    Response writeScore(@RequestParam long id, @RequestParam float score) {
+    Response writeScore(@RequestBody MatchScoreObj scoreObj) {
         try {
-            this.matchService.writeScore(id, score);
+            this.matchService.writeScore(scoreObj);
             return ResponseHandler.response("success");
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
@@ -129,15 +219,14 @@ public class MatchControler {
     }
 
     /**
-     * Vyzada opetovne odegrani zapasu. Pokud jde o skupinovy zapas automaticky
-     * tento pozadavek vyzada i u ostatnich zapasu.
+     * Request a rematch - reset scores and mark for replay
      * 
-     * @param id ID zapasu
-     * @return Informace o stavu provedeneho requestu
+     * @param id Match ID
+     * @return Success message
      */
     @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @PutMapping("/rematch")
-    Response rematch(@RequestParam long id) {
+    Response rematch(@RequestParam Long id) {
         try {
             this.matchService.rematch(id);
             return ResponseHandler.response("success");

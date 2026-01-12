@@ -1,30 +1,32 @@
 package com.robogames.RoboCupMS.Business.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import com.robogames.RoboCupMS.Communication;
-import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Enum.EMatchState;
+import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
+import com.robogames.RoboCupMS.Business.Object.MatchScoreObj;
 import com.robogames.RoboCupMS.Business.Object.RobotMatchObj;
-import com.robogames.RoboCupMS.Entity.MatchGroup;
+import com.robogames.RoboCupMS.Entity.Discipline;
 import com.robogames.RoboCupMS.Entity.MatchState;
 import com.robogames.RoboCupMS.Entity.Playground;
 import com.robogames.RoboCupMS.Entity.Robot;
 import com.robogames.RoboCupMS.Entity.RobotMatch;
-import com.robogames.RoboCupMS.Repository.MatchGroupRepository;
+import com.robogames.RoboCupMS.Entity.ScoreType;
+import com.robogames.RoboCupMS.Entity.TournamentPhase;
 import com.robogames.RoboCupMS.Repository.MatchStateRepository;
 import com.robogames.RoboCupMS.Repository.PlaygroundRepository;
 import com.robogames.RoboCupMS.Repository.RobotMatchRepository;
 import com.robogames.RoboCupMS.Repository.RobotRepository;
+import com.robogames.RoboCupMS.Repository.TournamentPhaseRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Zajistuje spravu zapasu
+ * Service for managing robot matches
  */
 @Service
 public class MatchService {
@@ -42,217 +44,498 @@ public class MatchService {
     private PlaygroundRepository playgroundRepository;
 
     @Autowired
-    private MatchGroupRepository matchGroupRepository;
+    private TournamentPhaseRepository tournamentPhaseRepository;
 
     /**
-     * Typy zprav
+     * Message types for communication system
      */
     public static enum Message {
         CREATE,
         REMOVE,
-        REMOVE_ALL,
         WRITE_SCORE,
-        REMATCH
+        REMATCH,
+        UPDATE
     }
 
     /**
-     * Navrati vsechny zapasy
+     * Get all matches
      * 
-     * @return Seznam vsech zapasu
+     * @return List of all matches
      */
     public List<RobotMatch> getAll() {
-        List<RobotMatch> all = this.robotMatchRepository.findAll();
-        return all;
+        return this.robotMatchRepository.findAll();
     }
 
     /**
-     * Navrati vsechny zapasy pro konkretni rocnik
+     * Get match by ID
      * 
-     * @param year Rocnik souteze
-     * @return Seznam vsech zapasu
+     * @param id Match ID
+     * @return The match
+     * @throws Exception if match not found
+     */
+    public RobotMatch getByID(Long id) throws Exception {
+        Optional<RobotMatch> match = this.robotMatchRepository.findById(id);
+        if (!match.isPresent()) {
+            throw new Exception(String.format("failure, match with ID [%d] not exists", id));
+        }
+        return match.get();
+    }
+
+    /**
+     * Get all matches for a specific competition year
+     * 
+     * @param year Competition year
+     * @return List of matches for that year
      */
     public List<RobotMatch> allByYear(int year) {
-        Stream<RobotMatch> filter = this.robotMatchRepository.findAll().stream()
-                .filter((m) -> (m.getRobot().getTeamRegistration().getCompetitionYear() == year));
-        List<RobotMatch> out = new ArrayList<RobotMatch>();
-        filter.forEach((m) -> {
-            out.add(m);
-        });
-        return out;
+        return this.robotMatchRepository.findAll().stream()
+                .filter(m -> {
+                    // Check if match has any robot to determine the year
+                    if (m.getRobotA() != null) {
+                        return m.getRobotA().getTeamRegistration().getCompetitionYear() == year;
+                    }
+                    return false;
+                })
+                .collect(Collectors.toList());
     }
 
     /**
-     * Naplanuje novy zapas
+     * Get all matches for a specific playground
      * 
-     * @param robotMatchObj Nové parametry zápasu
+     * @param playgroundID Playground ID
+     * @return List of matches on that playground
      */
-    public void create(RobotMatchObj robotMatchObj)
-            throws Exception {
-        // overi zda robot existuje
-        Optional<Robot> robot = this.robotRepository.findById(robotMatchObj.getRobotID());
-        if (!robot.isPresent()) {
-            throw new Exception(String.format("failure, robot with ID [%d] not exists", robotMatchObj.getRobotID()));
+    public List<RobotMatch> getByPlayground(Long playgroundID) throws Exception {
+        Optional<Playground> playground = this.playgroundRepository.findById(playgroundID);
+        if (!playground.isPresent()) {
+            throw new Exception(String.format("failure, playground with ID [%d] not exists", playgroundID));
         }
+        return this.robotMatchRepository.findAll().stream()
+                .filter(m -> m.getPlaygroundID().equals(playgroundID))
+                .collect(Collectors.toList());
+    }
 
-        // overi zda hriste existuje
-        Optional<Playground> playground = this.playgroundRepository.findById(robotMatchObj.getPlaygroundID());
+    /**
+     * Create a new match (schedule it)
+     * Can be created without robots (just scheduled) or with one or two robots
+     * 
+     * @param matchObj Match parameters
+     * @return The created match
+     * @throws Exception on validation errors
+     */
+    public RobotMatch create(RobotMatchObj matchObj) throws Exception {
+        // Validate playground exists
+        Optional<Playground> playground = this.playgroundRepository.findById(matchObj.getPlaygroundID());
         if (!playground.isPresent()) {
             throw new Exception(
-                    String.format("failure, playground with ID [%d] not exists", robotMatchObj.getPlaygroundID()));
+                    String.format("failure, playground with ID [%d] not exists", matchObj.getPlaygroundID()));
         }
 
-        // overi zda ma robot povoleno zapasit (registrace byla uspesna => povoluje se
-        // pri kontrole pred zacatkem souteze)
-        if (!robot.get().getConfirmed()) {
-            throw new Exception(
-                    String.format("failure, robot with ID [%d] is not confirmed", robotMatchObj.getRobotID()));
-        }
+        Robot robotA = null;
+        Robot robotB = null;
+        Discipline discipline = playground.get().getDiscipline();
 
-        // overi zda jiz nebyl prekrocen maximalni pocet zapasu "pokusu"
-        int maxRounds = robot.get().getDiscipline().getMaxRounds();
-        if (maxRounds >= 0) {
-            if (robot.get().getMatches().size() >= maxRounds) {
+        // Validate robot A if provided
+        if (matchObj.getRobotAID() != null) {
+            Optional<Robot> robotAOpt = this.robotRepository.findById(matchObj.getRobotAID());
+            if (!robotAOpt.isPresent()) {
                 throw new Exception(
-                        String.format("failure, robot with ID [%d] exceeded the maximum number of matches",
-                                robotMatchObj.getRobotID()));
+                        String.format("failure, robot with ID [%d] not exists", matchObj.getRobotAID()));
             }
-        }
+            robotA = robotAOpt.get();
 
-        // overi zda zapasova skupina existuje, pokud je id skupiny zaporne pak jde o
-        // zapas jen jednoho robota (line follower, micromouse, ...)
-        MatchGroup group = null;
-        if (robotMatchObj.getGroupID() >= 0) {
-            Optional<MatchGroup> gOpt = this.matchGroupRepository.findById(robotMatchObj.getGroupID());
-            if (!gOpt.isPresent()) {
+            // Verify robot is confirmed
+            if (!robotA.getConfirmed()) {
                 throw new Exception(
-                        String.format("failure, group with ID [%d] not exists", robotMatchObj.getGroupID()));
+                        String.format("failure, robot with ID [%d] is not confirmed", matchObj.getRobotAID()));
             }
-            group = gOpt.get();
 
-            // overi zda maji vsichni roboti stejnou kategorii ve skupine
-            ECategory mainCategory = robot.get().getTeamRegistration().getCategory();
-            List<RobotMatch> matches = group.getMatches();
-            for (RobotMatch matche : matches) {
-                if (matche.getRobot().getTeamRegistration().getCategory() != mainCategory) {
+            // Check max rounds limit
+            int maxRounds = robotA.getDiscipline().getMaxRounds();
+            if (maxRounds >= 0) {
+                if (robotA.getMatches().size() >= maxRounds) {
                     throw new Exception(
-                            String.format("failure, the robots in the group are not in the same category",
-                                    robotMatchObj.getGroupID()));
+                            String.format("failure, robot with ID [%d] exceeded the maximum number of matches",
+                                    matchObj.getRobotAID()));
                 }
             }
         }
 
-        // ziska stav zapasu
+        // Validate robot B if provided
+        if (matchObj.getRobotBID() != null) {
+            Optional<Robot> robotBOpt = this.robotRepository.findById(matchObj.getRobotBID());
+            if (!robotBOpt.isPresent()) {
+                throw new Exception(
+                        String.format("failure, robot with ID [%d] not exists", matchObj.getRobotBID()));
+            }
+            robotB = robotBOpt.get();
+
+            // Verify robot is confirmed
+            if (!robotB.getConfirmed()) {
+                throw new Exception(
+                        String.format("failure, robot with ID [%d] is not confirmed", matchObj.getRobotBID()));
+            }
+
+            // Verify both robots are from the same category (if both are assigned)
+            if (robotA != null && robotA.getCategory() != robotB.getCategory()) {
+                throw new Exception("failure, robots must be from the same category");
+            }
+
+            // Verify both robots are from the same discipline
+            if (robotA != null && !robotA.getDiscipline().getID().equals(robotB.getDiscipline().getID())) {
+                throw new Exception("failure, robots must be from the same discipline");
+            }
+
+            // Check max rounds limit for robot B
+            int maxRounds = robotB.getDiscipline().getMaxRounds();
+            if (maxRounds >= 0) {
+                if (robotB.getMatches().size() >= maxRounds) {
+                    throw new Exception(
+                            String.format("failure, robot with ID [%d] exceeded the maximum number of matches",
+                                    matchObj.getRobotBID()));
+                }
+            }
+        }
+
+        // Get tournament phase if provided
+        TournamentPhase phase = null;
+        if (matchObj.getPhase() != null) {
+            Optional<TournamentPhase> phaseOpt = this.tournamentPhaseRepository.findByName(matchObj.getPhase());
+            if (phaseOpt.isPresent()) {
+                phase = phaseOpt.get();
+            }
+        }
+
+        // Get next match if provided
+        RobotMatch nextMatch = null;
+        if (matchObj.getNextMatchID() != null) {
+            Optional<RobotMatch> nextMatchOpt = this.robotMatchRepository.findById(matchObj.getNextMatchID());
+            if (!nextMatchOpt.isPresent()) {
+                throw new Exception(
+                        String.format("failure, next match with ID [%d] not exists", matchObj.getNextMatchID()));
+            }
+            nextMatch = nextMatchOpt.get();
+        }
+
+        // Get initial match state
         MatchState state = matchStateRepository.findByName(EMatchState.WAITING).get();
 
-        // vytvori zapas a ulozi ho do databaze
-        RobotMatch m = new RobotMatch(
-                robot.get(),
-                group,
-                playground.get(),
-                state);
-        this.robotMatchRepository.save(m);
+        // Get score type from discipline
+        ScoreType scoreType = discipline.getScoreType();
 
-        // odesle do komunikacniho systemu zpravu
+        // Determine highScoreWin - use provided value or inherit from discipline
+        boolean highScoreWin = matchObj.getHighScoreWin() != null 
+                ? matchObj.getHighScoreWin() 
+                : (discipline.getHighScoreWin() != null ? discipline.getHighScoreWin() : true);
+
+        // Create and save the match
+        RobotMatch match = new RobotMatch(robotA, robotB, playground.get(), state,
+                scoreType, phase, nextMatch, highScoreWin);
+        this.robotMatchRepository.save(match);
+
+        // Send message to communication system
         Communication.getInstance().sendAll(this, MatchService.Message.CREATE);
+
+        return match;
     }
 
     /**
-     * Odstrani zapas
+     * Update an existing match
      * 
-     * @param id ID zapasu
+     * @param id Match ID
+     * @param matchObj New match parameters
+     * @throws Exception on validation errors
      */
-    public void remove(long id) throws Exception {
-        // overi zda zapas existuje
+    public void update(Long id, RobotMatchObj matchObj) throws Exception {
+        Optional<RobotMatch> matchOpt = this.robotMatchRepository.findById(id);
+        if (!matchOpt.isPresent()) {
+            throw new Exception(String.format("failure, match with ID [%d] not exists", id));
+        }
+
+        RobotMatch match = matchOpt.get();
+
+        // Update playground if provided
+        if (matchObj.getPlaygroundID() != null) {
+            Optional<Playground> playground = this.playgroundRepository.findById(matchObj.getPlaygroundID());
+            if (!playground.isPresent()) {
+                throw new Exception(
+                        String.format("failure, playground with ID [%d] not exists", matchObj.getPlaygroundID()));
+            }
+            match.setPlayground(playground.get());
+        }
+
+        // Update robot A if provided
+        if (matchObj.getRobotAID() != null) {
+            Optional<Robot> robotA = this.robotRepository.findById(matchObj.getRobotAID());
+            if (!robotA.isPresent()) {
+                throw new Exception(
+                        String.format("failure, robot with ID [%d] not exists", matchObj.getRobotAID()));
+            }
+            if (!robotA.get().getConfirmed()) {
+                throw new Exception(
+                        String.format("failure, robot with ID [%d] is not confirmed", matchObj.getRobotAID()));
+            }
+            match.setRobotA(robotA.get());
+        }
+
+        // Update robot B if provided
+        if (matchObj.getRobotBID() != null) {
+            Optional<Robot> robotB = this.robotRepository.findById(matchObj.getRobotBID());
+            if (!robotB.isPresent()) {
+                throw new Exception(
+                        String.format("failure, robot with ID [%d] not exists", matchObj.getRobotBID()));
+            }
+            if (!robotB.get().getConfirmed()) {
+                throw new Exception(
+                        String.format("failure, robot with ID [%d] is not confirmed", matchObj.getRobotBID()));
+            }
+            match.setRobotB(robotB.get());
+        }
+
+        // Update tournament phase if provided
+        if (matchObj.getPhase() != null) {
+            Optional<TournamentPhase> phase = this.tournamentPhaseRepository.findByName(matchObj.getPhase());
+            if (phase.isPresent()) {
+                match.setPhase(phase.get());
+            }
+        }
+
+        // Update next match if provided
+        if (matchObj.getNextMatchID() != null) {
+            Optional<RobotMatch> nextMatch = this.robotMatchRepository.findById(matchObj.getNextMatchID());
+            if (!nextMatch.isPresent()) {
+                throw new Exception(
+                        String.format("failure, next match with ID [%d] not exists", matchObj.getNextMatchID()));
+            }
+            match.setNextMatch(nextMatch.get());
+        }
+
+        // Update highScoreWin if provided
+        if (matchObj.getHighScoreWin() != null) {
+            match.setHighScoreWin(matchObj.getHighScoreWin());
+        }
+
+        this.robotMatchRepository.save(match);
+
+        // Send message to communication system
+        Communication.getInstance().sendAll(this, MatchService.Message.UPDATE);
+    }
+
+    /**
+     * Assign robots to an existing match
+     * 
+     * @param id Match ID
+     * @param robotAID Robot A ID (can be null to keep existing)
+     * @param robotBID Robot B ID (can be null to keep existing)
+     * @throws Exception on validation errors
+     */
+    public void assignRobots(Long id, Long robotAID, Long robotBID) throws Exception {
+        Optional<RobotMatch> matchOpt = this.robotMatchRepository.findById(id);
+        if (!matchOpt.isPresent()) {
+            throw new Exception(String.format("failure, match with ID [%d] not exists", id));
+        }
+
+        RobotMatch match = matchOpt.get();
+
+        if (robotAID != null) {
+            Optional<Robot> robotA = this.robotRepository.findById(robotAID);
+            if (!robotA.isPresent()) {
+                throw new Exception(String.format("failure, robot with ID [%d] not exists", robotAID));
+            }
+            if (!robotA.get().getConfirmed()) {
+                throw new Exception(String.format("failure, robot with ID [%d] is not confirmed", robotAID));
+            }
+            match.setRobotA(robotA.get());
+        }
+
+        if (robotBID != null) {
+            Optional<Robot> robotB = this.robotRepository.findById(robotBID);
+            if (!robotB.isPresent()) {
+                throw new Exception(String.format("failure, robot with ID [%d] not exists", robotBID));
+            }
+            if (!robotB.get().getConfirmed()) {
+                throw new Exception(String.format("failure, robot with ID [%d] is not confirmed", robotBID));
+            }
+            // Verify robots are from same category
+            if (match.getRobotA() != null && match.getRobotA().getCategory() != robotB.get().getCategory()) {
+                throw new Exception("failure, robots must be from the same category");
+            }
+            match.setRobotB(robotB.get());
+        }
+
+        this.robotMatchRepository.save(match);
+
+        // Send message to communication system
+        Communication.getInstance().sendAll(this, MatchService.Message.UPDATE);
+    }
+
+    /**
+     * Remove a match
+     * 
+     * @param id Match ID
+     * @throws Exception if match not found
+     */
+    public void remove(Long id) throws Exception {
         if (!this.robotMatchRepository.findById(id).isPresent()) {
             throw new Exception(String.format("failure, match with ID [%d] not exists", id));
         }
 
-        // odstrani zapas
         this.robotMatchRepository.deleteById(id);
 
-        // odesle do komunikacniho systemu zpravu
+        // Send message to communication system
         Communication.getInstance().sendAll(this, MatchService.Message.REMOVE);
     }
 
     /**
-     * Odstrani vsechny zapasy, ktere nalezi do urcite skupiny
+     * Write scores for a match and automatically mark it as done
+     * Also handles progression to next match in bracket-style tournaments
      * 
-     * @param groudID ID skupiny, jejiz zapasy maji byt odstraneni
-     * @return Pocet odstranenych zapasu
+     * @param scoreObj Score data
+     * @throws Exception on validation errors
      */
-    public int removeAll(long groupID) {
-        // najde vsechny zapasy prislusici dane skupine
-        Stream<RobotMatch> filter = this.robotMatchRepository.findAll().stream()
-                .filter((m) -> (m.getGroupID() == groupID));
-
-        // odstani vsechny nalezene zapasy
-        int cnt = 0;
-        for (Object m : filter.toArray()) {
-            ++cnt;
-            this.robotMatchRepository.delete((RobotMatch) m);
+    public void writeScore(MatchScoreObj scoreObj) throws Exception {
+        Optional<RobotMatch> matchOpt = this.robotMatchRepository.findById(scoreObj.getMatchID());
+        if (!matchOpt.isPresent()) {
+            throw new Exception(String.format("failure, match with ID [%d] not exists", scoreObj.getMatchID()));
         }
 
-        // odesle do komunikacniho systemu zpravu
-        Communication.getInstance().sendAll(this, MatchService.Message.REMOVE_ALL);
-        return cnt;
-    }
+        RobotMatch match = matchOpt.get();
 
-    /**
-     * Zapise vysledne skore zapasu
-     * 
-     * @param id    ID zapasu
-     * @param score Skore zapasu
-     */
-    public void writeScore(long id, float score) throws Exception {
-        Optional<RobotMatch> m = this.robotMatchRepository.findById(id);
-        if (m.isPresent()) {
-            // zapise skore zapasu
-            m.get().setScore(score);
-            // nastavi stav jako odehrany
-            MatchState state = matchStateRepository.findByName(EMatchState.DONE).get();
-            m.get().setMatchState(state);
-            this.robotMatchRepository.save(m.get());
-
-            // odesle do komunikacniho systemu zpravu
-            Communication.getInstance().sendAll(this, MatchService.Message.WRITE_SCORE);
-        } else {
-            throw new Exception(String.format("failure, match with ID [%d] not exists", id));
+        // Validate that robots are assigned
+        if (match.getRobotA() == null) {
+            throw new Exception("failure, cannot write score - no robots assigned to this match");
         }
-    }
 
-    /**
-     * Vyzada opetovne odegrani zapasu. Pokud jde o skupinovy zapas automaticky
-     * tento pozadavek vyzada i u ostatnich zapasu.
-     * 
-     * @param id ID zapasu
-     */
-    public void rematch(long id) throws Exception {
-        // novy stav zapasu
-        MatchState state = this.matchStateRepository.findByName(EMatchState.REMATCH).get();
-
-        // provede zmeni
-        Optional<RobotMatch> match = this.robotMatchRepository.findById(id);
-        if (match.isPresent()) {
-            // vynuluje skore a zmeni stav zapasu
-            match.get().setScore(0);
-            match.get().setMatchState(state);
-            this.robotMatchRepository.save(match.get());
-
-            // pokud jde o skupinovy zapas pak pozadavek uplatni i na ostatni zapasy skupiny
-            MatchGroup matchGroup = match.get().getMatchGroup();
-            if (matchGroup != null) {
-                matchGroup.getMatches().stream().forEach((m) -> {
-                    m.setScore(0);
-                    m.setMatchState(state);
-                    this.robotMatchRepository.save(m);
-                });
+        // Set scores
+        match.setScoreA(scoreObj.getScoreA());
+        
+        // Only set score B if it's a two-robot match
+        if (match.getRobotB() != null) {
+            if (scoreObj.getScoreB() == null) {
+                throw new Exception("failure, score B is required for two-robot matches");
             }
+            match.setScoreB(scoreObj.getScoreB());
+        }
 
-            // odesle do komunikacniho systemu zpravu
-            Communication.getInstance().sendAll(this, MatchService.Message.REMATCH);
-        } else {
+        // Mark as done
+        MatchState doneState = matchStateRepository.findByName(EMatchState.DONE).get();
+        match.setMatchState(doneState);
+
+        this.robotMatchRepository.save(match);
+
+        // Handle progression to next match if configured
+        if (match.getNextMatch() != null) {
+            this.progressWinnerToNextMatch(match);
+        }
+
+        // Send message to communication system
+        Communication.getInstance().sendAll(this, MatchService.Message.WRITE_SCORE);
+    }
+
+    /**
+     * Request a rematch - reset scores and mark for replay
+     * 
+     * @param id Match ID
+     * @throws Exception if match not found
+     */
+    public void rematch(Long id) throws Exception {
+        Optional<RobotMatch> matchOpt = this.robotMatchRepository.findById(id);
+        if (!matchOpt.isPresent()) {
             throw new Exception(String.format("failure, match with ID [%d] not exists", id));
         }
+
+        RobotMatch match = matchOpt.get();
+
+        // Reset scores
+        match.setScoreA(null);
+        match.setScoreB(null);
+
+        // Set rematch state
+        MatchState rematchState = matchStateRepository.findByName(EMatchState.REMATCH).get();
+        match.setMatchState(rematchState);
+
+        this.robotMatchRepository.save(match);
+
+        // Send message to communication system
+        Communication.getInstance().sendAll(this, MatchService.Message.REMATCH);
+    }
+
+    /**
+     * Progress the winner of a match to the next match in bracket
+     * Prevents duplicate assignments to both robot A and robot B positions
+     * 
+     * @param match The completed match
+     */
+    private void progressWinnerToNextMatch(RobotMatch match) {
+        Robot winner = match.getWinner();
+        if (winner == null) {
+            return; // No clear winner (tie or missing scores)
+        }
+
+        RobotMatch nextMatch = match.getNextMatch();
+        if (nextMatch == null) {
+            return;
+        }
+
+        // Check if winner is already assigned to next match
+        if (nextMatch.getRobotA() != null && nextMatch.getRobotA().getID().equals(winner.getID())) {
+            return; // Already assigned as robot A
+        }
+        if (nextMatch.getRobotB() != null && nextMatch.getRobotB().getID().equals(winner.getID())) {
+            return; // Already assigned as robot B
+        }
+
+        // Check if the loser from this match is already in the next match
+        // This prevents both robots from the same match going to next match
+        Robot loser = (winner.equals(match.getRobotA())) ? match.getRobotB() : match.getRobotA();
+        if (loser != null) {
+            if (nextMatch.getRobotA() != null && nextMatch.getRobotA().getID().equals(loser.getID())) {
+                return; // Loser already in next match - something is wrong
+            }
+            if (nextMatch.getRobotB() != null && nextMatch.getRobotB().getID().equals(loser.getID())) {
+                return; // Loser already in next match - something is wrong
+            }
+        }
+
+        // Assign winner to first available slot
+        if (nextMatch.getRobotA() == null) {
+            nextMatch.setRobotA(winner);
+        } else if (nextMatch.getRobotB() == null) {
+            nextMatch.setRobotB(winner);
+        }
+
+        this.robotMatchRepository.save(nextMatch);
+    }
+
+    /**
+     * Get all waiting/scheduled matches for a playground
+     * 
+     * @param playgroundID Playground ID
+     * @return List of waiting matches
+     */
+    public List<RobotMatch> getWaitingMatches(Long playgroundID) throws Exception {
+        Optional<Playground> playground = this.playgroundRepository.findById(playgroundID);
+        if (!playground.isPresent()) {
+            throw new Exception(String.format("failure, playground with ID [%d] not exists", playgroundID));
+        }
+
+        return this.robotMatchRepository.findAll().stream()
+                .filter(m -> m.getPlaygroundID().equals(playgroundID))
+                .filter(m -> m.getState().getName() == EMatchState.WAITING 
+                          || m.getState().getName() == EMatchState.REMATCH)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get matches by tournament phase
+     * 
+     * @param phase Tournament phase
+     * @return List of matches in that phase
+     */
+    public List<RobotMatch> getByPhase(ETournamentPhase phase) {
+        return this.robotMatchRepository.findAll().stream()
+                .filter(m -> m.getPhaseName() == phase)
+                .collect(Collectors.toList());
     }
 
 }

@@ -45,21 +45,39 @@ public class CompetitionEvaluationService {
     private DisciplineRepository disciplineRepository;
 
     /**
-     * Navrati skore vsech robotu, kteri soutezili v danem rocniku
+     * Returns the score for a robot in a specific match.
+     * For single-robot matches (robotB is null), returns scoreA.
+     * For two-robot matches, returns the score of the requested robot.
      * 
-     * @param year     Rocnik souteze
-     * @param category Kategorie, pro kterou má zobrazit výsledky
-     * @return Seznam vsech robotu a jejich skore v soutezi
+     * @param match The match
+     * @param robot The robot to get the score for
+     * @return The score for the robot, or null if not found
+     */
+    private Float getScoreForRobot(RobotMatch match, Robot robot) {
+        if (match.getRobotA() != null && match.getRobotA().getID() == robot.getID()) {
+            return match.getScoreA();
+        }
+        if (match.getRobotB() != null && match.getRobotB().getID() == robot.getID()) {
+            return match.getScoreB();
+        }
+        return null;
+    }
+
+    /**
+     * Returns the score of all robots that competed in the given year
+     * 
+     * @param year     Competition year
+     * @param category Category for which to show results
+     * @return List of all robots and their scores in the competition
      */
     public List<RobotScore> getScoreOfAll(int year, ECategory category) throws Exception {
-        // overi zda rocnik souteze existuje
+        // verify that competition year exists
         Optional<Competition> competition = this.competitionRepository.findByYear(year);
         if (!competition.isPresent()) {
             throw new Exception(String.format("failure, competition [%d] not exists", year));
         }
 
-        // pro vsechny registrovane tymy vypoci celkove skore u vsech jejich potvrzenych
-        // robotu
+        // for all registered teams, calculate total score for all their confirmed robots
         List<RobotScore> scoreList = new LinkedList<RobotScore>();
 
         List<TeamRegistration> registrations = competition.get().getRegistrations();
@@ -69,18 +87,21 @@ public class CompetitionEvaluationService {
                 if (!r.getConfirmed() || r.getCategory() != category)
                     continue;
 
-                // agregacni funkce skore
+                // score aggregation function
                 ScoreAggregation ag = r.getDiscipline().getScoreAggregation();
-                // funkci aplikuje pro vsechny zapasy, ktere robot odehral
+                // apply function for all matches the robot played
                 float totalScore = ag.getTotalScoreInitValue();
                 List<RobotMatch> matches = r.getMatches();
                 for (RobotMatch m : matches) {
                     if (m.getState().getName() == EMatchState.DONE) {
-                        totalScore = ag.proccess(totalScore, m.getScore());
+                        Float robotScore = getScoreForRobot(m, r);
+                        if (robotScore != null) {
+                            totalScore = ag.proccess(totalScore, robotScore);
+                        }
                     }
                 }
 
-                // score s robotem zapise do listu
+                // record score with robot
                 scoreList.add(new RobotScore(r, totalScore));
             }
         }
@@ -97,41 +118,44 @@ public class CompetitionEvaluationService {
     }
 
     /**
-     * Navrati skore vsech robotu urciteho tymu
+     * Returns the score of all robots of a specific team
      * 
-     * @param year Rocnik
-     * @param id   ID tymu
-     * @return Navrati skore vsech reobotu v tymu
+     * @param year Year
+     * @param id   Team ID
+     * @return Returns the score of all robots in the team
      */
     public TeamScore getScoreOfTeam(int year, long id) throws Exception {
-        // overi zda tym existuje
+        // verify that team exists
         Optional<Team> team = this.teamRepository.findById(id);
         if (!team.isPresent()) {
             throw new Exception(String.format("failure, team with ID [%d] not exists", id));
         }
 
-        // najde registraci pro dany rocnik souteze
+        // find registration for the given competition year
         Optional<TeamRegistration> registration = team.get().getRegistrations().stream()
                 .filter((r) -> (r.getCompetitionYear() == year)).findFirst();
         if (!registration.isPresent()) {
             throw new Exception(String.format("failure, registration for year [%d] not exists", year));
         }
 
-        // pro kazdeho robota spocita skore
+        // calculate score for each robot
         List<RobotScore> scoreList = new ArrayList<RobotScore>();
         List<Robot> robots = registration.get().getRobots();
 
         robots.stream().forEach((r) -> {
-            // prihlaska robota musi byt potvrzena
+            // robot registration must be confirmed
             if (r.getConfirmed()) {
-                // agregacni funkce skore
+                // score aggregation function
                 ScoreAggregation ag = r.getDiscipline().getScoreAggregation();
-                // funkci aplikuje pro vsechny zapasy, ktere robot odehral
+                // apply function for all matches the robot played
                 float totalScore = ag.getTotalScoreInitValue();
                 List<RobotMatch> matches = r.getMatches();
                 for (RobotMatch m : matches) {
                     if (m.getState().getName() == EMatchState.DONE) {
-                        totalScore = ag.proccess(totalScore, m.getScore());
+                        Float robotScore = getScoreForRobot(m, r);
+                        if (robotScore != null) {
+                            totalScore = ag.proccess(totalScore, robotScore);
+                        }
                     }
                 }
                 scoreList.add(new RobotScore(r, totalScore));
@@ -142,11 +166,11 @@ public class CompetitionEvaluationService {
     }
 
     /**
-     * Navrati skore jednoho konkreniho robota
+     * Returns the score of one specific robot
      * 
-     * @param year Rocnik souteze
-     * @param id   ID robota
-     * @return Navrati skore robota
+     * @param year Competition year
+     * @param id   Robot ID
+     * @return Returns the robot's score
      */
     public RobotScore getScoreOfRobot(int year, long id) throws Exception {
         Optional<Robot> robot = this.robotRepository.findById(id);
@@ -154,78 +178,86 @@ public class CompetitionEvaluationService {
             throw new Exception(String.format("failure, robot with ID [%d] not exists", id));
         }
 
-        // overi povrzeni robota
+        // verify robot confirmation
         if (!robot.get().getConfirmed()) {
             throw new Exception(String.format("failure, robot with ID [%d] is not confirmed", id));
         }
 
-        // overi rocnik souteze
+        // verify competition year
         if (robot.get().getTeamRegistration().getCompetitionYear() != year) {
             throw new Exception(String.format("failure, this robot is not registed in year [%d]", year));
         }
 
-        // agregacni funkce skore
-        ScoreAggregation ag = robot.get().getDiscipline().getScoreAggregation();
-        // funkci aplikuje pro vsechny zapasy, ktere robot odehral
+        Robot r = robot.get();
+        
+        // score aggregation function
+        ScoreAggregation ag = r.getDiscipline().getScoreAggregation();
+        // apply function for all matches the robot played
         float totalScore = ag.getTotalScoreInitValue();
-        List<RobotMatch> matches = robot.get().getMatches();
+        List<RobotMatch> matches = r.getMatches();
         for (RobotMatch m : matches) {
             if (m.getState().getName() == EMatchState.DONE) {
-                totalScore = ag.proccess(totalScore, m.getScore());
+                Float robotScore = getScoreForRobot(m, r);
+                if (robotScore != null) {
+                    totalScore = ag.proccess(totalScore, robotScore);
+                }
             }
         }
 
-        return new RobotScore(robot.get(), totalScore);
+        return new RobotScore(r, totalScore);
     }
 
     /**
-     * Navrati umisteni robotu v konkretni discipline v ramci soutezni kategorie
+     * Returns the placement of robots in a specific discipline within a competition category
      * 
-     * @param year     Rocnik souteze
-     * @param category Soutezni kategorie
-     * @param id       ID discipliny
-     * @return Poradi vsech robotu, kteri soutezili v dane discipline + kategorii
+     * @param year     Competition year
+     * @param category Competition category
+     * @param id       Discipline ID
+     * @return Order of all robots that competed in the given discipline + category
      */
     public List<OrderObj> getOrder(int year, ECategory category, long id) throws Exception {
-        // overi zda rocnik souteze existuje
+        // verify that competition year exists
         if (!this.competitionRepository.findByYear(year).isPresent()) {
             throw new Exception(String.format("failure, competition [%d] not exists", year));
         }
 
-        // najde discipliny
+        // find discipline
         Optional<Discipline> discipline = this.disciplineRepository.findById(id);
         if (!discipline.isPresent()) {
             throw new Exception(String.format("failure, discipline with ID [%d] not exists", id));
         }
 
-        // najde vsechny roboty v discipline, kteri hrali v danem roce
+        // find all robots in discipline who played in the given year
         Stream<Robot> robots = discipline.get().getRobots().stream()
                 .filter((r) -> (r.getTeamRegistration().getCompetitionYear() == year));
 
-        // agregacni funkce skore
+        // score aggregation function
         ScoreAggregation ag = discipline.get().getScoreAggregation();
 
         List<RobotScore> all = new LinkedList<>();
         robots.forEach(r -> {
             if (r.getConfirmed() && r.getCategory() == category) {
-                // funkci aplikuje pro vsechny zapasy, ktere robot odehral
+                // apply function for all matches the robot played
                 float totalScore = ag.getTotalScoreInitValue();
                 List<RobotMatch> matches = r.getMatches();
                 for (RobotMatch m : matches) {
                     if (m.getState().getName() == EMatchState.DONE) {
-                        totalScore = ag.proccess(totalScore, m.getScore());
+                        Float robotScore = getScoreForRobot(m, r);
+                        if (robotScore != null) {
+                            totalScore = ag.proccess(totalScore, robotScore);
+                        }
                     }
                 }
 
-                // score s robotem zapise do listu
+                // record score with robot
                 all.add(new RobotScore(r, totalScore));
             }
         });
 
-        // serazeni
+        // sorting
         if (ag.getName() == EScoreAggregation.MIN) {
-            // MIN -> od nejnizsi hodnoty skore po nejvestisi (line follower, drag race, ...
-            // => score reprezenutje cas)
+            // MIN -> from lowest score to highest (line follower, drag race, ...
+            // => score represents time)
             Collections.sort(all, new Comparator<RobotScore>() {
                 @Override
                 public int compare(RobotScore r1, RobotScore r2) {
@@ -233,7 +265,7 @@ public class CompetitionEvaluationService {
                 }
             });
         } else {
-            // MAX nebo SUM -> od nejvyssi po nejnizsi (sumo, robostrong, ..)
+            // MAX or SUM -> from highest to lowest (sumo, robostrong, ..)
             Collections.sort(all, new Comparator<RobotScore>() {
                 @Override
                 public int compare(RobotScore r1, RobotScore r2) {
@@ -248,7 +280,7 @@ public class CompetitionEvaluationService {
             order.add(new OrderObj(place++, scoreObj));
         }
 
-        // navrati viteze discipliny v dane soutezni kategorii
+        // return winner of discipline in the given competition category
         return order;
     }
 
@@ -263,10 +295,10 @@ public class CompetitionEvaluationService {
     }
 
     private static void sortListByCriteria(List<RobotScore> scoreList, EScoreAggregation aggregation) {
-        // serazeni
+        // sorting
         if (aggregation == EScoreAggregation.MIN) {
-            // MIN -> od nejnizsi hodnoty skore po nejvestisi (line follower, drag race, ...
-            // => score reprezenutje cas)
+            // MIN -> from lowest score to highest (line follower, drag race, ...
+            // => score represents time)
             Collections.sort(scoreList, new Comparator<RobotScore>() {
                 @Override
                 public int compare(RobotScore r1, RobotScore r2) {
@@ -274,7 +306,7 @@ public class CompetitionEvaluationService {
                 }
             });
         } else {
-            // MAX nebo SUM -> od nejvyssi po nejnizsi (sumo, robostrong, ..)
+            // MAX or SUM -> from highest to lowest (sumo, robostrong, ..)
             Collections.sort(scoreList, new Comparator<RobotScore>() {
                 @Override
                 public int compare(RobotScore r1, RobotScore r2) {

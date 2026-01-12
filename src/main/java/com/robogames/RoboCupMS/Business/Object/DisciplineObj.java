@@ -1,6 +1,7 @@
 package com.robogames.RoboCupMS.Business.Object;
 
 import com.robogames.RoboCupMS.Business.Enum.EScoreAggregation;
+import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 
 public class DisciplineObj {
     
@@ -28,6 +29,18 @@ public class DisciplineObj {
      * Maximalni pocet zapasu, ktere robotu muze v teto discipline odehrat
      */
     private int maxRounds;
+
+    /**
+     * Score type for this discipline (TIME or SCORE)
+     */
+    private EScoreType scoreType;
+
+    /**
+     * Determines how to select the winner based on score
+     * true = higher score wins (e.g., sumo wins count)
+     * false = lower score wins (e.g., time-based like line follower)
+     */
+    private Boolean highScoreWin;
 
 
     public DisciplineObj() {
@@ -79,6 +92,22 @@ public class DisciplineObj {
 
     public void setMaxRounds(int maxRounds) {
         this.maxRounds = maxRounds;
+    }
+
+    public EScoreType getScoreType() {
+        return this.scoreType;
+    }
+
+    public void setScoreType(EScoreType scoreType) {
+        this.scoreType = scoreType;
+    }
+
+    public Boolean getHighScoreWin() {
+        return this.highScoreWin;
+    }
+
+    public void setHighScoreWin(Boolean highScoreWin) {
+        this.highScoreWin = highScoreWin;
     }
 
 }

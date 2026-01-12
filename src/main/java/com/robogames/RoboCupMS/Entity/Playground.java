@@ -103,6 +103,16 @@ public class Playground {
     }
 
     /**
+     * Returns the discipline for this playground
+     * 
+     * @return Discipline
+     */
+    @JsonIgnore
+    public Discipline getDiscipline() {
+        return this.discipline;
+    }
+
+    /**
      * Navrati ID discipliny, pro kterou je toto hriste urcine
      * 
      * @return ID discipliny

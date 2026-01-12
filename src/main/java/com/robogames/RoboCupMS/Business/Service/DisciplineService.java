@@ -4,11 +4,14 @@ import java.util.List;
 import java.util.Optional;
 
 import com.robogames.RoboCupMS.Communication;
+import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 import com.robogames.RoboCupMS.Business.Object.DisciplineObj;
 import com.robogames.RoboCupMS.Entity.Discipline;
 import com.robogames.RoboCupMS.Entity.ScoreAggregation;
+import com.robogames.RoboCupMS.Entity.ScoreType;
 import com.robogames.RoboCupMS.Repository.DisciplineRepository;
 import com.robogames.RoboCupMS.Repository.ScoreAggregationRepository;
+import com.robogames.RoboCupMS.Repository.ScoreTypeRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,9 @@ public class DisciplineService {
 
     @Autowired
     private ScoreAggregationRepository aggregationRepository;
+
+    @Autowired
+    private ScoreTypeRepository scoreTypeRepository;
 
     /**
      * Typy zprav
@@ -71,6 +77,20 @@ public class DisciplineService {
                 disciplineObj.getScoreAggregation(),
                 disciplineObj.getTime(),
                 disciplineObj.getMaxRounds());
+        
+        // Set scoreType if provided
+        if (disciplineObj.getScoreType() != null) {
+            Optional<ScoreType> scoreType = this.scoreTypeRepository.findByName(disciplineObj.getScoreType());
+            if (scoreType.isPresent()) {
+                discipline.setScoreType(scoreType.get());
+            }
+        }
+        
+        // Set highScoreWin if provided
+        if (disciplineObj.getHighScoreWin() != null) {
+            discipline.setHighScoreWin(disciplineObj.getHighScoreWin());
+        }
+        
         this.disciplineRepository.save(discipline);
 
         // odesle do komunikacniho systemu zpravu
@@ -115,6 +135,13 @@ public class DisciplineService {
      */
     public void edit(Long id, DisciplineObj disciplineObj) throws Exception {
         Optional<ScoreAggregation> score = this.aggregationRepository.findByName(disciplineObj.getScoreAggregation());
+        
+        // Get scoreType if provided
+        Optional<ScoreType> scoreType = Optional.empty();
+        if (disciplineObj.getScoreType() != null) {
+            scoreType = this.scoreTypeRepository.findByName(disciplineObj.getScoreType());
+        }
+        final Optional<ScoreType> finalScoreType = scoreType;
 
         Optional<Discipline> map = this.disciplineRepository.findById(id)
                 .map(d -> {
@@ -123,6 +150,17 @@ public class DisciplineService {
                     d.setTime(disciplineObj.getTime());
                     d.setScoreAggregation(score.get());
                     d.setMaxRounds(disciplineObj.getMaxRounds());
+                    
+                    // Set scoreType if provided
+                    if (finalScoreType.isPresent()) {
+                        d.setScoreType(finalScoreType.get());
+                    }
+                    
+                    // Set highScoreWin if provided
+                    if (disciplineObj.getHighScoreWin() != null) {
+                        d.setHighScoreWin(disciplineObj.getHighScoreWin());
+                    }
+                    
                     return this.disciplineRepository.save(d);
                 });
         if (!map.isPresent()) {

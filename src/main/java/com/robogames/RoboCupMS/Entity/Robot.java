@@ -14,6 +14,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.robogames.RoboCupMS.Business.Enum.ECategory;
 
 /**
@@ -68,34 +69,40 @@ public class Robot {
     private Boolean confirmed;
 
     /**
-     * Seznam vsech odehranych zapasu
+     * List of all matches where this robot is robot A
      */
-    @OneToMany(mappedBy = "robot", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
-    private List<RobotMatch> matches;
+    @OneToMany(mappedBy = "robotA", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private List<RobotMatch> matchesAsRobotA;
 
     /**
-     * Vytvori robota, ten pokud se prihlasi do urcite kategorie tak muze zapasit
+     * List of all matches where this robot is robot B
+     */
+    @OneToMany(mappedBy = "robotB", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private List<RobotMatch> matchesAsRobotB;
+
+    /**
+     * Creates a robot that can compete in categories
      */
     public Robot() {
         this.confirmed = false;
-        this.matches = new ArrayList<RobotMatch>();
+        this.matchesAsRobotA = new ArrayList<RobotMatch>();
+        this.matchesAsRobotB = new ArrayList<RobotMatch>();
     }
 
     /**
-     * Vytvori robota, ten pokud se prihlasi do urcite kategorie tak muze zapasit
+     * Creates a robot that can compete in categories
      * 
-     * @param _name             Jmeno robota
-     * @param _number           Cislo robota (toto cislo identifikuje robota pri
-     *                          jednotlivych
-     *                          zapasech)
-     * @param _teamRegistration Registrace tymu, na kterou je robot vytvoren
+     * @param _name             Robot name
+     * @param _number           Robot number (identifies the robot during matches)
+     * @param _teamRegistration Team registration to which this robot belongs
      */
     public Robot(String _name, long _number, TeamRegistration _teamRegistration) {
         this.name = _name;
         this.number = _number;
         this.teamRegistration = _teamRegistration;
         this.confirmed = false;
-        this.matches = new ArrayList<RobotMatch>();
+        this.matchesAsRobotA = new ArrayList<RobotMatch>();
+        this.matchesAsRobotB = new ArrayList<RobotMatch>();
     }
 
     /**
@@ -103,6 +110,7 @@ public class Robot {
      * 
      * @return ID
      */
+    @JsonProperty("id")
     public Long getID() {
         return this.id;
     }
@@ -217,13 +225,40 @@ public class Robot {
     }
 
     /**
-     * Seznam vsech zapasu, ktere robot odehral nebo jsou jen naplanovane
+     * Get all matches where this robot participates (as robot A or B)
      * 
-     * @return Seznam zapasu
+     * @return List of all matches
      */
     @JsonIgnore
     public List<RobotMatch> getMatches() {
-        return this.matches;
+        List<RobotMatch> allMatches = new ArrayList<RobotMatch>();
+        if (this.matchesAsRobotA != null) {
+            allMatches.addAll(this.matchesAsRobotA);
+        }
+        if (this.matchesAsRobotB != null) {
+            allMatches.addAll(this.matchesAsRobotB);
+        }
+        return allMatches;
+    }
+
+    /**
+     * Get matches where this robot is robot A
+     * 
+     * @return List of matches as robot A
+     */
+    @JsonIgnore
+    public List<RobotMatch> getMatchesAsRobotA() {
+        return this.matchesAsRobotA;
+    }
+
+    /**
+     * Get matches where this robot is robot B
+     * 
+     * @return List of matches as robot B
+     */
+    @JsonIgnore
+    public List<RobotMatch> getMatchesAsRobotB() {
+        return this.matchesAsRobotB;
     }
 
     /**

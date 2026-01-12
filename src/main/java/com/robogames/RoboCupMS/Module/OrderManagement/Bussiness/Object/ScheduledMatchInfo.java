@@ -2,19 +2,32 @@ package com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object;
 
 import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Enum.EMatchState;
+import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
 import com.robogames.RoboCupMS.Entity.RobotMatch;
 
 /**
- * DTO objekt pro zobrazeni naplanovaneho zapasu na verejne strance
+ * DTO object for displaying scheduled match on public page
+ * Supports both single-robot matches and two-robot matches
  */
 public class ScheduledMatchInfo {
 
     private long matchId;
-    private long robotId;
-    private long robotNumber;
-    private String robotName;
-    private long teamId;
-    private String teamName;
+    
+    // Robot A info
+    private Long robotAId;
+    private Long robotANumber;
+    private String robotAName;
+    private Long teamAId;
+    private String teamAName;
+    
+    // Robot B info (null for single-robot matches)
+    private Long robotBId;
+    private Long robotBNumber;
+    private String robotBName;
+    private Long teamBId;
+    private String teamBName;
+    
+    // Match info
     private long disciplineId;
     private String disciplineName;
     private ECategory category;
@@ -22,50 +35,97 @@ public class ScheduledMatchInfo {
     private int playgroundNumber;
     private String playgroundName;
     private EMatchState matchState;
-    private long groupId;
+    private ETournamentPhase phase;
+    private boolean isTwoRobotMatch;
 
     public ScheduledMatchInfo() {
     }
 
     public ScheduledMatchInfo(RobotMatch match) {
         this.matchId = match.getID();
-        this.robotId = match.getRobotID();
-        this.robotNumber = match.getRobotNumber();
-        this.robotName = match.getRobotName();
-        this.teamId = match.getRobot().getTeamRegistration().getTeamID();
-        this.teamName = match.getRobot().getTeamRegistration().getTeam().getName();
-        this.disciplineId = match.getRobot().getDiscipline().getID();
-        this.disciplineName = match.getRobot().getDiscipline().getName();
-        this.category = match.getRobot().getCategory();
-        this.playgroundId = match.getPlaygroundID();
-        this.playgroundNumber = match.getPlayground().getNumber();
-        this.playgroundName = match.getPlayground().getName();
+        
+        // Robot A
+        if (match.getRobotA() != null) {
+            this.robotAId = match.getRobotA().getID();
+            this.robotANumber = match.getRobotA().getNumber();
+            this.robotAName = match.getRobotA().getName();
+            this.teamAId = match.getRobotA().getTeamRegistration().getTeamID();
+            this.teamAName = match.getRobotA().getTeamRegistration().getTeam().getName();
+            
+            // Get discipline and category from robot A
+            this.disciplineId = match.getRobotA().getDiscipline().getID();
+            this.disciplineName = match.getRobotA().getDiscipline().getName();
+            this.category = match.getRobotA().getCategory();
+        }
+        
+        // Robot B (for two-robot matches)
+        if (match.getRobotB() != null) {
+            this.robotBId = match.getRobotB().getID();
+            this.robotBNumber = match.getRobotB().getNumber();
+            this.robotBName = match.getRobotB().getName();
+            this.teamBId = match.getRobotB().getTeamRegistration().getTeamID();
+            this.teamBName = match.getRobotB().getTeamRegistration().getTeam().getName();
+        }
+        
+        this.isTwoRobotMatch = match.getRobotB() != null;
+        
+        // Playground
+        if (match.getPlayground() != null) {
+            this.playgroundId = match.getPlayground().getID();
+            this.playgroundNumber = match.getPlayground().getNumber();
+            this.playgroundName = match.getPlayground().getName();
+        }
+        
         this.matchState = match.getState().getName();
-        this.groupId = match.getGroupID();
+        
+        // Phase
+        if (match.getPhase() != null) {
+            this.phase = match.getPhase().getName();
+        }
     }
 
     public long getMatchId() {
         return matchId;
     }
 
-    public long getRobotId() {
-        return robotId;
+    public Long getRobotAId() {
+        return robotAId;
     }
 
-    public long getRobotNumber() {
-        return robotNumber;
+    public Long getRobotANumber() {
+        return robotANumber;
     }
 
-    public String getRobotName() {
-        return robotName;
+    public String getRobotAName() {
+        return robotAName;
     }
 
-    public long getTeamId() {
-        return teamId;
+    public Long getTeamAId() {
+        return teamAId;
     }
 
-    public String getTeamName() {
-        return teamName;
+    public String getTeamAName() {
+        return teamAName;
+    }
+
+    public Long getRobotBId() {
+        return robotBId;
+    }
+
+    public Long getRobotBNumber() {
+        return robotBNumber;
+    }
+
+    public String getRobotBName() {
+        return robotBName;
+    }
+
+    public Long getTeamBId() {
+        return teamBId;
+    }
+
+    public String getTeamBName() {
+        return teamBName;
     }
 
     public long getDisciplineId() {
@@ -96,7 +156,11 @@ public class ScheduledMatchInfo {
         return matchState;
     }
 
-    public long getGroupId() {
-        return groupId;
+    public ETournamentPhase getPhase() {
+        return phase;
+    }
+
+    public boolean isTwoRobotMatch() {
+        return isTwoRobotMatch;
     }
 }
