@@ -112,15 +112,16 @@ public class MatchControler {
     }
 
     /**
-     * Get all matches for a specific playground
+     * Get all matches for a specific playground and year
      * 
+     * @param year Competition year
      * @param playgroundID Playground ID
      * @return List of matches
      */
     @GetMapping("/byPlayground")
-    Response getByPlayground(@RequestParam Long playgroundID) {
+    Response getByPlayground(@RequestParam int year, @RequestParam Long playgroundID) {
         try {
-            List<RobotMatch> matches = this.matchService.getByPlayground(playgroundID);
+            List<RobotMatch> matches = this.matchService.getByPlayground(year, playgroundID);
             return ResponseHandler.response(matches);
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());

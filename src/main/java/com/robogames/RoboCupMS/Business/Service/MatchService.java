@@ -134,17 +134,18 @@ public class MatchService {
     }
 
     /**
-     * Get all matches for a specific playground
+     * Get all matches for a specific playground and year
      * 
+     * @param year Competition year
      * @param playgroundID Playground ID
-     * @return List of matches on that playground
+     * @return List of matches on that playground for that year
      */
-    public List<RobotMatch> getByPlayground(Long playgroundID) throws Exception {
+    public List<RobotMatch> getByPlayground(int year, Long playgroundID) throws Exception {
         Optional<Playground> playground = this.playgroundRepository.findById(playgroundID);
         if (!playground.isPresent()) {
             throw new Exception(String.format("failure, playground with ID [%d] not exists", playgroundID));
         }
-        return this.robotMatchRepository.findAll().stream()
+        return this.allByYear(year).stream()
                 .filter(m -> m.getPlaygroundID().equals(playgroundID))
                 .collect(Collectors.toList());
     }
