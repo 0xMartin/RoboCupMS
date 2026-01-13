@@ -128,4 +128,21 @@ public class CompetitionControler {
         }
     }
 
+    /**
+     * Zrusi zahajeni souteze
+     * 
+     * @param id ID souteze, u ktere ma byt zahajeni zruseno
+     * @return Informace o stavu provedeneho requestu
+     */
+    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER })
+    @PutMapping("/cancelStart")
+    Response cancelStart(@RequestParam Long id) {
+        try {
+            this.competitionService.cancelStart(id);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
 }

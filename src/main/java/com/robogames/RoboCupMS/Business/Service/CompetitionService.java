@@ -144,4 +144,30 @@ public class CompetitionService {
         Communication.getInstance().sendAll(this, CompetitionService.Message.START);
     }
 
+    /**
+     * Zrusi zahajeni souteze (nastavi started na false)
+     * 
+     * @param id ID souteze
+     * @throws Exception
+     */
+    public void cancelStart(Long id) throws Exception {
+        // overi zda soutez existuje
+        Optional<Competition> competition = this.repository.findById(id);
+        if (!competition.isPresent()) {
+            throw new Exception(String.format("failure, competition with ID [%d] not exists", id));
+        }
+
+        // overi zda je soutez zahajena
+        if (!competition.get().getStarted()) {
+            throw new Exception("failure, competition is not started yet");
+        }
+
+        // zrusi zahajeni souteze a ulozi zmeny
+        competition.get().setStarted(false);
+        this.repository.save(competition.get());
+
+        // odesle do komunikacniho systemu zpravu
+        Communication.getInstance().sendAll(this, CompetitionService.Message.START);
+    }
+
 }
