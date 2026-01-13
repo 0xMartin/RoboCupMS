@@ -2,11 +2,20 @@ package com.robogames.RoboCupMS.Business.Object;
 
 import java.time.LocalDateTime;
 
-public class TeamInvitationObj {
+/**
+ * DTO pro zadost o vstup do tymu
+ */
+public class TeamJoinRequestObj {
 
     private Long id;
 
     private Long userId;
+
+    private String userName;
+
+    private String userSurname;
+
+    private String userEmail;
 
     private Long teamId;
 
@@ -14,12 +23,16 @@ public class TeamInvitationObj {
 
     private LocalDateTime createdAt;
 
-    public TeamInvitationObj() {
+    public TeamJoinRequestObj() {
     }
 
-    public TeamInvitationObj(Long id, Long userId, Long teamId, String teamName, LocalDateTime createdAt) {
+    public TeamJoinRequestObj(Long id, Long userId, String userName, String userSurname, String userEmail,
+                              Long teamId, String teamName, LocalDateTime createdAt) {
         this.id = id;
         this.userId = userId;
+        this.userName = userName;
+        this.userSurname = userSurname;
+        this.userEmail = userEmail;
         this.teamId = teamId;
         this.teamName = teamName;
         this.createdAt = createdAt;
@@ -39,6 +52,30 @@ public class TeamInvitationObj {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getUserSurname() {
+        return userSurname;
+    }
+
+    public void setUserSurname(String userSurname) {
+        this.userSurname = userSurname;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     public Long getTeamId() {

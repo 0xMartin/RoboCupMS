@@ -1,13 +1,16 @@
 package com.robogames.RoboCupMS.Controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Response;
 import com.robogames.RoboCupMS.ResponseHandler;
+import com.robogames.RoboCupMS.Business.Object.TeamJoinRequestObj;
 import com.robogames.RoboCupMS.Business.Object.TeamObj;
 import com.robogames.RoboCupMS.Business.Service.TeamService;
 import com.robogames.RoboCupMS.Entity.Team;
+import com.robogames.RoboCupMS.Entity.TeamJoinRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -138,22 +141,6 @@ public class TeamControler {
     }
 
     /**
-     * Prida do tymu noveho clena
-     * 
-     * @param id ID clena, ktery ma byt pridat do tymu
-     * @return Informace o stavu provedeneho requestu
-     */
-    @PutMapping("/addMember")
-    Response addMember(@RequestParam Long id) {
-        try {
-            this.teamService.addMember(id);
-            return ResponseHandler.response("success");
-        } catch (Exception ex) {
-            return ResponseHandler.error(ex.getMessage());
-        }
-    }
-
-    /**
      * Odebere z tymu jednoho clena
      * 
      * @param id ID clena, ktery ma byt odebran z tymu
@@ -163,6 +150,57 @@ public class TeamControler {
     Response removeMember(@RequestParam Long id) {
         try {
             this.teamService.removeMember(id);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Zmeni vedouciho tymu na jineho clena tymu
+     * 
+     * @param id ID noveho vedouciho
+     * @return Informace o stavu provedeneho requestu
+     */
+    @PutMapping("/changeLeader")
+    Response changeLeader(@RequestParam Long id) {
+        try {
+            this.teamService.changeLeader(id);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Opusti tym, ve ktrem se prihlaseny uzivatel aktualne nachazi
+     * 
+     * @return Informace o stavu provedeneho requestu
+     */
+    @PutMapping("/leave")
+    Response leave() {
+        try {
+            this.teamService.leaveTeam();
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    // =====================================================
+    // ENDPOINTY PRO POZVÁNÍ DO TYMU (INVITATIONS)
+    // =====================================================
+
+    /**
+     * Prida do tymu noveho clena podle emailu
+     * 
+     * @param email Email clena, ktery ma byt pridat do tymu
+     * @return Informace o stavu provedeneho requestu
+     */
+    @PutMapping("/addMemberByEmail")
+    Response addMemberByEmail(@RequestParam String email) {
+        try {
+            this.teamService.addMemberByEmail(email);
             return ResponseHandler.response("success");
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
@@ -189,19 +227,132 @@ public class TeamControler {
         }
     }
 
+    // =====================================================
+    // ENDPOINTY PRO ZADOSTI O VSTUP DO TYMU (JOIN REQUESTS)
+    // =====================================================
+
     /**
-     * Opusti tym, ve ktrem se prihlaseny uzivatel aktualne nachazi
+     * Navrati seznam vsech tymu (pouze nazvy a ID) pro uzivatele bez tymu
      * 
+     * @return Seznam tymu s nazvy a ID
+     */
+    @GetMapping("/allNames")
+    Response getAllTeamNames() {
+        return ResponseHandler.response(this.teamService.getAllTeamNames());
+    }
+
+    /**
+     * Odesle zadost o vstup do tymu
+     * 
+     * @param teamId ID tymu
      * @return Informace o stavu provedeneho requestu
      */
-    @PutMapping("/leave")
-    Response leave() {
+    @PostMapping("/joinRequest")
+    Response sendJoinRequest(@RequestParam Long teamId) {
         try {
-            this.teamService.leaveTeam();
+            this.teamService.sendJoinRequest(teamId);
             return ResponseHandler.response("success");
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
         }
+    }
+
+    /**
+     * Navrati vsechny zadosti o vstup do tymu pro vedouciho tymu
+     * 
+     * @return Seznam zadosti
+     */
+    @GetMapping("/joinRequests")
+    Response getJoinRequests() {
+        try {
+            List<TeamJoinRequestObj> all = new ArrayList<TeamJoinRequestObj>();
+            for (TeamJoinRequest req : this.teamService.getJoinRequests()) {
+                all.add(new TeamJoinRequestObj(
+                    req.getId(),
+                    req.getUser().getID(),
+                    req.getUser().getName(),
+                    req.getUser().getSurname(),
+                    req.getUser().getEmail(),
+                    req.getTeam().getID(),
+                    req.getTeam().getName(),
+                    req.getCreatedAt()
+                ));
+            }
+            return ResponseHandler.response(all);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Prijme zadost o vstup do tymu
+     * 
+     * @param id ID zadosti
+     * @return Informace o stavu provedeneho requestu
+     */
+    @PutMapping("/acceptJoinRequest")
+    Response acceptJoinRequest(@RequestParam Long id) {
+        try {
+            this.teamService.acceptJoinRequest(id);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Odmitne zadost o vstup do tymu
+     * 
+     * @param id ID zadosti
+     * @return Informace o stavu provedeneho requestu
+     */
+    @PutMapping("/rejectJoinRequest")
+    Response rejectJoinRequest(@RequestParam Long id) {
+        try {
+            this.teamService.rejectJoinRequest(id);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Zrusi vlastni zadost o vstup do tymu
+     * 
+     * @param id ID zadosti
+     * @return Informace o stavu provedeneho requestu
+     */
+    @DeleteMapping("/cancelJoinRequest")
+    Response cancelJoinRequest(@RequestParam Long id) {
+        try {
+            this.teamService.cancelJoinRequest(id);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Navrati vsechny zadosti odeslane prihlasenym uzivatelem
+     * 
+     * @return Seznam zadosti
+     */
+    @GetMapping("/myJoinRequests")
+    Response getMyJoinRequests() {
+        List<TeamJoinRequestObj> all = new ArrayList<TeamJoinRequestObj>();
+        for (TeamJoinRequest req : this.teamService.getMyJoinRequests()) {
+            all.add(new TeamJoinRequestObj(
+                req.getId(),
+                req.getUser().getID(),
+                req.getUser().getName(),
+                req.getUser().getSurname(),
+                req.getUser().getEmail(),
+                req.getTeam().getID(),
+                req.getTeam().getName(),
+                req.getCreatedAt()
+            ));
+        }
+        return ResponseHandler.response(all);
     }
 
 }

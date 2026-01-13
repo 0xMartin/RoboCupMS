@@ -317,8 +317,7 @@ public class UserService {
     public List<TeamInvitation> getTeamInvitations() {
         UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        List<TeamInvitation> invitations = invitationRepository.findAll().stream()
-                .filter(e -> e.getUser().getID() == user.getID()).collect(Collectors.toList());
+        List<TeamInvitation> invitations = invitationRepository.findByUserOrderByCreatedAtAsc(user);
 
         return invitations;
     }

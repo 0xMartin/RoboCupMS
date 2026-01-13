@@ -20,5 +20,5 @@ public interface UserRepository extends JpaRepository<UserRC, Long> {
 
     Optional<UserRC> findByToken(String token);
 
-    List<UserRC> findByTeamId(Long teamId);
+    List<UserRC> findByTeam_Id(Long teamId);
 }

@@ -2,15 +2,19 @@ package com.robogames.RoboCupMS.Business.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.robogames.RoboCupMS.GlobalConfig;
+import com.robogames.RoboCupMS.Business.Object.TeamNameObj;
 import com.robogames.RoboCupMS.Business.Object.TeamObj;
 import com.robogames.RoboCupMS.Entity.Robot;
 import com.robogames.RoboCupMS.Entity.Team;
 import com.robogames.RoboCupMS.Entity.TeamInvitation;
+import com.robogames.RoboCupMS.Entity.TeamJoinRequest;
 import com.robogames.RoboCupMS.Entity.TeamRegistration;
 import com.robogames.RoboCupMS.Entity.UserRC;
 import com.robogames.RoboCupMS.Repository.TeamInvitationRepository;
+import com.robogames.RoboCupMS.Repository.TeamJoinRequestRepository;
 import com.robogames.RoboCupMS.Repository.TeamRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
@@ -33,6 +37,9 @@ public class TeamService {
 
     @Autowired
     private TeamInvitationRepository invitationRepository;
+
+    @Autowired
+    private TeamJoinRequestRepository joinRequestRepository;
 
     /**
      * Navrati info o tymu, ve kterem se prihlaseny uzivatel nachazi
@@ -207,12 +214,116 @@ public class TeamService {
     }
 
     /**
-     * Prida do tymu noveho clena
+     * Odebere z tymu jednoho clena
      * 
-     * @param id ID clena, ktery ma byt pridat do tymu
+     * @param id ID clena, ktery ma byt odebran z tymu
      * @throws Exception
      */
-    public void addMember(Long id) throws Exception {
+    public void removeMember(Long id) throws Exception {
+        UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Optional<Team> t = this.teamRepository.findAllByLeader(leader).stream().findFirst();
+        if (t.isPresent()) {
+            Optional<UserRC> u = this.userRepository.findById(id);
+            if (u.isPresent()) {
+                // Nelze odebrat sebe sama (vedouciho)
+                if (u.get().getID() == leader.getID()) {
+                    throw new Exception("failure, you cannot remove yourself from the team");
+                }
+                t.get().getMembers().remove(u.get());
+                u.get().setTeam(null);
+                this.teamRepository.save(t.get());
+                this.userRepository.save(u.get());
+            } else {
+                throw new Exception(String.format("failure, user with ID [%s] not found", id));
+            }
+        } else {
+            throw new Exception("failure, you are not the leader of any existing team");
+        }
+    }
+
+    /**
+     * Zmeni vedouciho tymu na jineho clena tymu
+     * 
+     * @param id ID noveho vedouciho
+     * @throws Exception
+     */
+    @Transactional
+    public void changeLeader(Long id) throws Exception {
+        UserRC currentLeader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Optional<Team> t = this.teamRepository.findAllByLeader(currentLeader).stream().findFirst();
+        if (t.isPresent()) {
+            Team team = t.get();
+            Optional<UserRC> newLeader = this.userRepository.findById(id);
+            
+            if (!newLeader.isPresent()) {
+                throw new Exception(String.format("failure, user with ID [%s] not found", id));
+            }
+            
+            // Overi ze novy vedouci je clenem tymu
+            if (newLeader.get().getTeamID() != team.getID()) {
+                throw new Exception("failure, user is not a member of this team");
+            }
+            
+            // Nelze nastavit sebe jako noveho vedouciho
+            if (newLeader.get().getID() == currentLeader.getID()) {
+                throw new Exception("failure, you are already the leader");
+            }
+            
+            team.setLeader(newLeader.get());
+            this.teamRepository.save(team);
+        } else {
+            throw new Exception("failure, you are not the leader of any existing team");
+        }
+    }
+
+    /**
+     * Opusti tym, ve ktrem se prihlaseny uzivatel aktualne nachazi. Pokud tim kdo
+     * opousti tym je jeho vedouci pak se automaticky urci novy vedouci.
+     */
+    @Transactional
+    public void leaveTeam() throws Exception {
+        UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        // overi zda se v nejakem tymu nachazi
+        if (user.getTeamID() == Team.NOT_IN_TEAM) {
+            throw new Exception("failure, you are not member of any team");
+        }
+
+        // pokud je uzivatel vedoucim tymu, pak se vedoucim musi stat jiny z clenu tymu.
+        // pokud zde jiz zadny clen neni, bude nastaven na null.
+        Team team = user.getTeam();
+        if (team.getLeaderID() == user.getID()) {
+            List<UserRC> members = userRepository.findByTeam_Id(team.getID());
+
+            if (members.size() <= 1) {
+                team.setLeader(null);
+            } else {
+                UserRC newLeader = members.stream()
+                        .filter(u -> u.getID() != user.getID())
+                        .findFirst()
+                        .orElse(null);
+                team.setLeader(newLeader);
+            }
+            this.teamRepository.save(team);
+        }
+
+        user.setTeam(null);
+        this.userRepository.save(user);
+    }
+
+    // =====================================================
+    // ENDPOINTY PRO POZVÁNÍ DO TYMU (INVITATIONS)
+    // =====================================================
+
+    /**
+     * Prida do tymu noveho clena podle emailu
+     * 
+     * @param email Email clena, ktery ma byt pridat do tymu
+     * @throws Exception
+     */
+    public void addMemberByEmail(String email) throws Exception {
         UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Optional<Team> t = this.teamRepository.findAllByLeader(leader).stream().findFirst();
@@ -222,11 +333,11 @@ public class TeamService {
                 throw new Exception("failure, team is full");
             }
 
-            Optional<UserRC> u = this.userRepository.findById(id);
+            Optional<UserRC> u = this.userRepository.findByEmail(email);
 
             // nejprve overi zda uzivatel existuje
             if (!u.isPresent()) {
-                throw new Exception(String.format("failure, user with ID [%s] not found", id));
+                throw new Exception("failure, user not found");
             }
 
             // overi zda uzivatel jeste nebyl do tymu pozvan
@@ -245,49 +356,49 @@ public class TeamService {
         }
     }
 
-    /**
-     * Odebere z tymu jednoho clena
-     * 
-     * @param id ID clena, ktery ma byt odebran z tymu
-     * @throws Exception
-     */
-    public void removeMember(Long id) throws Exception {
-        UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        Optional<Team> t = this.teamRepository.findAllByLeader(leader).stream().findFirst();
-        if (t.isPresent()) {
-            Optional<UserRC> u = this.userRepository.findById(id);
-            if (u.isPresent()) {
-                t.get().getMembers().remove(u.get());
-                u.get().setTeam(null);
-                this.teamRepository.save(t.get());
-                this.userRepository.save(u.get());
-            } else {
-                throw new Exception(String.format("failure, user with ID [%s] not found", id));
-            }
-        } else {
-            throw new Exception("failure, you are not the leader of any existing team");
-        }
-    }
-
+    @Transactional
     public void acceptInvitation(Long id) throws Exception {
         Optional<TeamInvitation> invitation = this.invitationRepository.findById(id);
         if (invitation.isPresent()) {
             UserRC currentUser = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             UserRC u = invitation.get().getUser();
-            Team t = invitation.get().getTeam();
+            Team newTeam = invitation.get().getTeam();
 
             // pokud pozvanka nepatri uzivateli, kteremu realne byla odeslana
             if (currentUser.getID() != u.getID()) {
                 throw new Exception("failure, this is not your invitation");
             }
 
-            // prida uzivatele do tymu (automaticky nastavi vedouciho pokud tym zadneho nema)
-            t.addMember(u);
-            this.teamRepository.save(t);
+            // pokud je uzivatel v nejakem tymu, automaticky ho opusti
+            if (u.getTeamID() != Team.NOT_IN_TEAM) {
+                Team oldTeam = u.getTeam();
+                
+                // pokud je vedoucim stareho tymu, nastav noveho vedouciho nebo null
+                if (oldTeam.getLeaderID() == u.getID()) {
+                    List<UserRC> members = userRepository.findByTeam_Id(oldTeam.getID());
+                    if (members.size() <= 1) {
+                        oldTeam.setLeader(null);
+                    } else {
+                        UserRC newLeader = members.stream()
+                                .filter(member -> member.getID() != u.getID())
+                                .findFirst()
+                                .orElse(null);
+                        oldTeam.setLeader(newLeader);
+                    }
+                }
+                
+                // odeber uzivatele ze stareho tymu
+                oldTeam.getMembers().remove(u);
+                u.setTeam(null);
+                this.teamRepository.save(oldTeam);
+            }
+
+            // prida uzivatele do noveho tymu (automaticky nastavi vedouciho pokud tym zadneho nema)
+            newTeam.addMember(u);
+            this.teamRepository.save(newTeam);
             this.userRepository.save(u);
 
-            // odstraneni z databaze
+            // odstraneni pozvanky z databaze
             this.invitationRepository.delete(invitation.get());
         } else {
             throw new Exception(String.format("failure, invitation with ID [%s] not found", id));
@@ -312,39 +423,206 @@ public class TeamService {
         }
     }
 
+    // =====================================================
+    // METODY PRO ZADOSTI O VSTUP DO TYMU (JOIN REQUESTS)
+    // =====================================================
+
     /**
-     * Opusti tym, ve ktrem se prihlaseny uzivatel aktualne nachazi. Pokud tim kdo
-     * opousti tym je jeho vedouci pak se automaticky urci novy vedouci.
+     * Navrati seznam vsech tymu (pouze nazvy a ID) pro uzivatele bez tymu
+     * 
+     * @return Seznam vsech tymu
      */
-    @Transactional
-    public void leaveTeam() throws Exception {
+    public List<TeamNameObj> getAllTeamNames() {
+        return this.teamRepository.findAll().stream()
+                .map(team -> new TeamNameObj(team.getID(), team.getName(), team.getMemberCount()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Odesle zadost o vstup do tymu
+     * 
+     * @param teamId ID tymu, do ktereho chce uzivatel vstoupit
+     * @throws Exception
+     */
+    public void sendJoinRequest(Long teamId) throws Exception {
         UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // overi zda se v nejakem tymu nachazi
-        if (user.getTeamID() == Team.NOT_IN_TEAM) {
-            throw new Exception("failure, you are not member of any team");
+        // overi zda uzivatel neni jiz clenem nejakeho tymu
+        if (user.getTeamID() != Team.NOT_IN_TEAM) {
+            throw new Exception("failure, you are already a member of a team");
         }
 
-        // pokud je uzivatel vedoucim tymu, pak se vedoucim musi stat jiny z clenu tymu.
-        // pokud zde jiz zadny clen neni, bude nastaven na null.
-        Team team = user.getTeam();
-        if (team.getLeaderID() == user.getID()) {
-            List<UserRC> members = userRepository.findByTeamId(team.getID());
+        Optional<Team> teamOpt = this.teamRepository.findById(teamId);
+        if (!teamOpt.isPresent()) {
+            throw new Exception(String.format("failure, team with ID [%d] not found", teamId));
+        }
 
-            if (members.size() <= 1) {
-                team.setLeader(null);
-            } else {
-                UserRC newLeader = members.stream()
-                        .filter(u -> u.getID() != user.getID())
-                        .findFirst()
-                        .orElse(null);
-                team.setLeader(newLeader);
+        Team team = teamOpt.get();
+
+        // overi zda tym neni plny
+        if (team.getMemberCount() >= GlobalConfig.MAX_TEAM_MEMBERS) {
+            throw new Exception("failure, team is full");
+        }
+
+        // overi zda tym ma vedouciho
+        if (team.getLeaderID() == -1) {
+            throw new Exception("failure, team has no leader");
+        }
+
+        // overi zda uzivatel jiz neposlal zadost do tohoto tymu
+        Optional<TeamJoinRequest> existingRequest = this.joinRequestRepository.findByUserAndTeam(user, team);
+        if (existingRequest.isPresent()) {
+            throw new Exception("failure, you have already sent a request to this team");
+        }
+
+        // vytvori novou zadost
+        TeamJoinRequest request = new TeamJoinRequest(user, team);
+        this.joinRequestRepository.save(request);
+    }
+
+    /**
+     * Navrati vsechny zadosti o vstup do tymu pro vedouciho tymu
+     * 
+     * @return Seznam zadosti serazeny od nejstarsi
+     * @throws Exception
+     */
+    public List<TeamJoinRequest> getJoinRequests() throws Exception {
+        UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Optional<Team> teamOpt = this.teamRepository.findAllByLeader(leader).stream().findFirst();
+        if (!teamOpt.isPresent()) {
+            throw new Exception("failure, you are not the leader of any existing team");
+        }
+
+        return this.joinRequestRepository.findByTeamOrderByCreatedAtAsc(teamOpt.get());
+    }
+
+    /**
+     * Prijme zadost o vstup do tymu
+     * 
+     * @param requestId ID zadosti
+     * @throws Exception
+     */
+    @Transactional
+    public void acceptJoinRequest(Long requestId) throws Exception {
+        UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Optional<TeamJoinRequest> requestOpt = this.joinRequestRepository.findById(requestId);
+        if (!requestOpt.isPresent()) {
+            throw new Exception(String.format("failure, join request with ID [%d] not found", requestId));
+        }
+
+        TeamJoinRequest request = requestOpt.get();
+        Team team = request.getTeam();
+        UserRC user = request.getUser();
+
+        // overi ze vedouci je skutecne vedoucim tohoto tymu
+        if (team.getLeaderID() != leader.getID()) {
+            throw new Exception("failure, you are not the leader of this team");
+        }
+
+        // overi zda tym neni plny
+        if (team.getMemberCount() >= GlobalConfig.MAX_TEAM_MEMBERS) {
+            throw new Exception("failure, team is full");
+        }
+
+        // pokud je uzivatel v nejakem tymu (mezitim mohl prijmout jinou pozvanku),
+        // automaticky ho opusti
+        if (user.getTeamID() != Team.NOT_IN_TEAM) {
+            Team oldTeam = user.getTeam();
+            
+            // pokud je vedoucim stareho tymu, nastav noveho vedouciho nebo null
+            if (oldTeam.getLeaderID() == user.getID()) {
+                List<UserRC> members = userRepository.findByTeam_Id(oldTeam.getID());
+                if (members.size() <= 1) {
+                    oldTeam.setLeader(null);
+                } else {
+                    UserRC newLeader = members.stream()
+                            .filter(member -> member.getID() != user.getID())
+                            .findFirst()
+                            .orElse(null);
+                    oldTeam.setLeader(newLeader);
+                }
             }
-            this.teamRepository.save(team);
+            
+            // odeber uzivatele ze stareho tymu
+            oldTeam.getMembers().remove(user);
+            user.setTeam(null);
+            this.teamRepository.save(oldTeam);
         }
 
-        user.setTeam(null);
+        // prida uzivatele do tymu
+        team.addMember(user);
+        this.teamRepository.save(team);
         this.userRepository.save(user);
+
+        // smaze zadost
+        this.joinRequestRepository.delete(request);
+
+        // smaze vsechny ostatni zadosti od tohoto uzivatele
+        List<TeamJoinRequest> otherRequests = this.joinRequestRepository.findByUser(user);
+        this.joinRequestRepository.deleteAll(otherRequests);
+    }
+
+    /**
+     * Odmitne zadost o vstup do tymu
+     * 
+     * @param requestId ID zadosti
+     * @throws Exception
+     */
+    public void rejectJoinRequest(Long requestId) throws Exception {
+        UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Optional<TeamJoinRequest> requestOpt = this.joinRequestRepository.findById(requestId);
+        if (!requestOpt.isPresent()) {
+            throw new Exception(String.format("failure, join request with ID [%d] not found", requestId));
+        }
+
+        TeamJoinRequest request = requestOpt.get();
+        Team team = request.getTeam();
+
+        // overi ze vedouci je skutecne vedoucim tohoto tymu
+        if (team.getLeaderID() != leader.getID()) {
+            throw new Exception("failure, you are not the leader of this team");
+        }
+
+        // smaze zadost
+        this.joinRequestRepository.delete(request);
+    }
+
+    /**
+     * Zrusi vlastni zadost o vstup do tymu
+     * 
+     * @param requestId ID zadosti
+     * @throws Exception
+     */
+    public void cancelJoinRequest(Long requestId) throws Exception {
+        UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Optional<TeamJoinRequest> requestOpt = this.joinRequestRepository.findById(requestId);
+        if (!requestOpt.isPresent()) {
+            throw new Exception(String.format("failure, join request with ID [%d] not found", requestId));
+        }
+
+        TeamJoinRequest request = requestOpt.get();
+
+        // overi ze zadost patri tomuto uzivateli
+        if (request.getUser().getID() != user.getID()) {
+            throw new Exception("failure, this is not your join request");
+        }
+
+        // smaze zadost
+        this.joinRequestRepository.delete(request);
+    }
+
+    /**
+     * Navrati vsechny zadosti odeslane prihlasenym uzivatelem
+     * 
+     * @return Seznam zadosti
+     */
+    public List<TeamJoinRequest> getMyJoinRequests() {
+        UserRC user = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return this.joinRequestRepository.findByUser(user);
     }
 
 }
