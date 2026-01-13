@@ -187,28 +187,47 @@ public class OrderManagementService {
     }
 
     /**
-     * Request a change in match order in the queue
+     * Skip the current match on a playground - moves first match to the end of queue
      * 
-     * @param id Match ID to be moved to the front of the queue
+     * @param playgroundId Playground ID
      */
-    public void requestAnotherMatch(long id) throws Exception {
+    public void skipCurrentMatch(long playgroundId) throws Exception {
         if (OrderManagementService.YEAR == -1) {
             throw new Exception("failure, order Management Service is not running!");
         }
 
-        Optional<RobotMatch> match = this.robotMatchRepository.findById(id);
-        if (!match.isPresent()) {
-            throw new Exception(String.format("failure, match with ID [%d] not exists", id));
-        }
-
-        MatchQueue matchQueue = OrderManagementService.MATCH_QUEUES.get(match.get().getPlayground().getID());
+        MatchQueue matchQueue = OrderManagementService.MATCH_QUEUES.get(playgroundId);
 
         if (matchQueue == null) {
-            throw new Exception("match queue not exists");
+            throw new Exception(String.format("failure, no match queue exists for playground ID [%d]", playgroundId));
         }
 
-        // Move match to the front of the queue
-        matchQueue.setFirst(id);
+        // Move first match to the end of the queue
+        if (!matchQueue.moveFirstToEnd()) {
+            throw new Exception("failure, queue is empty or has only one match");
+        }
+        
+        logger.info(String.format("[Playground ID: %d] skipped current match, moved to end of queue", playgroundId));
+    }
+
+    /**
+     * Get current match for a specific playground (first in queue)
+     * 
+     * @param playgroundId Playground ID
+     * @return Current match or null if no match in queue
+     */
+    public RobotMatch getCurrentMatch(long playgroundId) throws Exception {
+        if (OrderManagementService.YEAR == -1) {
+            throw new Exception("failure, order Management Service is not running!");
+        }
+
+        MatchQueue matchQueue = OrderManagementService.MATCH_QUEUES.get(playgroundId);
+
+        if (matchQueue == null) {
+            return null;
+        }
+
+        return matchQueue.getFirst();
     }
 
     /**

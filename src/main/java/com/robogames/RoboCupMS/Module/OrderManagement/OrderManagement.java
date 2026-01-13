@@ -93,17 +93,34 @@ public class OrderManagement {
     }
 
     /**
-     * Request a change in match order in the queue
+     * Skip current match on a playground - moves first match to end of queue
      * 
-     * @param id Match ID to be moved to the front of the queue
+     * @param playgroundId Playground ID
      * @return Status info
      */
     @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
-    @PutMapping("/requestAnotherMatch")
-    Response requestAnotherMatch(@RequestParam long id) {
+    @PutMapping("/skipCurrentMatch")
+    Response skipCurrentMatch(@RequestParam long playgroundId) {
         try {
-            this.orderManagementService.requestAnotherMatch(id);
+            this.orderManagementService.skipCurrentMatch(playgroundId);
             return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Get current match for a specific playground (first in queue)
+     * 
+     * @param playgroundId Playground ID
+     * @return Current match or null
+     */
+    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT, ERole.Names.REFEREE })
+    @GetMapping("/currentMatch")
+    Response getCurrentMatch(@RequestParam long playgroundId) {
+        try {
+            RobotMatch match = this.orderManagementService.getCurrentMatch(playgroundId);
+            return ResponseHandler.response(match);
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
         }

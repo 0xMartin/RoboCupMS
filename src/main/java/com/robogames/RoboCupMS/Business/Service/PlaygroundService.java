@@ -36,6 +36,16 @@ public class PlaygroundService {
     }
 
     /**
+     * Navrati jedno hriste podle ID
+     * 
+     * @param id ID hriste
+     * @return Hriste nebo empty
+     */
+    public Optional<Playground> getByID(Long id) {
+        return this.playgroundRepository.findById(id);
+    }
+
+    /**
      * Navrati vsechny hriste pro urcitou disciplinu
      * 
      * @param id ID discipliny

@@ -136,6 +136,20 @@ public class MatchQueue {
     }
 
     /**
+     * Presune prvni zapas na konec fronty (preskoci aktualni zapas)
+     * 
+     * @return True -> presunuti bylo uspesne
+     */
+    public synchronized boolean moveFirstToEnd() {
+        if (this.queue.size() < 2) {
+            return false;
+        }
+        RobotMatch first = this.queue.removeFirst();
+        this.queue.addLast(first);
+        return true;
+    }
+
+    /**
      * Zapas s konkretnim ID presune na prvni misto ve fronte
      * 
      * @param matchID ID zapasu
