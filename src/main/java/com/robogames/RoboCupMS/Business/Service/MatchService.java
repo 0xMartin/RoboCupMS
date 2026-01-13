@@ -25,6 +25,7 @@ import com.robogames.RoboCupMS.Repository.TournamentPhaseRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service for managing robot matches
@@ -158,6 +159,7 @@ public class MatchService {
      * @return The created match
      * @throws Exception on validation errors
      */
+    @Transactional
     public RobotMatch create(RobotMatchObj matchObj) throws Exception {
         // Validate playground exists
         Optional<Playground> playground = this.playgroundRepository.findById(matchObj.getPlaygroundID());
@@ -166,9 +168,16 @@ public class MatchService {
                     String.format("failure, playground with ID [%d] not exists", matchObj.getPlaygroundID()));
         }
 
+        // Validate that robotA and robotB are not the same
+        if (matchObj.getRobotAID() != null && matchObj.getRobotBID() != null 
+                && matchObj.getRobotAID().equals(matchObj.getRobotBID())) {
+            throw new Exception("failure, robot cannot play against itself");
+        }
+
         Robot robotA = null;
         Robot robotB = null;
         Discipline discipline = playground.get().getDiscipline();
+        Competition competition = null;
 
         // Validate robot A if provided
         if (matchObj.getRobotAID() != null) {
@@ -178,13 +187,13 @@ public class MatchService {
                         String.format("failure, robot with ID [%d] not exists", matchObj.getRobotAID()));
             }
             robotA = robotAOpt.get();
+            competition = robotA.getTeamRegistration().getCompetition();
 
-            // Check if competition has started
-            Competition competition = robotA.getTeamRegistration().getCompetition();
-            if (!competition.getStarted()) {
+            // Verify robot's discipline matches playground's discipline
+            if (!robotA.getDiscipline().getID().equals(discipline.getID())) {
                 throw new Exception(
-                        String.format("failure, competition year [%d] has not started yet. Matches cannot be created before the competition starts.",
-                                competition.getYear()));
+                        String.format("failure, robot with ID [%d] is not in the same discipline as the playground", 
+                                matchObj.getRobotAID()));
             }
 
             // Verify robot is confirmed
@@ -212,6 +221,18 @@ public class MatchService {
                         String.format("failure, robot with ID [%d] not exists", matchObj.getRobotBID()));
             }
             robotB = robotBOpt.get();
+            
+            // Set competition from robotB if robotA was not provided
+            if (competition == null) {
+                competition = robotB.getTeamRegistration().getCompetition();
+            }
+
+            // Verify robot's discipline matches playground's discipline
+            if (!robotB.getDiscipline().getID().equals(discipline.getID())) {
+                throw new Exception(
+                        String.format("failure, robot with ID [%d] is not in the same discipline as the playground", 
+                                matchObj.getRobotBID()));
+            }
 
             // Verify robot is confirmed
             if (!robotB.getConfirmed()) {
@@ -224,11 +245,6 @@ public class MatchService {
                 throw new Exception("failure, robots must be from the same category");
             }
 
-            // Verify both robots are from the same discipline
-            if (robotA != null && !robotA.getDiscipline().getID().equals(robotB.getDiscipline().getID())) {
-                throw new Exception("failure, robots must be from the same discipline");
-            }
-
             // Check max rounds limit for robot B
             int maxRounds = robotB.getDiscipline().getMaxRounds();
             if (maxRounds >= 0) {
@@ -238,6 +254,13 @@ public class MatchService {
                                     matchObj.getRobotBID()));
                 }
             }
+        }
+
+        // Check if competition has started (if any robot is assigned)
+        if (competition != null && !competition.getStarted()) {
+            throw new Exception(
+                    String.format("failure, competition year [%d] has not started yet. Matches cannot be created before the competition starts.",
+                            competition.getYear()));
         }
 
         // Get tournament phase if provided
@@ -306,6 +329,7 @@ public class MatchService {
      * @param matchObj New match parameters
      * @throws Exception on validation errors
      */
+    @Transactional
     public void update(Long id, RobotMatchObj matchObj) throws Exception {
         Optional<RobotMatch> matchOpt = this.robotMatchRepository.findById(id);
         if (!matchOpt.isPresent()) {
@@ -313,6 +337,7 @@ public class MatchService {
         }
 
         RobotMatch match = matchOpt.get();
+        Discipline playgroundDiscipline = match.getPlayground().getDiscipline();
 
         // Update playground if provided
         if (matchObj.getPlaygroundID() != null) {
@@ -322,6 +347,25 @@ public class MatchService {
                         String.format("failure, playground with ID [%d] not exists", matchObj.getPlaygroundID()));
             }
             match.setPlayground(playground.get());
+            playgroundDiscipline = playground.get().getDiscipline();
+        }
+
+        // Track new robot IDs for validation
+        Long newRobotAID = matchObj.getRobotAID();
+        Long newRobotBID = matchObj.getRobotBID();
+        
+        // Get effective robot IDs after update
+        Long effectiveRobotAID = (newRobotAID != null) 
+                ? (newRobotAID == 0 ? null : newRobotAID) 
+                : (match.getRobotA() != null ? match.getRobotA().getID() : null);
+        Long effectiveRobotBID = (newRobotBID != null) 
+                ? (newRobotBID == 0 ? null : newRobotBID) 
+                : (match.getRobotB() != null ? match.getRobotB().getID() : null);
+        
+        // Validate that robotA and robotB are not the same
+        if (effectiveRobotAID != null && effectiveRobotBID != null 
+                && effectiveRobotAID.equals(effectiveRobotBID)) {
+            throw new Exception("failure, robot cannot play against itself");
         }
 
         // Update robot A if provided (0 means remove robot)
@@ -337,6 +381,12 @@ public class MatchService {
                 if (!robotA.get().getConfirmed()) {
                     throw new Exception(
                             String.format("failure, robot with ID [%d] is not confirmed", matchObj.getRobotAID()));
+                }
+                // Verify robot's discipline matches playground's discipline
+                if (!robotA.get().getDiscipline().getID().equals(playgroundDiscipline.getID())) {
+                    throw new Exception(
+                            String.format("failure, robot with ID [%d] is not in the same discipline as the playground", 
+                                    matchObj.getRobotAID()));
                 }
                 match.setRobotA(robotA.get());
             }
@@ -355,6 +405,16 @@ public class MatchService {
                 if (!robotB.get().getConfirmed()) {
                     throw new Exception(
                             String.format("failure, robot with ID [%d] is not confirmed", matchObj.getRobotBID()));
+                }
+                // Verify robot's discipline matches playground's discipline
+                if (!robotB.get().getDiscipline().getID().equals(playgroundDiscipline.getID())) {
+                    throw new Exception(
+                            String.format("failure, robot with ID [%d] is not in the same discipline as the playground", 
+                                    matchObj.getRobotBID()));
+                }
+                // Verify robots are from same category
+                if (match.getRobotA() != null && match.getRobotA().getCategory() != robotB.get().getCategory()) {
+                    throw new Exception("failure, robots must be from the same category");
                 }
                 match.setRobotB(robotB.get());
             }
@@ -410,6 +470,7 @@ public class MatchService {
      * @param robotBID Robot B ID (can be null to keep existing)
      * @throws Exception on validation errors
      */
+    @Transactional
     public void assignRobots(Long id, Long robotAID, Long robotBID) throws Exception {
         Optional<RobotMatch> matchOpt = this.robotMatchRepository.findById(id);
         if (!matchOpt.isPresent()) {
@@ -417,7 +478,21 @@ public class MatchService {
         }
 
         RobotMatch match = matchOpt.get();
+        Discipline playgroundDiscipline = match.getPlayground().getDiscipline();
+        
+        // Validate that robotA and robotB are not the same
+        if (robotAID != null && robotBID != null && robotAID.equals(robotBID)) {
+            throw new Exception("failure, robot cannot play against itself");
+        }
+        
+        // Also check against existing robots
+        Long effectiveRobotAID = robotAID != null ? robotAID : (match.getRobotA() != null ? match.getRobotA().getID() : null);
+        Long effectiveRobotBID = robotBID != null ? robotBID : (match.getRobotB() != null ? match.getRobotB().getID() : null);
+        if (effectiveRobotAID != null && effectiveRobotBID != null && effectiveRobotAID.equals(effectiveRobotBID)) {
+            throw new Exception("failure, robot cannot play against itself");
+        }
 
+        Robot newRobotA = null;
         if (robotAID != null) {
             Optional<Robot> robotA = this.robotRepository.findById(robotAID);
             if (!robotA.isPresent()) {
@@ -426,7 +501,14 @@ public class MatchService {
             if (!robotA.get().getConfirmed()) {
                 throw new Exception(String.format("failure, robot with ID [%d] is not confirmed", robotAID));
             }
-            match.setRobotA(robotA.get());
+            // Verify robot's discipline matches playground's discipline
+            if (!robotA.get().getDiscipline().getID().equals(playgroundDiscipline.getID())) {
+                throw new Exception(
+                        String.format("failure, robot with ID [%d] is not in the same discipline as the playground", 
+                                robotAID));
+            }
+            newRobotA = robotA.get();
+            match.setRobotA(newRobotA);
         }
 
         if (robotBID != null) {
@@ -437,8 +519,15 @@ public class MatchService {
             if (!robotB.get().getConfirmed()) {
                 throw new Exception(String.format("failure, robot with ID [%d] is not confirmed", robotBID));
             }
+            // Verify robot's discipline matches playground's discipline
+            if (!robotB.get().getDiscipline().getID().equals(playgroundDiscipline.getID())) {
+                throw new Exception(
+                        String.format("failure, robot with ID [%d] is not in the same discipline as the playground", 
+                                robotBID));
+            }
             // Verify robots are from same category
-            if (match.getRobotA() != null && match.getRobotA().getCategory() != robotB.get().getCategory()) {
+            Robot existingRobotA = newRobotA != null ? newRobotA : match.getRobotA();
+            if (existingRobotA != null && existingRobotA.getCategory() != robotB.get().getCategory()) {
                 throw new Exception("failure, robots must be from the same category");
             }
             match.setRobotB(robotB.get());
@@ -474,6 +563,7 @@ public class MatchService {
      * @param scoreObj Score data
      * @throws Exception on validation errors
      */
+    @Transactional
     public void writeScore(MatchScoreObj scoreObj) throws Exception {
         Optional<RobotMatch> matchOpt = this.robotMatchRepository.findById(scoreObj.getMatchID());
         if (!matchOpt.isPresent()) {
@@ -482,9 +572,14 @@ public class MatchService {
 
         RobotMatch match = matchOpt.get();
 
-        // Validate that robots are assigned
+        // Validate that at least robot A is assigned
         if (match.getRobotA() == null) {
             throw new Exception("failure, cannot write score - no robots assigned to this match");
+        }
+        
+        // Validate that score A is provided
+        if (scoreObj.getScoreA() == null) {
+            throw new Exception("failure, score A is required");
         }
 
         // Set scores
@@ -542,49 +637,128 @@ public class MatchService {
     }
 
     /**
-     * Progress the winner of a match to the next match in bracket
-     * Prevents duplicate assignments to both robot A and robot B positions
+     * Progress the winner of a match to the next match in bracket.
+     * Handles the following scenarios:
+     * - Single robot match: that robot automatically advances
+     * - Two robot match: winner based on scores and highScoreWin advances
+     * - If a robot from this match is already in the next match, it gets replaced by the winner
+     * - Prevents both robots from the same match being in the next match
      * 
      * @param match The completed match
      */
     private void progressWinnerToNextMatch(RobotMatch match) {
-        Robot winner = match.getWinner();
-        if (winner == null) {
-            return; // No clear winner (tie or missing scores)
-        }
-
         RobotMatch nextMatch = match.getNextMatch();
         if (nextMatch == null) {
             return;
         }
 
-        // Check if winner is already assigned to next match
-        if (nextMatch.getRobotA() != null && nextMatch.getRobotA().getID().equals(winner.getID())) {
-            return; // Already assigned as robot A
-        }
-        if (nextMatch.getRobotB() != null && nextMatch.getRobotB().getID().equals(winner.getID())) {
-            return; // Already assigned as robot B
-        }
-
-        // Check if the loser from this match is already in the next match
-        // This prevents both robots from the same match going to next match
-        Robot loser = (winner.equals(match.getRobotA())) ? match.getRobotB() : match.getRobotA();
-        if (loser != null) {
-            if (nextMatch.getRobotA() != null && nextMatch.getRobotA().getID().equals(loser.getID())) {
-                return; // Loser already in next match - something is wrong
+        // Determine the winner
+        Robot winner;
+        Robot loser;
+        
+        // Single robot match - that robot automatically advances
+        if (match.getRobotB() == null) {
+            winner = match.getRobotA();
+            loser = null;
+        } else if (match.getRobotA() == null) {
+            winner = match.getRobotB();
+            loser = null;
+        } else {
+            // Two robot match - determine winner based on scores
+            winner = match.getWinner();
+            if (winner == null) {
+                return; // No clear winner (tie or missing scores)
             }
-            if (nextMatch.getRobotB() != null && nextMatch.getRobotB().getID().equals(loser.getID())) {
-                return; // Loser already in next match - something is wrong
-            }
+            loser = winner.equals(match.getRobotA()) ? match.getRobotB() : match.getRobotA();
         }
-
-        // Assign winner to first available slot
-        if (nextMatch.getRobotA() == null) {
+        
+        if (winner == null) {
+            return; // No robot to advance
+        }
+        
+        Long winnerID = winner.getID();
+        Long loserID = loser != null ? loser.getID() : null;
+        
+        // Get current robots in next match
+        Robot nextRobotA = nextMatch.getRobotA();
+        Robot nextRobotB = nextMatch.getRobotB();
+        Long nextRobotAID = nextRobotA != null ? nextRobotA.getID() : null;
+        Long nextRobotBID = nextRobotB != null ? nextRobotB.getID() : null;
+        
+        // Check if winner is already correctly assigned
+        if (winnerID.equals(nextRobotAID) || winnerID.equals(nextRobotBID)) {
+            // Winner is already in next match, but we need to make sure loser is not there too
+            if (loserID != null) {
+                if (loserID.equals(nextRobotAID)) {
+                    // Loser is in position A, replace with winner (or null if winner is in B)
+                    if (winnerID.equals(nextRobotBID)) {
+                        nextMatch.setRobotA(null);
+                    } else {
+                        nextMatch.setRobotA(winner);
+                    }
+                    this.robotMatchRepository.save(nextMatch);
+                } else if (loserID.equals(nextRobotBID)) {
+                    // Loser is in position B, replace with winner (or null if winner is in A)
+                    if (winnerID.equals(nextRobotAID)) {
+                        nextMatch.setRobotB(null);
+                    } else {
+                        nextMatch.setRobotB(winner);
+                    }
+                    this.robotMatchRepository.save(nextMatch);
+                }
+            }
+            return;
+        }
+        
+        // Winner is not in next match yet
+        // Check if loser (or any robot from this match) is in next match - if so, replace it
+        if (loserID != null && loserID.equals(nextRobotAID)) {
+            // Loser is in position A, replace with winner
             nextMatch.setRobotA(winner);
-        } else if (nextMatch.getRobotB() == null) {
+            this.robotMatchRepository.save(nextMatch);
+            return;
+        }
+        if (loserID != null && loserID.equals(nextRobotBID)) {
+            // Loser is in position B, replace with winner
+            nextMatch.setRobotB(winner);
+            this.robotMatchRepository.save(nextMatch);
+            return;
+        }
+        
+        // Also check if robotA or robotB from current match (not just loser) is in next match
+        // This handles edge cases where robots might have been manually assigned
+        Long robotAID = match.getRobotA() != null ? match.getRobotA().getID() : null;
+        Long robotBID = match.getRobotB() != null ? match.getRobotB().getID() : null;
+        
+        if (robotAID != null && robotAID.equals(nextRobotAID)) {
+            nextMatch.setRobotA(winner);
+            this.robotMatchRepository.save(nextMatch);
+            return;
+        }
+        if (robotAID != null && robotAID.equals(nextRobotBID)) {
+            nextMatch.setRobotB(winner);
+            this.robotMatchRepository.save(nextMatch);
+            return;
+        }
+        if (robotBID != null && robotBID.equals(nextRobotAID)) {
+            nextMatch.setRobotA(winner);
+            this.robotMatchRepository.save(nextMatch);
+            return;
+        }
+        if (robotBID != null && robotBID.equals(nextRobotBID)) {
+            nextMatch.setRobotB(winner);
+            this.robotMatchRepository.save(nextMatch);
+            return;
+        }
+        
+        // No robot from this match is in next match yet - assign to first available slot
+        if (nextRobotA == null) {
+            nextMatch.setRobotA(winner);
+        } else if (nextRobotB == null) {
             nextMatch.setRobotB(winner);
         }
-
+        // If both slots are taken by robots from other matches, do nothing
+        
         this.robotMatchRepository.save(nextMatch);
     }
 

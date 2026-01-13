@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Object.TeamNameObj;
 import com.robogames.RoboCupMS.Business.Object.TeamObj;
-import com.robogames.RoboCupMS.Entity.Robot;
 import com.robogames.RoboCupMS.Entity.Team;
 import com.robogames.RoboCupMS.Entity.TeamInvitation;
 import com.robogames.RoboCupMS.Entity.TeamJoinRequest;
@@ -148,43 +147,44 @@ public class TeamService {
     }
 
     /**
-     * Odstrani tym z databaze
+     * Odstrani tym z databaze.
+     * Neni mozne odstranit tym pokud ma registraci v jiz zahajenem rocniku souteze.
      * 
      * @throws Exception
      */
+    @Transactional
     public void remove() throws Exception {
         UserRC leader = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Optional<Team> t = this.teamRepository.findAllByLeader(leader).stream().findFirst();
-        if (t.isPresent()) {
-            for (TeamRegistration reg : t.get().getRegistrations()) {
-                // overi zda jiz tento tym neni registrovan v nejakem rocnik, ktery jit zacal.
-                // Pak v tom pripade neni mozne jiz tym odstranit, jelikoz system zaznamenava i
-                // zapasy z minulych rocniku
-                if (reg.getCompetition().getStarted()) {
-                    throw new Exception(
-                            "failure, it is not possible to remove the team because it is already registred in a competition that has already started");
-                }
-                // overi zda jiz tym nema nejakeho robota, ktery ma jiz potvrzenou registraci
-                for (Robot r : reg.getRobots()) {
-                    if (r.getConfirmed()) {
-                        throw new Exception(
-                                "failure, it is not possible to remove the team because it already have confirmed robot");
-                    }
-                }
-            }
-
-            // odebere cleny z tymu
-            t.get().getMembers().forEach((m) -> {
-                m.setTeam(null);
-            });
-            this.userRepository.saveAll(t.get().getMembers());
-
-            // odstrani tym
-            this.teamRepository.delete(t.get());
-        } else {
+        if (!t.isPresent()) {
             throw new Exception("failure, you are not the leader of any existing team");
         }
+        
+        Team team = t.get();
+
+        // overi zda tym nema registraci v jiz zahajenem rocniku souteze
+        for (TeamRegistration reg : team.getRegistrations()) {
+            if (reg.getCompetition().getStarted()) {
+                throw new Exception(
+                        "failure, it is not possible to remove the team because it is already registered in a competition year that has already started");
+            }
+        }
+
+        // smaze vsechny pozvanky do tohoto tymu
+        this.invitationRepository.deleteByTeam(team);
+        
+        // smaze vsechny zadosti o vstup do tohoto tymu
+        this.joinRequestRepository.deleteByTeam(team);
+
+        // odebere cleny z tymu (nastavi jim team na null)
+        team.getMembers().forEach((m) -> {
+            m.setTeam(null);
+        });
+        this.userRepository.saveAll(team.getMembers());
+
+        // odstrani tym (diky CascadeType.REMOVE na registrations a robots se smaze i vse ostatni)
+        this.teamRepository.delete(team);
     }
 
     /**
@@ -229,6 +229,10 @@ public class TeamService {
                 // Nelze odebrat sebe sama (vedouciho)
                 if (u.get().getID() == leader.getID()) {
                     throw new Exception("failure, you cannot remove yourself from the team");
+                }
+                // Overi zda je uzivatel skutecne clenem tohoto tymu
+                if (u.get().getTeamID() != t.get().getID()) {
+                    throw new Exception("failure, user is not a member of your team");
                 }
                 t.get().getMembers().remove(u.get());
                 u.get().setTeam(null);
@@ -340,6 +344,11 @@ public class TeamService {
                 throw new Exception("failure, user not found");
             }
 
+            // overi zda uzivatel jiz neni clenem tohoto tymu
+            if (u.get().getTeamID() == t.get().getID()) {
+                throw new Exception("failure, user is already a member of your team");
+            }
+
             // overi zda uzivatel jeste nebyl do tymu pozvan
             Optional<TeamInvitation> existingInvitation = this.invitationRepository.findByUserAndTeam(u.get(), t.get());
             if (existingInvitation.isPresent()) {
@@ -367,6 +376,11 @@ public class TeamService {
             // pokud pozvanka nepatri uzivateli, kteremu realne byla odeslana
             if (currentUser.getID() != u.getID()) {
                 throw new Exception("failure, this is not your invitation");
+            }
+
+            // overi zda uzivatel jiz neni clenem ciloveho tymu
+            if (u.getTeamID() == newTeam.getID()) {
+                throw new Exception("failure, you are already a member of this team");
             }
 
             // pokud je uzivatel v nejakem tymu, automaticky ho opusti
@@ -400,6 +414,14 @@ public class TeamService {
 
             // odstraneni pozvanky z databaze
             this.invitationRepository.delete(invitation.get());
+            
+            // smaze vsechny ostatni pozvanky pro tohoto uzivatele
+            List<TeamInvitation> otherInvitations = this.invitationRepository.findByUserOrderByCreatedAtAsc(u);
+            this.invitationRepository.deleteAll(otherInvitations);
+            
+            // smaze vsechny zadosti o vstup od tohoto uzivatele
+            List<TeamJoinRequest> joinRequests = this.joinRequestRepository.findByUser(u);
+            this.joinRequestRepository.deleteAll(joinRequests);
         } else {
             throw new Exception(String.format("failure, invitation with ID [%s] not found", id));
         }
@@ -428,12 +450,14 @@ public class TeamService {
     // =====================================================
 
     /**
-     * Navrati seznam vsech tymu (pouze nazvy a ID) pro uzivatele bez tymu
+     * Navrati seznam vsech tymu (pouze nazvy a ID) pro uzivatele bez tymu.
+     * Vynechava tymy s 0 cleny.
      * 
-     * @return Seznam vsech tymu
+     * @return Seznam vsech tymu s alespon jednim clenem
      */
     public List<TeamNameObj> getAllTeamNames() {
         return this.teamRepository.findAll().stream()
+                .filter(team -> team.getMemberCount() > 0)
                 .map(team -> new TeamNameObj(team.getID(), team.getName(), team.getMemberCount()))
                 .collect(Collectors.toList());
     }
@@ -526,6 +550,13 @@ public class TeamService {
             throw new Exception("failure, team is full");
         }
 
+        // overi zda uzivatel jiz neni clenem ciloveho tymu
+        if (user.getTeamID() == team.getID()) {
+            // smaze zadost, protoze uz je clenem
+            this.joinRequestRepository.delete(request);
+            throw new Exception("failure, user is already a member of this team");
+        }
+
         // pokud je uzivatel v nejakem tymu (mezitim mohl prijmout jinou pozvanku),
         // automaticky ho opusti
         if (user.getTeamID() != Team.NOT_IN_TEAM) {
@@ -562,6 +593,10 @@ public class TeamService {
         // smaze vsechny ostatni zadosti od tohoto uzivatele
         List<TeamJoinRequest> otherRequests = this.joinRequestRepository.findByUser(user);
         this.joinRequestRepository.deleteAll(otherRequests);
+        
+        // smaze vsechny pozvanky pro tohoto uzivatele
+        List<TeamInvitation> invitations = this.invitationRepository.findByUserOrderByCreatedAtAsc(user);
+        this.invitationRepository.deleteAll(invitations);
     }
 
     /**

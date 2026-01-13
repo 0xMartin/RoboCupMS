@@ -35,4 +35,9 @@ public interface TeamJoinRequestRepository extends JpaRepository<TeamJoinRequest
      * Najde vsechny zadosti pro tym podle ID tymu
      */
     List<TeamJoinRequest> findByTeam_IdOrderByCreatedAtAsc(Long teamId);
+    
+    /**
+     * Smaze vsechny zadosti o vstup do konkretniho tymu
+     */
+    void deleteByTeam(Team team);
 }

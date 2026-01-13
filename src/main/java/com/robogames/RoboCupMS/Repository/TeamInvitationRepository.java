@@ -19,4 +19,9 @@ public interface TeamInvitationRepository extends JpaRepository<TeamInvitation, 
      * Najde vsechny pozvanky pro uzivatele serazene od nejstarsi
      */
     List<TeamInvitation> findByUserOrderByCreatedAtAsc(UserRC user);
+    
+    /**
+     * Smaze vsechny pozvanky do konkretniho tymu
+     */
+    void deleteByTeam(Team team);
 }

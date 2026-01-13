@@ -667,20 +667,25 @@ public class RobotMatch {
     /**
      * Determine the winner of this match based on scores and highScoreWin setting
      * 
-     * @return Winner robot, or null if no clear winner (tie, missing scores, or single robot match)
+     * @return Winner robot, or null if no clear winner (tie or missing scores for two-robot match)
      */
     @JsonIgnore
     public Robot getWinner() {
-        if (this.scoreA == null) {
+        // Single robot match - that robot automatically "wins" and advances
+        if (this.robotB == null && this.robotA != null) {
+            return this.robotA;
+        }
+        if (this.robotA == null && this.robotB != null) {
+            return this.robotB;
+        }
+        
+        // No robots assigned
+        if (this.robotA == null && this.robotB == null) {
             return null;
         }
         
-        // Single robot match - robot A is the "winner" if score is recorded
-        if (this.robotB == null) {
-            return this.robotA;
-        }
-        
-        if (this.scoreB == null) {
+        // Two robot match - need scores to determine winner
+        if (this.scoreA == null || this.scoreB == null) {
             return null;
         }
         
