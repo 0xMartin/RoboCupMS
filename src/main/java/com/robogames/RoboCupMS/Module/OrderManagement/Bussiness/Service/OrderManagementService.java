@@ -19,7 +19,6 @@ import com.robogames.RoboCupMS.Entity.RobotMatch;
 import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.MatchQueue;
 import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.ScheduledMatchInfo;
 import com.robogames.RoboCupMS.Repository.CompetitionRepository;
-import com.robogames.RoboCupMS.Repository.PlaygroundRepository;
 import com.robogames.RoboCupMS.Repository.RobotMatchRepository;
 import com.robogames.RoboCupMS.Repository.RobotRepository;
 
@@ -46,9 +45,6 @@ public class OrderManagementService {
 
     @Autowired
     private RobotRepository robotRepository;
-
-    @Autowired
-    private PlaygroundRepository playgroundRepository;
 
     /**
      * Match queues for each playground
@@ -296,16 +292,18 @@ public class OrderManagementService {
             logger.info(String.format("[Playground ID: %d] removed from queue: %d", p, cnt));
         });
 
-        // Add all matches waiting to be played
+        // Add all matches waiting to be played (only matches WITH robots - can't call robots if there are none)
         List<RobotMatch> matches = this.robotMatchRepository.findAll().stream()
+                .filter(m -> m.hasRobots()) // Only matches with at least one robot
                 .filter(m -> {
                     // Filter by year - check if any robot is from this year
                     if (m.getRobotA() != null) {
                         return m.getRobotA().getTeamRegistration().getCompetitionYear() == YEAR;
                     }
-                    // For matches without robots, we can't determine the year
-                    // These should still be included if they're on a playground for this year
-                    return true;
+                    if (m.getRobotB() != null) {
+                        return m.getRobotB().getTeamRegistration().getCompetitionYear() == YEAR;
+                    }
+                    return false; // Should never reach here since hasRobots() is true
                 })
                 .collect(Collectors.toList());
 

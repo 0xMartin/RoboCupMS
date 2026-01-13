@@ -68,17 +68,23 @@ public class MatchQueue {
         for(RobotMatch m : this.queue) {
             Optional<RobotMatch> match = repository.findById(m.getID());
             if (match.isPresent()) {
-                m.setMatchState(match.get().getState());
+                RobotMatch dbMatch = match.get();
+                m.setMatchState(dbMatch.getState());
+                // Also remove matches that no longer have robots (can't call them)
+                if (!dbMatch.hasRobots()) {
+                    indexes.add(index);
+                }
             } else {
                 indexes.add(index);  
             }
             index++;
         }
 
-        // odstraneni neexistujicich
-        indexes.stream().forEach((i) -> {
-            queue.remove((int) i);
-        });
+        // odstraneni neexistujicich a zapasu bez robotu
+        // Remove in reverse order to avoid index shifting issues
+        for (int i = indexes.size() - 1; i >= 0; i--) {
+            queue.remove((int) indexes.get(i));
+        }
     }
 
     /**

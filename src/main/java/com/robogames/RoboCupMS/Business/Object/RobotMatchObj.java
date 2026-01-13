@@ -53,6 +53,11 @@ public class RobotMatchObj {
      */
     private Integer visualY;
 
+    /**
+     * Competition year this match belongs to
+     */
+    private Integer competitionYear;
+
     public RobotMatchObj() {
     }
 
@@ -136,6 +141,14 @@ public class RobotMatchObj {
 
     public void setVisualY(Integer visualY) {
         this.visualY = visualY;
+    }
+
+    public Integer getCompetitionYear() {
+        return this.competitionYear;
+    }
+
+    public void setCompetitionYear(Integer competitionYear) {
+        this.competitionYear = competitionYear;
     }
 
 }

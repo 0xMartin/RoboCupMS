@@ -119,6 +119,13 @@ public class RobotMatch {
     private Integer visualY;
 
     /**
+     * Competition year this match belongs to
+     * Used for filtering matches when robots are not yet assigned
+     */
+    @Column(name = "competition_year", nullable = true)
+    private Integer competitionYear;
+
+    /**
      * Default constructor - creates a scheduled match
      */
     public RobotMatch() {
@@ -129,6 +136,7 @@ public class RobotMatch {
         this.group = null;
         this.visualX = 0;
         this.visualY = 0;
+        this.competitionYear = null;
     }
 
     /**
@@ -396,6 +404,23 @@ public class RobotMatch {
     }
 
     /**
+     * Get the competition year
+     * 
+     * @return Competition year or null if not set
+     */
+    public Integer getCompetitionYear() {
+        // First try to get year from robots if assigned
+        if (this.robotA != null) {
+            return this.robotA.getTeamRegistration().getCompetitionYear();
+        }
+        if (this.robotB != null) {
+            return this.robotB.getTeamRegistration().getCompetitionYear();
+        }
+        // Otherwise return stored value
+        return this.competitionYear;
+    }
+
+    /**
      * Get the discipline name (from playground)
      * 
      * @return Discipline name
@@ -628,6 +653,15 @@ public class RobotMatch {
      */
     public void setVisualY(Integer visualY) {
         this.visualY = visualY;
+    }
+
+    /**
+     * Set the competition year
+     * 
+     * @param competitionYear Competition year
+     */
+    public void setCompetitionYear(Integer competitionYear) {
+        this.competitionYear = competitionYear;
     }
 
     /**

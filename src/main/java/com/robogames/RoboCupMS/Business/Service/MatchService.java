@@ -95,7 +95,12 @@ public class MatchService {
                     if (m.getRobotA() != null) {
                         return m.getRobotA().getTeamRegistration().getCompetitionYear() == year;
                     }
-                    return false;
+                    if (m.getRobotB() != null) {
+                        return m.getRobotB().getTeamRegistration().getCompetitionYear() == year;
+                    }
+                    // Fallback: check stored competition year
+                    Integer storedYear = m.getCompetitionYear();
+                    return storedYear != null && storedYear == year;
                 })
                 .collect(Collectors.toList());
     }
@@ -280,6 +285,11 @@ public class MatchService {
             match.setVisualY(matchObj.getVisualY());
         }
         
+        // Set competition year if provided (for matches without robots)
+        if (matchObj.getCompetitionYear() != null) {
+            match.setCompetitionYear(matchObj.getCompetitionYear());
+        }
+        
         this.robotMatchRepository.save(match);
 
         // Send message to communication system
@@ -313,32 +323,40 @@ public class MatchService {
             match.setPlayground(playground.get());
         }
 
-        // Update robot A if provided
+        // Update robot A if provided (0 means remove robot)
         if (matchObj.getRobotAID() != null) {
-            Optional<Robot> robotA = this.robotRepository.findById(matchObj.getRobotAID());
-            if (!robotA.isPresent()) {
-                throw new Exception(
-                        String.format("failure, robot with ID [%d] not exists", matchObj.getRobotAID()));
+            if (matchObj.getRobotAID() == 0) {
+                match.setRobotA(null);
+            } else {
+                Optional<Robot> robotA = this.robotRepository.findById(matchObj.getRobotAID());
+                if (!robotA.isPresent()) {
+                    throw new Exception(
+                            String.format("failure, robot with ID [%d] not exists", matchObj.getRobotAID()));
+                }
+                if (!robotA.get().getConfirmed()) {
+                    throw new Exception(
+                            String.format("failure, robot with ID [%d] is not confirmed", matchObj.getRobotAID()));
+                }
+                match.setRobotA(robotA.get());
             }
-            if (!robotA.get().getConfirmed()) {
-                throw new Exception(
-                        String.format("failure, robot with ID [%d] is not confirmed", matchObj.getRobotAID()));
-            }
-            match.setRobotA(robotA.get());
         }
 
-        // Update robot B if provided
+        // Update robot B if provided (0 means remove robot)
         if (matchObj.getRobotBID() != null) {
-            Optional<Robot> robotB = this.robotRepository.findById(matchObj.getRobotBID());
-            if (!robotB.isPresent()) {
-                throw new Exception(
-                        String.format("failure, robot with ID [%d] not exists", matchObj.getRobotBID()));
+            if (matchObj.getRobotBID() == 0) {
+                match.setRobotB(null);
+            } else {
+                Optional<Robot> robotB = this.robotRepository.findById(matchObj.getRobotBID());
+                if (!robotB.isPresent()) {
+                    throw new Exception(
+                            String.format("failure, robot with ID [%d] not exists", matchObj.getRobotBID()));
+                }
+                if (!robotB.get().getConfirmed()) {
+                    throw new Exception(
+                            String.format("failure, robot with ID [%d] is not confirmed", matchObj.getRobotBID()));
+                }
+                match.setRobotB(robotB.get());
             }
-            if (!robotB.get().getConfirmed()) {
-                throw new Exception(
-                        String.format("failure, robot with ID [%d] is not confirmed", matchObj.getRobotBID()));
-            }
-            match.setRobotB(robotB.get());
         }
 
         // Update tournament phase if provided
