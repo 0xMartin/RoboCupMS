@@ -1,6 +1,7 @@
 package com.robogames.RoboCupMS.Controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Response;
@@ -40,6 +41,22 @@ public class PlaygroundControler {
     Response getAll() {
         List<Playground> all = this.playgroundService.getAll();
         return ResponseHandler.response(all);
+    }
+
+    /**
+     * Navrati jedno hriste podle ID
+     * 
+     * @param id ID hriste
+     * @return Hriste
+     */
+    @GetMapping("/getByID")
+    Response getByID(@RequestParam Long id) {
+        Optional<Playground> playground = this.playgroundService.getByID(id);
+        if (playground.isPresent()) {
+            return ResponseHandler.response(playground.get());
+        } else {
+            return ResponseHandler.error(String.format("Playground with ID [%d] not found", id));
+        }
     }
 
     /**

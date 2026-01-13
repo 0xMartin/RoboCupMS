@@ -14,6 +14,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Hriste, na kterem roboti uskutecnuji zapasy mezi sebou
@@ -80,6 +81,7 @@ public class Playground {
      * 
      * @return ID hriste
      */
+    @JsonProperty("id")
     public long getID() {
         return this.id;
     }
@@ -100,6 +102,16 @@ public class Playground {
      */
     public int getNumber() {
         return this.number;
+    }
+
+    /**
+     * Returns the discipline for this playground
+     * 
+     * @return Discipline
+     */
+    @JsonIgnore
+    public Discipline getDiscipline() {
+        return this.discipline;
     }
 
     /**

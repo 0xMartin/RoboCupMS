@@ -9,13 +9,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.robogames.RoboCupMS.Business.Enum.EMatchState;
+import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
 
 /**
- * Entita reprezentujici mozne stavy zapasu (Enum)
+ * Entity representing tournament phases (preliminary, semifinal, final, etc.)
  */
-@Entity(name = "match_state")
-public class MatchState {
+@Entity(name = "tournament_phase")
+public class TournamentPhase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,27 +23,27 @@ public class MatchState {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private EMatchState name;
+    private ETournamentPhase name;
 
     /**
-     * Entita reprezentujici mozne stav zapasu
+     * Default constructor
      */
-    public MatchState() {
+    public TournamentPhase() {
     }
 
     /**
-     * Entita reprezentujici mozne stav zapasu
+     * Constructor with phase name
      * 
-     * @param name Nazev stavu zapasu
+     * @param name The tournament phase name
      */
-    public MatchState(EMatchState name) {
+    public TournamentPhase(ETournamentPhase name) {
         this.name = name;
     }
 
     /**
-     * Navrati ID stavu zapasu
+     * Get the ID of this tournament phase
      * 
-     * @return ID stavu zapasu
+     * @return The ID
      */
     @JsonProperty("id")
     public Long getID() {
@@ -51,20 +51,20 @@ public class MatchState {
     }
 
     /**
-     * Navrati nazev stavu zapasu
+     * Get the name of this tournament phase
      * 
-     * @return Nazev stavu
+     * @return The phase name
      */
-    public EMatchState getName() {
+    public ETournamentPhase getName() {
         return name;
     }
 
     /**
-     * Nastavi nazev stavu zapasu
+     * Set the name of this tournament phase
      * 
-     * @param name Novy nazes stavu
+     * @param name The new phase name
      */
-    public void setName(EMatchState name) {
+    public void setName(ETournamentPhase name) {
         this.name = name;
     }
 

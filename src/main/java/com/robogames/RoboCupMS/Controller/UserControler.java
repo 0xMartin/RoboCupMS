@@ -48,7 +48,7 @@ public class UserControler {
         List<TeamInvitationObj> all = new ArrayList<TeamInvitationObj>();
         for (TeamInvitation inv : this.userService.getTeamInvitations()) {
             all.add(new TeamInvitationObj(inv.getId(), inv.getUser().getID(), inv.getTeam().getID(),
-                    inv.getTeam().getName()));
+                    inv.getTeam().getName(), inv.getCreatedAt()));
         }
         return ResponseHandler.response(all);
     }

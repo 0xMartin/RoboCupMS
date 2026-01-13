@@ -1,5 +1,6 @@
 package com.robogames.RoboCupMS.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +14,14 @@ import com.robogames.RoboCupMS.Entity.UserRC;
  */
 public interface TeamInvitationRepository extends JpaRepository<TeamInvitation, Long> {
     Optional<TeamInvitation> findByUserAndTeam(UserRC u, Team t);
+    
+    /**
+     * Najde vsechny pozvanky pro uzivatele serazene od nejstarsi
+     */
+    List<TeamInvitation> findByUserOrderByCreatedAtAsc(UserRC user);
+    
+    /**
+     * Smaze vsechny pozvanky do konkretniho tymu
+     */
+    void deleteByTeam(Team team);
 }

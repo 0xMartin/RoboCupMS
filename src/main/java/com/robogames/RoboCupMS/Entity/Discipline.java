@@ -12,92 +12,104 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.robogames.RoboCupMS.AppInit;
 import com.robogames.RoboCupMS.Business.Enum.EScoreAggregation;
+import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 import com.robogames.RoboCupMS.Repository.ScoreAggregationRepository;
 
 @Entity(name = "discipline")
 public class Discipline {
 
     /**
-     * Navratova hodnota ID "zadne" discipliny (navrati pokud robot neni registrovan
-     * v zadne
-     * discipline)
+     * Return value for ID when robot is not registered in any discipline
      */
     public static final int NOT_REGISTRED = -1;
 
     /**
-     * Hodnota parametru "maxRounds" pokud nema byt robot limitovat pocetem zapasu
+     * Value for "maxRounds" parameter when robot should not be limited by match count
      */
     public static final int NOT_LIMITED_NUMBER_OF_ROUNDS = -1;
 
     /**
-     * ID discipliny
+     * Discipline ID
      */
     @Id
     @GeneratedValue
     private Long id;
 
     /**
-     * Nazev discipliny
+     * Discipline name
      */
     @Column(name = "name", length = 80, nullable = false, unique = false)
     private String name;
 
     /**
-     * Agregacni funkce skore (pouziva se pro automaticke vyhodnoceni skore)
+     * Score aggregation function (used for automatic score evaluation)
      */
     @ManyToOne(optional = false)
     private ScoreAggregation scoreAggregation;
 
     /**
-     * Casový limit na jeden zapas (v sekundách)
+     * Score type for this discipline (TIME or SCORE)
+     */
+    @ManyToOne(optional = true)
+    private ScoreType scoreType;
+
+    /**
+     * Determines how to select the winner based on score
+     * true = higher score wins (e.g., sumo wins count)
+     * false = lower score wins (e.g., time-based like line follower)
+     */
+    @Column(name = "high_score_win", nullable = false)
+    private Boolean highScoreWin;
+
+    /**
+     * Time limit for one match (in seconds)
      */
     @Column(name = "time", length = 8192, nullable = false, unique = false)
     private int time;
 
     /**
-     * Maximalni pocet zapasu odehranych robotem (hodnota bude ignorovana v pripada
-     * zaporneho cisla)
+     * Maximum number of matches a robot can play (negative value means no limit)
      */
     @Column(name = "maxRounds", nullable = false, unique = false)
     private int maxRounds;
 
     /**
-     * Popis discipliny
+     * Discipline description
      */
     @Column(name = "description", length = 8192, nullable = true, unique = false)
     private String description;
 
     /**
-     * Seznam vsech hrist pro tuto disciplinu
+     * List of all playgrounds for this discipline
      */
     @OneToMany(mappedBy = "discipline", cascade = CascadeType.REMOVE)
     private List<Playground> playgrounds;
 
     /**
-     * Seznam vsech robotu, kteri jsou registrovani v teto discipline
+     * List of all robots registered in this discipline
      */
     @OneToMany(mappedBy = "discipline", cascade = CascadeType.REMOVE)
     private List<Robot> robots;
 
     /**
-     * Disciplina, ve ktere muzou roboti soutezit
+     * Default constructor
      */
     public Discipline() {
         this.playgrounds = new ArrayList<Playground>();
+        this.highScoreWin = true;
     }
 
     /**
-     * Disciplina, ve ktere muzou roboti soutezit
+     * Constructor with parameters
      * 
-     * @param _name             Nazev discipliny
-     * @param _description      Popis discipliny (max 8192 znaku)
-     * @param _scoreAggregation Agregacni funkce skore (pouziva se pro automaticke
-     *                          vyhodnoceni skore)
-     * @param _time             Casový limit na jeden zapas (v sekundách)
-     * @param _maxRounds        Maximalni pocet zapasu odehranych robotem (hodnota
-     *                          bude ignorovana v pripada zaporneho cisla)
+     * @param _name             Discipline name
+     * @param _description      Discipline description (max 8192 characters)
+     * @param _scoreAggregation Score aggregation function
+     * @param _time             Time limit for one match (in seconds)
+     * @param _maxRounds        Maximum number of matches (negative = no limit)
      */
     public Discipline(String _name, String _description, EScoreAggregation _scoreAggregation, int _time,
             int _maxRounds) {
@@ -108,6 +120,7 @@ public class Discipline {
         this.scoreAggregation = repository.findByName(_scoreAggregation).get();
         this.description = _description;
         this.time = _time;
+        this.highScoreWin = true;
         this.playgrounds = new ArrayList<Playground>();
         this.maxRounds = _maxRounds;
     }
@@ -117,6 +130,7 @@ public class Discipline {
      * 
      * @return ID
      */
+    @JsonProperty("id")
     public Long getID() {
         return this.id;
     }
@@ -131,18 +145,46 @@ public class Discipline {
     }
 
     /**
-     * Navrati agregacni funkci skore
+     * Get the score aggregation function
      * 
-     * @return Agregacni funkce skore
+     * @return Score aggregation function
      */
     public ScoreAggregation getScoreAggregation() {
         return this.scoreAggregation;
     }
 
     /**
-     * Navrati casovy limit na odehrani jednoho zapasu
+     * Get the score type
      * 
-     * @return Casovy limit (sekundy)
+     * @return Score type or null
+     */
+    @JsonIgnore
+    public ScoreType getScoreType() {
+        return this.scoreType;
+    }
+
+    /**
+     * Get the score type name
+     * 
+     * @return Score type name or null
+     */
+    public EScoreType getScoreTypeName() {
+        return this.scoreType != null ? this.scoreType.getName() : null;
+    }
+
+    /**
+     * Get whether higher score wins in this discipline
+     * 
+     * @return true if higher score wins
+     */
+    public Boolean getHighScoreWin() {
+        return this.highScoreWin;
+    }
+
+    /**
+     * Get the time limit for one match
+     * 
+     * @return Time limit (seconds)
      */
     public int getTime() {
         return this.time;
@@ -224,11 +266,29 @@ public class Discipline {
     }
 
     /**
-     * Nastavi maximalni pocet kol jednoho zapasu
+     * Set max rounds
      * 
-     * @param _maxRounds Pocet kol
+     * @param _maxRounds Number of rounds
      */
     public void setMaxRounds(int _maxRounds){
         this.maxRounds = _maxRounds;
+    }
+
+    /**
+     * Set the score type
+     * 
+     * @param _scoreType Score type
+     */
+    public void setScoreType(ScoreType _scoreType) {
+        this.scoreType = _scoreType;
+    }
+
+    /**
+     * Set whether higher score wins
+     * 
+     * @param _highScoreWin true if higher score wins
+     */
+    public void setHighScoreWin(Boolean _highScoreWin) {
+        this.highScoreWin = _highScoreWin;
     }
 }

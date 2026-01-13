@@ -8,34 +8,41 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 
-@Entity(name = "team_invitation")
-public class TeamInvitation {
+/**
+ * Zadost o vstup do tymu - uzivatel bez tymu muze pozadat o vstup do tymu
+ */
+@Entity(name = "team_join_request")
+public class TeamJoinRequest {
 
     @Id
     @GeneratedValue
     private Long id;
 
-    @OneToOne
+    /**
+     * Uzivatel, ktery zada o vstup do tymu
+     */
+    @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private UserRC user;
 
+    /**
+     * Tym, do ktereho uzivatel zada o vstup
+     */
     @ManyToOne
     private Team team;
 
     /**
-     * Cas vytvoreni pozvanky
+     * Cas vytvoreni zadosti
      */
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public TeamInvitation() {
+    public TeamJoinRequest() {
         this.createdAt = LocalDateTime.now();
     }
 
-    public TeamInvitation(Long id, UserRC user, Team team) {
-        this.id = id;
+    public TeamJoinRequest(UserRC user, Team team) {
         this.user = user;
         this.team = team;
         this.createdAt = LocalDateTime.now();
@@ -49,20 +56,20 @@ public class TeamInvitation {
         this.id = id;
     }
 
-    public Team getTeam() {
-        return team;
-    }
-
-    public void setTeam(Team team) {
-        this.team = team;
-    }
-
     public UserRC getUser() {
         return user;
     }
 
     public void setUser(UserRC user) {
         this.user = user;
+    }
+
+    public Team getTeam() {
+        return team;
+    }
+
+    public void setTeam(Team team) {
+        this.team = team;
     }
 
     public LocalDateTime getCreatedAt() {

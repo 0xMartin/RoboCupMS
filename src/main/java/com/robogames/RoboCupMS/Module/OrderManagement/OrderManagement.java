@@ -8,7 +8,6 @@ import com.robogames.RoboCupMS.ResponseHandler;
 import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Entity.RobotMatch;
-import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.MultiMatchGroupObj;
 import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Object.ScheduledMatchInfo;
 import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Service.OrderManagementService;
 
@@ -16,15 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Zajistuje zobrazovani aktualniho poradi zapasu a jejich generovani
+ * Controller for managing match order and scheduling display
  */
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -32,20 +29,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderManagement {
 
     @Autowired
-    private OrderManagementService competitionEvaluationService;
+    private OrderManagementService orderManagementService;
 
     /**
-     * Spusti modul pro rizeni poradi. Modul bude mozne spustit jen pro soutez,
-     * ktery byla jiz zahajna.
+     * Start the order management module. Can only be started for a competition
+     * that has already been started.
      * 
-     * @param year Rocnik souteze
+     * @param year Competition year
      * @throws Exception
      */
     @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT })
     @PutMapping("/run")
     Response run(@RequestParam int year) {
         try {
-            this.competitionEvaluationService.run(year);
+            this.orderManagementService.run(year);
             return ResponseHandler.response("success");
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
@@ -53,26 +50,26 @@ public class OrderManagement {
     }
 
     /**
-     * Navrati informaci o tom zda je servis spusten
+     * Returns whether the service is running
      * 
-     * @return Stav
+     * @return Status
      */
     @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT, ERole.Names.REFEREE })
     @GetMapping("/isRunning")
     Response isRunning() {
-        return ResponseHandler.response(this.competitionEvaluationService.isRunning());
+        return ResponseHandler.response(this.orderManagementService.isRunning());
     }
 
     /**
-     * Vyzada refresh systemu, pokud dojde k zamrznuti
+     * Request a system refresh if frozen
      * 
-     * @return Informace o stavu provedeneho requestu
+     * @return Status info
      */
     @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT })
     @PutMapping("/requestRefresh")
     Response requestRefresh() {
         try {
-            this.competitionEvaluationService.requestRefresh();
+            this.orderManagementService.requestRefresh();
             return ResponseHandler.response("success");
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
@@ -80,18 +77,15 @@ public class OrderManagement {
     }
 
     /**
-     * Navrati seznam vsech zapasu, ktere maji byt nyni odehrany na prislusnych
-     * hristich
+     * Return list of all matches that should be played now on their respective playgrounds
      * 
-     * @param year     Rocnik souteze
-     * @param category Soutezni kategorie
-     * @return Vsechny zapasy, ktere maji byt nyni odehrany na prislusnych hristich
+     * @return All matches that should be played now
      */
     @GetMapping("/currentMatches")
     Response currentMatches() {
         List<RobotMatch> matches;
         try {
-            matches = this.competitionEvaluationService.currentMatches();
+            matches = this.orderManagementService.currentMatches();
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
         }
@@ -99,19 +93,16 @@ public class OrderManagement {
     }
 
     /**
-     * Vyzada zmenu poradi zapasu ve fronte
+     * Skip current match on a playground - moves first match to end of queue
      * 
-     * @param id ID zapasu, o kterem rozhodci rozhodne, aby byl odehran v danou
-     *           chvili. Zapas s timto ID bude presunut na prvni misto ve fronte.
-     *           (pokud bude zadana zaporna neplatna hodnota pak system vybere
-     *           náhodne ze seznamu cekajicich zapasu)
-     * @return Informace o stavu provedeneho requestu
+     * @param playgroundId Playground ID
+     * @return Status info
      */
     @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
-    @PutMapping("/requestAnotherMatch")
-    Response requestAnotherMatch(@RequestParam long id) {
+    @PutMapping("/skipCurrentMatch")
+    Response skipCurrentMatch(@RequestParam long playgroundId) {
         try {
-            this.competitionEvaluationService.requestAnotherMatch(id);
+            this.orderManagementService.skipCurrentMatch(playgroundId);
             return ResponseHandler.response("success");
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
@@ -119,16 +110,33 @@ public class OrderManagement {
     }
 
     /**
-     * Navrati pro robota seznam vsech nadchazejicich zapasu
+     * Get current match for a specific playground (first in queue)
      * 
-     * @param id ID robota
-     * @return Seznam vsech zapasu robota, ktere jeste cekaji na odehrani
+     * @param playgroundId Playground ID
+     * @return Current match or null
      */
-    @GetMapping("/upcommingMatches")
-    Response upcommingMatches(@RequestParam long id) {
+    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT, ERole.Names.REFEREE })
+    @GetMapping("/currentMatch")
+    Response getCurrentMatch(@RequestParam long playgroundId) {
+        try {
+            RobotMatch match = this.orderManagementService.getCurrentMatch(playgroundId);
+            return ResponseHandler.response(match);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Get list of all upcoming matches for a robot
+     * 
+     * @param id Robot ID
+     * @return List of all waiting matches for the robot
+     */
+    @GetMapping("/upcomingMatches")
+    Response upcomingMatches(@RequestParam long id) {
         List<RobotMatch> matches;
         try {
-            matches = this.competitionEvaluationService.upcommingMatches(id);
+            matches = this.orderManagementService.upcomingMatches(id);
         } catch (Exception ex) {
             return ResponseHandler.error(ex.getMessage());
         }
@@ -136,32 +144,12 @@ public class OrderManagement {
     }
 
     /**
-     * Vygeneruje skupinove zapasy "kazdy s kazdym" (sumo, robo strong, ...)
+     * Get all scheduled matches (WAITING, REMATCH) for public display.
+     * This endpoint is public - no authentication required.
      * 
-     * @param multiMatchGroupObj Objekt definujici parametry pro vygenerovani vsech
-     *                           zapasu
-     * @return Navrati identifikacni cislo tvurce zapasovych skupin (nasledne muze
-     *         byt uplatneno pro odstraneni zapasu)
-     */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
-    @PostMapping("/generateMatches")
-    Response generateMatches(@RequestBody MultiMatchGroupObj multiMatchGroupObj) {
-        long creatorIdentifier;
-        try {
-            creatorIdentifier = this.competitionEvaluationService.generateMatches(multiMatchGroupObj);
-        } catch (Exception ex) {
-            return ResponseHandler.error(ex.getMessage());
-        }
-        return ResponseHandler.response(creatorIdentifier);
-    }
-
-    /**
-     * Ziska seznam vsech naplanovaných zapasu (WAITING, REMATCH) pro verejne zobrazeni.
-     * Tento endpoint je verejny - neni vyzadovana autentizace.
-     * 
-     * @param disciplineIds Volitelny seznam ID disciplin pro filtrovani
-     * @param categories Volitelny seznam kategorii pro filtrovani (JUNIOR, SENIOR, OPEN)
-     * @return Seznam naplanovaných zapasu s informacemi o robotech a týmech
+     * @param disciplineIds Optional list of discipline IDs to filter
+     * @param categories Optional list of categories to filter (LOW_AGE_CATEGORY, HIGH_AGE_CATEGORY)
+     * @return List of scheduled matches with robot and team info
      */
     @GetMapping("/scheduledMatches")
     Response getScheduledMatches(
@@ -174,7 +162,7 @@ public class OrderManagement {
                         .map(c -> ECategory.valueOf(c.toUpperCase()))
                         .toList();
             }
-            List<ScheduledMatchInfo> matches = this.competitionEvaluationService.getAllScheduledMatches(disciplineIds, categoryEnums);
+            List<ScheduledMatchInfo> matches = this.orderManagementService.getAllScheduledMatches(disciplineIds, categoryEnums);
             return ResponseHandler.response(matches);
         } catch (IllegalArgumentException ex) {
             return ResponseHandler.error("Invalid category value: " + ex.getMessage());

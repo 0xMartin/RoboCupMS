@@ -9,13 +9,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.robogames.RoboCupMS.Business.Enum.EMatchState;
+import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 
 /**
- * Entita reprezentujici mozne stavy zapasu (Enum)
+ * Entity representing score types (time, points, etc.)
  */
-@Entity(name = "match_state")
-public class MatchState {
+@Entity(name = "score_type")
+public class ScoreType {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,27 +23,27 @@ public class MatchState {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private EMatchState name;
+    private EScoreType name;
 
     /**
-     * Entita reprezentujici mozne stav zapasu
+     * Default constructor
      */
-    public MatchState() {
+    public ScoreType() {
     }
 
     /**
-     * Entita reprezentujici mozne stav zapasu
+     * Constructor with score type name
      * 
-     * @param name Nazev stavu zapasu
+     * @param name The score type name
      */
-    public MatchState(EMatchState name) {
+    public ScoreType(EScoreType name) {
         this.name = name;
     }
 
     /**
-     * Navrati ID stavu zapasu
+     * Get the ID of this score type
      * 
-     * @return ID stavu zapasu
+     * @return The ID
      */
     @JsonProperty("id")
     public Long getID() {
@@ -51,20 +51,20 @@ public class MatchState {
     }
 
     /**
-     * Navrati nazev stavu zapasu
+     * Get the name of this score type
      * 
-     * @return Nazev stavu
+     * @return The score type name
      */
-    public EMatchState getName() {
+    public EScoreType getName() {
         return name;
     }
 
     /**
-     * Nastavi nazev stavu zapasu
+     * Set the name of this score type
      * 
-     * @param name Novy nazes stavu
+     * @param name The new score type name
      */
-    public void setName(EMatchState name) {
+    public void setName(EScoreType name) {
         this.name = name;
     }
 

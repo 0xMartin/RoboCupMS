@@ -1,185 +1,505 @@
 package com.robogames.RoboCupMS.Entity;
 
+import java.time.LocalDateTime;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.robogames.RoboCupMS.Business.Enum.EScoreType;
+import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
 
 /**
- * Entita reprezentujici zapas
+ * Entity representing a robot match
+ * Supports both single-robot matches (e.g., line follower) and two-robot matches (e.g., sumo)
  */
 @Entity(name = "robot_match")
 public class RobotMatch {
 
     /**
-     * ID zapasu
+     * Match ID
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**
-     * Robot, ktery bude soutezit
-     */
-    @ManyToOne(optional = false)
-    private Robot robot;
-
-    /**
-     * Skupina, ve ktere robot soutezi (null -> pokud nesoutezi v zadne skupine)
+     * First robot in the match (can be null if match is only scheduled but robots not assigned yet)
      */
     @ManyToOne(optional = true)
-    private MatchGroup group;
+    private Robot robotA;
 
     /**
-     * Hriste, na kterem se bude soutezit
+     * Second robot in the match (null for single-robot disciplines like line follower)
      */
-    @ManyToOne(optional = false)
-    private Playground playground;
+    @ManyToOne(optional = true)
+    private Robot robotB;
 
     /**
-     * Aktualni stav zapasu
+     * Score of robot A
+     */
+    @Column(name = "score_a", nullable = true)
+    private Float scoreA;
+
+    /**
+     * Score of robot B
+     */
+    @Column(name = "score_b", nullable = true)
+    private Float scoreB;
+
+    /**
+     * Score type for this match (inherited from discipline)
+     */
+    @ManyToOne(optional = true)
+    private ScoreType scoreType;
+
+    /**
+     * Current state of the match
      */
     @ManyToOne(optional = false)
     private MatchState state;
 
     /**
-     * Vysledne skore zapasu (kolik bodu dostava robot)
+     * Playground where the match takes place
      */
-    @Column(name = "score", nullable = true, unique = false)
-    private float score;
+    @ManyToOne(optional = false)
+    private Playground playground;
 
     /**
-     * Vytvori "naplanuje" zapas. Je mozne planovat skupinove zapasy (robo sumu,
-     * robo strong, ...), nebo jen ciste zapsat vysledek zapasu (line follower =>
-     * cas)
+     * Timestamp of last modification
+     */
+    @Column(name = "timestamp", nullable = false)
+    private LocalDateTime timestamp;
+
+    /**
+     * Tournament phase (preliminary, semifinal, final, etc.)
+     */
+    @ManyToOne(optional = true)
+    private TournamentPhase phase;
+
+    /**
+     * Reference to the next match in bracket-style tournaments
+     * Winner of this match will be automatically assigned to the next match
+     */
+    @ManyToOne(optional = true)
+    private RobotMatch nextMatch;
+
+    /**
+     * Determines how to select the winner based on score
+     * true = higher score wins (e.g., sumo wins count)
+     * false = lower score wins (e.g., time-based like line follower)
+     */
+    @Column(name = "high_score_win", nullable = false)
+    private Boolean highScoreWin;
+
+    /**
+     * Group name for grouping matches (e.g., for bracket visualization)
+     * Can be null if match is not assigned to any group
+     */
+    @Column(name = "match_group", nullable = true)
+    private String group;
+
+    /**
+     * X position for visual representation in bracket/matrix view
+     */
+    @Column(name = "visual_x", nullable = true)
+    private Integer visualX;
+
+    /**
+     * Y position for visual representation in bracket/matrix view
+     */
+    @Column(name = "visual_y", nullable = true)
+    private Integer visualY;
+
+    /**
+     * Competition year this match belongs to
+     * Used for filtering matches when robots are not yet assigned
+     */
+    @Column(name = "competition_year", nullable = true)
+    private Integer competitionYear;
+
+    /**
+     * Default constructor - creates a scheduled match
      */
     public RobotMatch() {
-        this.score = 0;
+        this.scoreA = null;
+        this.scoreB = null;
+        this.highScoreWin = true;
+        this.timestamp = LocalDateTime.now();
+        this.group = null;
+        this.visualX = 0;
+        this.visualY = 0;
+        this.competitionYear = null;
     }
 
     /**
-     * Vytvori "naplanuje" zapas. Je mozne planovat skupinove zapasy (robo sumu,
-     * robo strong, ...), nebo jen ciste zapsat vysledek zapasu (line follower =>
-     * cas)
+     * Constructor for creating a match with all parameters
      * 
-     * @param _robot      Robot, ktery bude soutezit
-     * @param _group      Skupina, ve ktere robot soutezi (null -> pokud nesoutezi v
-     *                    zadne skupine)
-     * @param _playground Hriste, na kterem se bude soutezit
-     * @param _state      Aktualni stav zapasu
+     * @param robotA       First robot (can be null)
+     * @param robotB       Second robot (can be null for single-robot disciplines)
+     * @param playground   Playground where the match will be played
+     * @param state        Initial match state
+     * @param scoreType    Type of scoring
+     * @param phase        Tournament phase
+     * @param nextMatch    Next match in bracket (can be null)
+     * @param highScoreWin Whether higher score wins
      */
-    public RobotMatch(Robot _robot, MatchGroup _group, Playground _playground, MatchState _state) {
-        this.robot = _robot;
-        this.group = _group;
-        this.playground = _playground;
-        this.state = _state;
-        this.score = 0;
+    public RobotMatch(Robot robotA, Robot robotB, Playground playground, MatchState state,
+            ScoreType scoreType, TournamentPhase phase, RobotMatch nextMatch, boolean highScoreWin) {
+        this.robotA = robotA;
+        this.robotB = robotB;
+        this.playground = playground;
+        this.state = state;
+        this.scoreType = scoreType;
+        this.phase = phase;
+        this.nextMatch = nextMatch;
+        this.highScoreWin = highScoreWin;
+        this.scoreA = null;
+        this.scoreB = null;
+        this.timestamp = LocalDateTime.now();
+        this.group = null;
+        this.visualX = 0;
+        this.visualY = 0;
     }
 
+    @PrePersist
+    @PreUpdate
+    protected void onUpdate() {
+        this.timestamp = LocalDateTime.now();
+    }
+
+    // ==================== GETTERS ====================
+
     /**
-     * Navrati ID zapasu
+     * Get the match ID
      * 
-     * @return ID zapasu
+     * @return Match ID
      */
-    public long getID() {
+    @JsonProperty("id")
+    public Long getID() {
         return this.id;
     }
 
     /**
-     * Navrati skore zapasu
+     * Get robot A's ID (returns null if robot not assigned)
      * 
-     * @return Skore
+     * @return Robot A's ID or null
      */
-    public float getScore() {
-        return this.score;
+    public Long getRobotAID() {
+        return this.robotA != null ? this.robotA.getID() : null;
     }
 
     /**
-     * Navrati ID robota
+     * Get robot B's ID (returns null if robot not assigned)
      * 
-     * @return ID robota
+     * @return Robot B's ID or null
      */
-    public long getRobotID() {
-        return this.robot.getID();
+    public Long getRobotBID() {
+        return this.robotB != null ? this.robotB.getID() : null;
     }
 
     /**
-     * Navrati identifikacni cislo robota
+     * Get robot A's number
      * 
-     * @return Identifikacni cislo robota
+     * @return Robot A's number or null
      */
-    public long getRobotNumber() {
-        return this.robot.getNumber();
+    public Long getRobotANumber() {
+        return this.robotA != null ? this.robotA.getNumber() : null;
     }
 
     /**
-     * Navrati jmeno robota
+     * Get robot B's number
      * 
-     * @return Jmeno robota
+     * @return Robot B's number or null
      */
-    public String getRobotName() {
-        return this.robot.getName();
+    public Long getRobotBNumber() {
+        return this.robotB != null ? this.robotB.getNumber() : null;
     }
 
     /**
-     * Navrati ID tymu
+     * Get robot A's name
      * 
-     * @return ID tymu
+     * @return Robot A's name or null
      */
-    public long getTeamID() {
-        return this.robot.getTeamRegistration().getTeamID();
+    public String getRobotAName() {
+        return this.robotA != null ? this.robotA.getName() : null;
     }
 
     /**
-     * Navrati ID zapasove skupiny. Pokud neni ve zadne skupine navrati
-     * MatchGroup.NOT_IN_GROUP
+     * Get robot B's name
      * 
-     * @return ID zapasove skupiny
+     * @return Robot B's name or null
      */
-    public long getGroupID() {
-        if (this.group == null) {
-            return MatchGroup.NOT_IN_GROUP;
-        } else {
-            return this.group.getID();
-        }
+    public String getRobotBName() {
+        return this.robotB != null ? this.robotB.getName() : null;
     }
 
     /**
-     * Navrati ID hriste, na kterem se kona zapas
+     * Get team A's ID
      * 
-     * @return ID hriste
+     * @return Team A's ID or null
      */
-    public long getPlaygroundID() {
-        return this.playground.getID();
+    public Long getTeamAID() {
+        return this.robotA != null ? this.robotA.getTeamRegistration().getTeamID() : null;
     }
 
     /**
-     * Navrati aktualni stav zapasu
+     * Get team B's ID
      * 
-     * @return Aktualni stav zapasu
+     * @return Team B's ID or null
+     */
+    public Long getTeamBID() {
+        return this.robotB != null ? this.robotB.getTeamRegistration().getTeamID() : null;
+    }
+
+    /**
+     * Get team A's name
+     * 
+     * @return Team A's name or null
+     */
+    public String getTeamAName() {
+        return this.robotA != null ? this.robotA.getTeamRegistration().getTeam().getName() : null;
+    }
+
+    /**
+     * Get team B's name
+     * 
+     * @return Team B's name or null
+     */
+    public String getTeamBName() {
+        return this.robotB != null ? this.robotB.getTeamRegistration().getTeam().getName() : null;
+    }
+
+    /**
+     * Get score of robot A
+     * 
+     * @return Score A
+     */
+    public Float getScoreA() {
+        return this.scoreA;
+    }
+
+    /**
+     * Get score of robot B
+     * 
+     * @return Score B
+     */
+    public Float getScoreB() {
+        return this.scoreB;
+    }
+
+    /**
+     * Get the score type
+     * 
+     * @return Score type or null
+     */
+    public EScoreType getScoreTypeName() {
+        return this.scoreType != null ? this.scoreType.getName() : null;
+    }
+
+    /**
+     * Get the match state
+     * 
+     * @return Match state
      */
     public MatchState getState() {
         return this.state;
     }
 
     /**
-     * Navrati robota
+     * Get the playground ID
      * 
-     * @return Robot
+     * @return Playground ID
      */
-    @JsonIgnore
-    public Robot getRobot() {
-        return this.robot;
+    public Long getPlaygroundID() {
+        return this.playground.getID();
     }
 
     /**
-     * Navrati hriste
+     * Get the playground name
      * 
-     * @return Hriste
+     * @return Playground name
+     */
+    public String getPlaygroundName() {
+        return this.playground.getName();
+    }
+
+    /**
+     * Get the playground number
+     * 
+     * @return Playground number
+     */
+    public int getPlaygroundNumber() {
+        return this.playground.getNumber();
+    }
+
+    /**
+     * Get the last modification timestamp
+     * 
+     * @return Timestamp
+     */
+    public LocalDateTime getTimestamp() {
+        return this.timestamp;
+    }
+
+    /**
+     * Get the tournament phase name
+     * 
+     * @return Tournament phase name or null
+     */
+    public ETournamentPhase getPhaseName() {
+        return this.phase != null ? this.phase.getName() : null;
+    }
+
+    /**
+     * Get the next match ID
+     * 
+     * @return Next match ID or null
+     */
+    public Long getNextMatchID() {
+        return this.nextMatch != null ? this.nextMatch.getID() : null;
+    }
+
+    /**
+     * Get whether higher score wins
+     * 
+     * @return true if higher score wins, false if lower score wins
+     */
+    public Boolean getHighScoreWin() {
+        return this.highScoreWin;
+    }
+
+    /**
+     * Get the group name for this match
+     * 
+     * @return Group name or null if not assigned to any group
+     */
+    public String getGroup() {
+        return this.group;
+    }
+
+    /**
+     * Get the visual X position for bracket/matrix view
+     * 
+     * @return X position or null if not set
+     */
+    public Integer getVisualX() {
+        return this.visualX;
+    }
+
+    /**
+     * Get the visual Y position for bracket/matrix view
+     * 
+     * @return Y position or null if not set
+     */
+    public Integer getVisualY() {
+        return this.visualY;
+    }
+
+    /**
+     * Get the competition year
+     * 
+     * @return Competition year or null if not set
+     */
+    public Integer getCompetitionYear() {
+        // First try to get year from robots if assigned
+        if (this.robotA != null) {
+            return this.robotA.getTeamRegistration().getCompetitionYear();
+        }
+        if (this.robotB != null) {
+            return this.robotB.getTeamRegistration().getCompetitionYear();
+        }
+        // Otherwise return stored value
+        return this.competitionYear;
+    }
+
+    /**
+     * Get the discipline name (from playground)
+     * 
+     * @return Discipline name
+     */
+    public String getDisciplineName() {
+        return this.playground.getDisciplineName();
+    }
+
+    /**
+     * Get the discipline ID (from playground)
+     * 
+     * @return Discipline ID
+     */
+    public Long getDisciplineID() {
+        return this.playground.getDisciplineID();
+    }
+
+    /**
+     * Get category of robot A
+     * 
+     * @return Category string or null
+     */
+    public String getCategoryA() {
+        return this.robotA != null ? this.robotA.getCategory().toString() : null;
+    }
+
+    /**
+     * Get category of robot B
+     * 
+     * @return Category string or null
+     */
+    public String getCategoryB() {
+        return this.robotB != null ? this.robotB.getCategory().toString() : null;
+    }
+
+    /**
+     * Check if this is a two-robot match
+     * 
+     * @return true if match has two robots assigned
+     */
+    public Boolean isTwoRobotMatch() {
+        return this.robotB != null;
+    }
+
+    /**
+     * Check if this match has any robots assigned
+     * 
+     * @return true if at least one robot is assigned
+     */
+    public Boolean hasRobots() {
+        return this.robotA != null;
+    }
+
+    // ==================== JSON IGNORE GETTERS ====================
+
+    /**
+     * Get robot A entity
+     * 
+     * @return Robot A
+     */
+    @JsonIgnore
+    public Robot getRobotA() {
+        return this.robotA;
+    }
+
+    /**
+     * Get robot B entity
+     * 
+     * @return Robot B
+     */
+    @JsonIgnore
+    public Robot getRobotB() {
+        return this.robotB;
+    }
+
+    /**
+     * Get the playground entity
+     * 
+     * @return Playground
      */
     @JsonIgnore
     public Playground getPlayground() {
@@ -187,97 +507,214 @@ public class RobotMatch {
     }
 
     /**
-     * Navrati zapasovou skupinu
+     * Get the score type entity
      * 
-     * @return Zapasova skupina
+     * @return Score type
      */
     @JsonIgnore
-    public MatchGroup getMatchGroup() {
-        return this.group;
+    public ScoreType getScoreType() {
+        return this.scoreType;
     }
 
     /**
-     * Navrati nazev hriste
+     * Get the tournament phase entity
      * 
-     * @return Nazev hriste
+     * @return Tournament phase
      */
-    public String getPlaygroundName() {
-        return this.playground.getName();
+    @JsonIgnore
+    public TournamentPhase getPhase() {
+        return this.phase;
     }
 
     /**
-     * Navrati cislo hriste
+     * Get the next match entity
      * 
-     * @return Cislo hriste
+     * @return Next match
      */
-    public int getPlaygroundNumber() {
-        return this.playground.getNumber();
+    @JsonIgnore
+    public RobotMatch getNextMatch() {
+        return this.nextMatch;
+    }
+
+    // ==================== SETTERS ====================
+
+    /**
+     * Set robot A
+     * 
+     * @param robot Robot A
+     */
+    public void setRobotA(Robot robot) {
+        this.robotA = robot;
     }
 
     /**
-     * Navrati nazev tymu
+     * Set robot B
      * 
-     * @return Nazev tymu
+     * @param robot Robot B
      */
-    public String getTeamName() {
-        return this.robot.getTeamRegistration().getTeam().getName();
+    public void setRobotB(Robot robot) {
+        this.robotB = robot;
     }
 
     /**
-     * Navrati nazev discipliny
+     * Set score A
      * 
-     * @return Nazev discipliny
+     * @param score Score for robot A
      */
-    public String getDisciplineName() {
-        if (this.robot.getDiscipline() == null) {
-            return "";
+    public void setScoreA(Float score) {
+        this.scoreA = score;
+    }
+
+    /**
+     * Set score B
+     * 
+     * @param score Score for robot B
+     */
+    public void setScoreB(Float score) {
+        this.scoreB = score;
+    }
+
+    /**
+     * Set the score type
+     * 
+     * @param scoreType Score type
+     */
+    public void setScoreType(ScoreType scoreType) {
+        this.scoreType = scoreType;
+    }
+
+    /**
+     * Set the match state
+     * 
+     * @param state New match state
+     */
+    public void setMatchState(MatchState state) {
+        this.state = state;
+    }
+
+    /**
+     * Set the playground
+     * 
+     * @param playground New playground
+     */
+    public void setPlayground(Playground playground) {
+        this.playground = playground;
+    }
+
+    /**
+     * Set the tournament phase
+     * 
+     * @param phase Tournament phase
+     */
+    public void setPhase(TournamentPhase phase) {
+        this.phase = phase;
+    }
+
+    /**
+     * Set the next match in bracket
+     * 
+     * @param nextMatch Next match
+     */
+    public void setNextMatch(RobotMatch nextMatch) {
+        this.nextMatch = nextMatch;
+    }
+
+    /**
+     * Set whether higher score wins
+     * 
+     * @param highScoreWin true if higher score wins
+     */
+    public void setHighScoreWin(Boolean highScoreWin) {
+        this.highScoreWin = highScoreWin;
+    }
+
+    /**
+     * Set the group name for this match
+     * 
+     * @param group Group name or null
+     */
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    /**
+     * Set the visual X position for bracket/matrix view
+     * 
+     * @param visualX X position or null
+     */
+    public void setVisualX(Integer visualX) {
+        this.visualX = visualX;
+    }
+
+    /**
+     * Set the visual Y position for bracket/matrix view
+     * 
+     * @param visualY Y position or null
+     */
+    public void setVisualY(Integer visualY) {
+        this.visualY = visualY;
+    }
+
+    /**
+     * Set the competition year
+     * 
+     * @param competitionYear Competition year
+     */
+    public void setCompetitionYear(Integer competitionYear) {
+        this.competitionYear = competitionYear;
+    }
+
+    /**
+     * Determine the winner of this match based on scores and highScoreWin setting
+     * 
+     * @return Winner robot, or null if no clear winner (tie or missing scores for two-robot match)
+     */
+    @JsonIgnore
+    public Robot getWinner() {
+        // Single robot match - that robot automatically "wins" and advances
+        if (this.robotB == null && this.robotA != null) {
+            return this.robotA;
         }
-        return this.robot.getDiscipline().getName();
+        if (this.robotA == null && this.robotB != null) {
+            return this.robotB;
+        }
+        
+        // No robots assigned
+        if (this.robotA == null && this.robotB == null) {
+            return null;
+        }
+        
+        // Two robot match - need scores to determine winner
+        if (this.scoreA == null || this.scoreB == null) {
+            return null;
+        }
+        
+        // Two robot match - determine winner based on scores
+        if (this.scoreA.equals(this.scoreB)) {
+            return null; // Tie
+        }
+        
+        if (this.highScoreWin) {
+            return this.scoreA > this.scoreB ? this.robotA : this.robotB;
+        } else {
+            return this.scoreA < this.scoreB ? this.robotA : this.robotB;
+        }
     }
 
     /**
-     * Navrati kategorii robota
+     * Get the winning score
      * 
-     * @return Kategorie robota
+     * @return Winning score or null if no winner
      */
-    public String getCategory() {
-        return this.robot.getCategory().toString();
-    }
-
-    /**
-     * Nastavi score zapasu
-     * 
-     * @param _score Score
-     */
-    public void setScore(float _score) {
-        this.score = _score;
-    }
-
-    /**
-     * Zmeni robota
-     * 
-     * @param _robot Novy robot
-     */
-    public void setRobot(Robot _robot) {
-        this.robot = _robot;
-    }
-
-    /**
-     * Zmeni hriste
-     * 
-     * @param _playground Nove hriste
-     */
-    public void setPlaygrond(Playground _playground) {
-        this.playground = _playground;
-    }
-
-    /**
-     * Zmeni aktualni stav zapasu
-     * 
-     * @param _state Novy stav zapasu
-     */
-    public void setMatchState(MatchState _state) {
-        this.state = _state;
+    public Float getWinnerScore() {
+        Robot winner = getWinner();
+        if (winner == null) {
+            return null;
+        }
+        if (winner.equals(this.robotA)) {
+            return this.scoreA;
+        }
+        return this.scoreB;
     }
 
 }

@@ -9,17 +9,23 @@ import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Enum.EMatchState;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Business.Enum.EScoreAggregation;
+import com.robogames.RoboCupMS.Business.Enum.EScoreType;
+import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
 import com.robogames.RoboCupMS.Entity.Category;
 import com.robogames.RoboCupMS.Entity.Discipline;
 import com.robogames.RoboCupMS.Entity.MatchState;
 import com.robogames.RoboCupMS.Entity.Role;
 import com.robogames.RoboCupMS.Entity.ScoreAggregation;
+import com.robogames.RoboCupMS.Entity.ScoreType;
+import com.robogames.RoboCupMS.Entity.TournamentPhase;
 import com.robogames.RoboCupMS.Entity.UserRC;
 import com.robogames.RoboCupMS.Repository.CategoryRepository;
 import com.robogames.RoboCupMS.Repository.DisciplineRepository;
 import com.robogames.RoboCupMS.Repository.MatchStateRepository;
 import com.robogames.RoboCupMS.Repository.RoleRepository;
 import com.robogames.RoboCupMS.Repository.ScoreAggregationRepository;
+import com.robogames.RoboCupMS.Repository.ScoreTypeRepository;
+import com.robogames.RoboCupMS.Repository.TournamentPhaseRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
 import org.json.simple.JSONObject;
@@ -177,9 +183,9 @@ public class AppInit {
     }
 
     /**
-     * Prvni inicializace stavu zapasu
+     * Initialize match states
      * 
-     * @param repository RoleRepository
+     * @param repository MatchStateRepository
      */
     @Bean
     public ApplicationRunner initMatchState(MatchStateRepository repository) {
@@ -188,6 +194,41 @@ public class AppInit {
                     new MatchState(EMatchState.DONE),
                     new MatchState(EMatchState.REMATCH),
                     new MatchState(EMatchState.WAITING)));
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Initialize tournament phases
+     * 
+     * @param repository TournamentPhaseRepository
+     */
+    @Bean
+    public ApplicationRunner initTournamentPhase(TournamentPhaseRepository repository) {
+        if (repository.count() == 0) {
+            return args -> repository.saveAll(Arrays.asList(
+                    new TournamentPhase(ETournamentPhase.PRELIMINARY),
+                    new TournamentPhase(ETournamentPhase.QUARTERFINAL),
+                    new TournamentPhase(ETournamentPhase.SEMIFINAL),
+                    new TournamentPhase(ETournamentPhase.FINAL),
+                    new TournamentPhase(ETournamentPhase.THIRD_PLACE)));
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Initialize score types
+     * 
+     * @param repository ScoreTypeRepository
+     */
+    @Bean
+    public ApplicationRunner initScoreType(ScoreTypeRepository repository) {
+        if (repository.count() == 0) {
+            return args -> repository.saveAll(Arrays.asList(
+                    new ScoreType(EScoreType.TIME),
+                    new ScoreType(EScoreType.SCORE)));
         } else {
             return null;
         }
