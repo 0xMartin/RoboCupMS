@@ -22,6 +22,7 @@ import com.robogames.RoboCupMS.Repository.PlaygroundRepository;
 import com.robogames.RoboCupMS.Repository.RobotMatchRepository;
 import com.robogames.RoboCupMS.Repository.RobotRepository;
 import com.robogames.RoboCupMS.Repository.TournamentPhaseRepository;
+import com.robogames.RoboCupMS.Repository.CompetitionRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,9 @@ public class MatchService {
     @Autowired
     private TournamentPhaseRepository tournamentPhaseRepository;
 
+    @Autowired
+    private CompetitionRepository competitionRepository;
+
     /**
      * Message types for communication system
      */
@@ -57,6 +61,28 @@ public class MatchService {
         WRITE_SCORE,
         REMATCH,
         UPDATE
+    }
+
+    /**
+     * Validates that the competition for the given match has been started.
+     * Throws exception if competition is not started.
+     * 
+     * @param match The match to check
+     * @throws Exception if competition is not started
+     */
+    private void validateCompetitionStarted(RobotMatch match) throws Exception {
+        Integer year = match.getCompetitionYear();
+        if (year == null) {
+            // No robots assigned yet, can't determine competition year
+            return;
+        }
+        
+        Optional<Competition> competition = this.competitionRepository.findByYear(year);
+        if (competition.isPresent() && !competition.get().getStarted()) {
+            throw new Exception(
+                    String.format("failure, competition year [%d] has not started yet. Match manipulation is not allowed before the competition starts.",
+                            year));
+        }
     }
 
     /**
@@ -256,11 +282,22 @@ public class MatchService {
             }
         }
 
-        // Check if competition has started (if any robot is assigned)
+        // Check if competition has started
+        // First check by robot's competition (if any robot is assigned)
         if (competition != null && !competition.getStarted()) {
             throw new Exception(
                     String.format("failure, competition year [%d] has not started yet. Matches cannot be created before the competition starts.",
                             competition.getYear()));
+        }
+        
+        // Also check by competitionYear parameter (for matches without robots)
+        if (competition == null && matchObj.getCompetitionYear() != null) {
+            Optional<Competition> compByYear = this.competitionRepository.findByYear(matchObj.getCompetitionYear());
+            if (compByYear.isPresent() && !compByYear.get().getStarted()) {
+                throw new Exception(
+                        String.format("failure, competition year [%d] has not started yet. Matches cannot be created before the competition starts.",
+                                matchObj.getCompetitionYear()));
+            }
         }
 
         // Get tournament phase if provided
@@ -337,6 +374,10 @@ public class MatchService {
         }
 
         RobotMatch match = matchOpt.get();
+        
+        // Validate competition is started
+        validateCompetitionStarted(match);
+        
         Discipline playgroundDiscipline = match.getPlayground().getDiscipline();
 
         // Update playground if provided
@@ -546,9 +587,13 @@ public class MatchService {
      * @throws Exception if match not found
      */
     public void remove(Long id) throws Exception {
-        if (!this.robotMatchRepository.findById(id).isPresent()) {
+        Optional<RobotMatch> matchOpt = this.robotMatchRepository.findById(id);
+        if (!matchOpt.isPresent()) {
             throw new Exception(String.format("failure, match with ID [%d] not exists", id));
         }
+        
+        // Validate competition is started
+        validateCompetitionStarted(matchOpt.get());
 
         this.robotMatchRepository.deleteById(id);
 
@@ -571,6 +616,9 @@ public class MatchService {
         }
 
         RobotMatch match = matchOpt.get();
+        
+        // Validate competition is started
+        validateCompetitionStarted(match);
 
         // Validate that at least robot A is assigned
         if (match.getRobotA() == null) {
