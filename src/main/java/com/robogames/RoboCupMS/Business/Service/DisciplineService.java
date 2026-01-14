@@ -50,6 +50,18 @@ public class DisciplineService {
     }
 
     /**
+     * Navrati vsechny viditelne discipliny (pro bezne uzivatele)
+     * 
+     * @return Seznam viditelnych disciplin
+     */
+    public List<Discipline> getAllVisible() {
+        List<Discipline> all = this.disciplineRepository.findAll();
+        return all.stream()
+                .filter(d -> !Boolean.TRUE.equals(d.getHidden()))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
      * Navarti disciplinu s konkretim ID
      * 
      * @param id ID pozadovane discipliny
@@ -88,6 +100,11 @@ public class DisciplineService {
         // Set highScoreWin if provided
         if (disciplineObj.getHighScoreWin() != null) {
             discipline.setHighScoreWin(disciplineObj.getHighScoreWin());
+        }
+
+        // Set hidden if provided (defaults to false)
+        if (disciplineObj.getHidden() != null) {
+            discipline.setHidden(disciplineObj.getHidden());
         }
         
         this.disciplineRepository.save(discipline);
@@ -158,6 +175,11 @@ public class DisciplineService {
                     // Set highScoreWin if provided
                     if (disciplineObj.getHighScoreWin() != null) {
                         d.setHighScoreWin(disciplineObj.getHighScoreWin());
+                    }
+                    
+                    // Set hidden if provided
+                    if (disciplineObj.getHidden() != null) {
+                        d.setHidden(disciplineObj.getHidden());
                     }
                     
                     return this.disciplineRepository.save(d);

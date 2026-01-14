@@ -83,6 +83,12 @@ public class Discipline {
     private String description;
 
     /**
+     * Whether this discipline is hidden from regular users
+     */
+    @Column(name = "hidden", nullable = false)
+    private Boolean hidden = false;
+
+    /**
      * List of all playgrounds for this discipline
      */
     @OneToMany(mappedBy = "discipline", cascade = CascadeType.REMOVE)
@@ -100,6 +106,7 @@ public class Discipline {
     public Discipline() {
         this.playgrounds = new ArrayList<Playground>();
         this.highScoreWin = true;
+        this.hidden = false;
     }
 
     /**
@@ -121,6 +128,7 @@ public class Discipline {
         this.description = _description;
         this.time = _time;
         this.highScoreWin = true;
+        this.hidden = false;
         this.playgrounds = new ArrayList<Playground>();
         this.maxRounds = _maxRounds;
     }
@@ -290,5 +298,23 @@ public class Discipline {
      */
     public void setHighScoreWin(Boolean _highScoreWin) {
         this.highScoreWin = _highScoreWin;
+    }
+
+    /**
+     * Get whether this discipline is hidden from regular users
+     * 
+     * @return true if hidden
+     */
+    public Boolean getHidden() {
+        return this.hidden != null ? this.hidden : false;
+    }
+
+    /**
+     * Set whether this discipline is hidden from regular users
+     * 
+     * @param _hidden true to hide
+     */
+    public void setHidden(Boolean _hidden) {
+        this.hidden = _hidden;
     }
 }

@@ -558,6 +558,7 @@ public class AdminService {
             if (!disciplineOpt.isPresent()) {
                 throw new Exception(String.format("failure, discipline with ID [%d] not found", robotCreateObj.getDisciplineId()));
             }
+            // Admin může registrovat i do skryté disciplíny - bez kontroly hidden
             robot.setDicipline(disciplineOpt.get());
         }
 
@@ -635,6 +636,7 @@ public class AdminService {
                 if (!disciplineOpt.isPresent()) {
                     throw new Exception(String.format("failure, discipline with ID [%d] not found", editObj.getDisciplineId()));
                 }
+                // Admin může registrovat i do skryté disciplíny - bez kontroly hidden
                 robot.setDicipline(disciplineOpt.get());
             }
         }

@@ -42,6 +42,11 @@ public class DisciplineObj {
      */
     private Boolean highScoreWin;
 
+    /**
+     * Whether this discipline is hidden from regular users
+     */
+    private Boolean hidden;
+
 
     public DisciplineObj() {
     }
@@ -108,6 +113,14 @@ public class DisciplineObj {
 
     public void setHighScoreWin(Boolean highScoreWin) {
         this.highScoreWin = highScoreWin;
+    }
+
+    public Boolean getHidden() {
+        return this.hidden;
+    }
+
+    public void setHidden(Boolean hidden) {
+        this.hidden = hidden;
     }
 
 }

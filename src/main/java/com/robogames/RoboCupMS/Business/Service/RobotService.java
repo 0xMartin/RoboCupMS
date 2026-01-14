@@ -345,6 +345,11 @@ public class RobotService {
             throw new Exception(String.format("failure, discipline with ID [%d] not exists", disciplineID));
         }
 
+        // overi zda disciplina neni skryta
+        if (Boolean.TRUE.equals(discipline.get().getHidden())) {
+            throw new Exception(String.format("failure, discipline with ID [%d] is not available for registration", disciplineID));
+        }
+
         // overi zda jiz nebyl prekrocen limit na maximalni pocet registrovanych robotu
         // v jedne discipline pro tym
         List<Robot> robots = discipline.get().getRobots();

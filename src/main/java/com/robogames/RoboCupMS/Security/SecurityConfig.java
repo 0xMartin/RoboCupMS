@@ -41,6 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                         // verejnosti umozni zobrazovat informace of vytvorenych disciplinach
                         GlobalConfig.API_PREFIX + "/discipline/all",
+                        GlobalConfig.API_PREFIX + "/discipline/all/visible",
                         GlobalConfig.API_PREFIX + "/discipline/get",
 
                         // verejnosti umozni zobrazovat informace o robotech

@@ -42,6 +42,17 @@ public class DisciplineControler {
     }
 
     /**
+     * Navrati vsechny viditelne discipliny (pro bezne uzivatele - skryje hidden discipliny)
+     * 
+     * @return Seznam viditelnych disciplin
+     */
+    @GetMapping("/all/visible")
+    Response getAllVisible() {
+        List<Discipline> all = this.disciplineService.getAllVisible();
+        return ResponseHandler.response(all);
+    }
+
+    /**
      * Navarti disciplinu s konkretim ID
      * 
      * @param id ID pozadovane discipliny
