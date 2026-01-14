@@ -30,9 +30,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         private static final String[] NOT_SECURED = new String[] {
                         // sekce prihlasovani a registrace
-                        //GlobalConfig.AUTH_PREFIX + "/login",
-                        //GlobalConfig.AUTH_PREFIX + "/register",
-                        //GlobalConfig.AUTH_PREFIX + "/oAuth2",
                         GlobalConfig.API_PREFIX + "/validate",
 
                         // verejnosti umozni zobrazovat vytvorene souteze a registrovane tymy

@@ -180,7 +180,11 @@ public class AdminService {
     }
 
     /**
-     * Odstrani tym (pokud ma registrace, tak pouze pokud zadny robot neni potvrzeny)
+     * Odstrani tym (s omezenimi pro zachovani integrity dat)
+     * Nelze odstranit tym pokud:
+     * - Je registrovan v jiz zahajene soutezi
+     * - Ma roboty s existujicimi zapasy
+     * - Ma potvrzene roboty
      * 
      * @param teamId ID tymu
      * @throws Exception
@@ -193,23 +197,44 @@ public class AdminService {
         }
         Team team = teamOpt.get();
 
-        // kontrola registraci - nesmaze tym pokud ma potvrzene roboty (zachovani dat pro prubeh souteze)
+        // kontrola registraci
         for (TeamRegistration reg : team.getRegistrations()) {
+            // nesmaze tym pokud je registrovan v jiz zahajene soutezi
+            if (Boolean.TRUE.equals(reg.getCompetition().getStarted())) {
+                throw new Exception(
+                        String.format("failure, cannot remove team because it is registered in started competition [%d]", 
+                                reg.getCompetitionYear()));
+            }
+
             for (Robot r : reg.getRobots()) {
+                // nesmaze tym pokud ma potvrzene roboty
                 if (r.getConfirmed()) {
                     throw new Exception(
                             "failure, cannot remove team because it has confirmed robots (data preservation)");
                 }
+                // nesmaze tym pokud roboti maji zapasy
+                if (!r.getMatches().isEmpty()) {
+                    throw new Exception(
+                            String.format("failure, cannot remove team because robot [%s] has existing matches", r.getName()));
+                }
             }
         }
 
-        // odebere cleny z tymu
+        // odebere cleny z tymu (nastavi jim team na null) - DULEZITE: pred smazanim tymu!
         for (UserRC member : team.getMembers()) {
             member.setTeam(null);
         }
         this.userRepository.saveAll(team.getMembers());
 
-        // odstrani tym (cascade odstrani i registrace a nepotvrze roboty)
+        // Explicitne odstran roboty a registrace
+        for (TeamRegistration reg : team.getRegistrations()) {
+            for (Robot r : reg.getRobots()) {
+                this.robotRepository.delete(r);
+            }
+            this.teamRegistrationRepository.delete(reg);
+        }
+
+        // odstrani tym
         this.teamRepository.delete(team);
     }
 

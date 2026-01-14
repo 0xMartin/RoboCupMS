@@ -7,13 +7,16 @@ import java.util.stream.Collectors;
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Object.TeamNameObj;
 import com.robogames.RoboCupMS.Business.Object.TeamObj;
+import com.robogames.RoboCupMS.Entity.Robot;
 import com.robogames.RoboCupMS.Entity.Team;
 import com.robogames.RoboCupMS.Entity.TeamInvitation;
 import com.robogames.RoboCupMS.Entity.TeamJoinRequest;
 import com.robogames.RoboCupMS.Entity.TeamRegistration;
 import com.robogames.RoboCupMS.Entity.UserRC;
+import com.robogames.RoboCupMS.Repository.RobotRepository;
 import com.robogames.RoboCupMS.Repository.TeamInvitationRepository;
 import com.robogames.RoboCupMS.Repository.TeamJoinRequestRepository;
+import com.robogames.RoboCupMS.Repository.TeamRegistrationRepository;
 import com.robogames.RoboCupMS.Repository.TeamRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
 
@@ -39,6 +42,12 @@ public class TeamService {
 
     @Autowired
     private TeamJoinRequestRepository joinRequestRepository;
+
+    @Autowired
+    private TeamRegistrationRepository teamRegistrationRepository;
+
+    @Autowired
+    private RobotRepository robotRepository;
 
     /**
      * Navrati info o tymu, ve kterem se prihlaseny uzivatel nachazi
@@ -148,7 +157,10 @@ public class TeamService {
 
     /**
      * Odstrani tym z databaze.
-     * Neni mozne odstranit tym pokud ma registraci v jiz zahajenem rocniku souteze.
+     * Neni mozne odstranit tym pokud:
+     * - Ma registraci v jiz zahajenem rocniku souteze
+     * - Ma potvrzene roboty
+     * - Jeho roboti maji nejake zapasy
      * 
      * @throws Exception
      */
@@ -163,11 +175,25 @@ public class TeamService {
         
         Team team = t.get();
 
-        // overi zda tym nema registraci v jiz zahajenem rocniku souteze
+        // Kontrola registraci a robotu
         for (TeamRegistration reg : team.getRegistrations()) {
-            if (reg.getCompetition().getStarted()) {
+            // overi zda tym nema registraci v jiz zahajenem rocniku souteze
+            if (Boolean.TRUE.equals(reg.getCompetition().getStarted())) {
                 throw new Exception(
                         "failure, it is not possible to remove the team because it is already registered in a competition year that has already started");
+            }
+
+            for (Robot robot : reg.getRobots()) {
+                // overi zda tym nema potvrzene roboty
+                if (robot.getConfirmed()) {
+                    throw new Exception(
+                            String.format("failure, cannot remove team because robot [%s] is confirmed", robot.getName()));
+                }
+                // overi zda roboti nemaji zapasy
+                if (!robot.getMatches().isEmpty()) {
+                    throw new Exception(
+                            String.format("failure, cannot remove team because robot [%s] has existing matches", robot.getName()));
+                }
             }
         }
 
@@ -177,13 +203,21 @@ public class TeamService {
         // smaze vsechny zadosti o vstup do tohoto tymu
         this.joinRequestRepository.deleteByTeam(team);
 
-        // odebere cleny z tymu (nastavi jim team na null)
-        team.getMembers().forEach((m) -> {
-            m.setTeam(null);
-        });
+        // odebere cleny z tymu (nastavi jim team na null) - DULEZITE: pred smazanim tymu!
+        for (UserRC member : team.getMembers()) {
+            member.setTeam(null);
+        }
         this.userRepository.saveAll(team.getMembers());
 
-        // odstrani tym (diky CascadeType.REMOVE na registrations a robots se smaze i vse ostatni)
+        // Explicitne odstran roboty a registrace
+        for (TeamRegistration registration : team.getRegistrations()) {
+            for (Robot robot : registration.getRobots()) {
+                this.robotRepository.delete(robot);
+            }
+            this.teamRegistrationRepository.delete(registration);
+        }
+
+        // odstrani tym
         this.teamRepository.delete(team);
     }
 
@@ -285,6 +319,8 @@ public class TeamService {
     /**
      * Opusti tym, ve ktrem se prihlaseny uzivatel aktualne nachazi. Pokud tim kdo
      * opousti tym je jeho vedouci pak se automaticky urci novy vedouci.
+     * Pokud tym zustane prazdny, provede se auto-cleanup (odstraneni tymu a jeho registraci),
+     * ale pouze pokud zadna registrace neni do jiz zahajene souteze a zadny robot nema zapasy.
      */
     @Transactional
     public void leaveTeam() throws Exception {
@@ -315,6 +351,68 @@ public class TeamService {
 
         user.setTeam(null);
         this.userRepository.save(user);
+
+        // Auto-cleanup: pokud tym zustane prazdny, odstran ho (za urcitych podminek)
+        this.cleanupEmptyTeam(team);
+    }
+
+    /**
+     * Odstrani prazdny tym a jeho registrace, pokud jsou splneny podminky:
+     * - Tym nema zadne cleny
+     * - Zadna registrace tymu neni do jiz zahajene souteze
+     * - Zadny robot tymu nema zadny zapas
+     * 
+     * @param team Tym k overeni a pripadnemu odstraneni
+     */
+    private void cleanupEmptyTeam(Team team) {
+        // Znovu nacti tym z databaze pro aktualni stav
+        Optional<Team> freshTeam = this.teamRepository.findById(team.getID());
+        if (!freshTeam.isPresent()) {
+            return; // Tym jiz neexistuje
+        }
+
+        Team t = freshTeam.get();
+
+        // Zkontroluj, zda tym nema zadne cleny
+        List<UserRC> members = userRepository.findByTeam_Id(t.getID());
+        if (!members.isEmpty()) {
+            return; // Tym ma stale cleny
+        }
+
+        // Zkontroluj registrace tymu
+        for (TeamRegistration registration : t.getRegistrations()) {
+            // Pokud soutez jiz zacala, neodstranuj tym
+            if (Boolean.TRUE.equals(registration.getCompetition().getStarted())) {
+                return;
+            }
+
+            // Zkontroluj, zda zadny robot nema zapasy
+            for (com.robogames.RoboCupMS.Entity.Robot robot : registration.getRobots()) {
+                if (robot.getConfirmed()) {
+                    return; // Robot je potvrzen, neodstranuj tym
+                }
+                if (!robot.getMatches().isEmpty()) {
+                    return; // Robot ma zapasy, neodstranuj tym
+                }
+            }
+        }
+
+        // Vsechny podminky splneny - odstran pozvani a zadosti
+        this.invitationRepository.deleteByTeam(t);
+        this.joinRequestRepository.deleteByTeam(t);
+
+        // Explicitne odstran roboty a jejich zavislosti pro kazdu registraci
+        for (TeamRegistration registration : t.getRegistrations()) {
+            // Smaz roboty
+            for (Robot robot : registration.getRobots()) {
+                this.robotRepository.delete(robot);
+            }
+            // Smaz registraci
+            this.teamRegistrationRepository.delete(registration);
+        }
+
+        // Odstran tym
+        this.teamRepository.delete(t);
     }
 
     // =====================================================
