@@ -54,7 +54,8 @@ public class MatchQueue {
     }
 
     /**
-     * Synchronizuje stavy zapasu ve fronte ze stavy zapasu v databazi
+     * Synchronizuje stavy zapasu ve fronte ze stavy zapasu v databazi.
+     * Nahrazuje objekty ve fronte cerstvymi daty z databaze.
      * 
      * @param repository RobotMatchRepository
      */
@@ -63,21 +64,22 @@ public class MatchQueue {
         // odstraneny
         List<Integer> indexes = new ArrayList<Integer>();
 
-        // synchronizace stavu
-        int index = 0;
-        for(RobotMatch m : this.queue) {
+        // synchronizace - nahrazeni objektu cerstvymi daty z DB
+        for (int i = 0; i < this.queue.size(); i++) {
+            RobotMatch m = this.queue.get(i);
             Optional<RobotMatch> match = repository.findById(m.getID());
             if (match.isPresent()) {
                 RobotMatch dbMatch = match.get();
-                m.setMatchState(dbMatch.getState());
-                // Also remove matches that no longer have robots (can't call them)
+                // Replace the match object with fresh data from DB
+                // This ensures robot info, state, and all other fields are up to date
+                this.queue.set(i, dbMatch);
+                // Mark for removal if match no longer has robots (can't call them)
                 if (!dbMatch.hasRobots()) {
-                    indexes.add(index);
+                    indexes.add(i);
                 }
             } else {
-                indexes.add(index);  
+                indexes.add(i);  
             }
-            index++;
         }
 
         // odstraneni neexistujicich a zapasu bez robotu
@@ -99,9 +101,10 @@ public class MatchQueue {
                 indexes.add(i);
             }
         }
-        indexes.stream().forEach((i) -> {
-            queue.remove((int) i);
-        });
+        // Remove in reverse order to avoid index shifting issues
+        for (int i = indexes.size() - 1; i >= 0; i--) {
+            queue.remove((int) indexes.get(i));
+        }
         return indexes.size();
     }
 

@@ -26,6 +26,7 @@ import com.robogames.RoboCupMS.Repository.RobotRepository;
 import com.robogames.RoboCupMS.Repository.TeamRegistrationRepository;
 import com.robogames.RoboCupMS.Repository.TeamRepository;
 import com.robogames.RoboCupMS.Repository.UserRepository;
+import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Service.OrderManagementService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -62,6 +63,9 @@ public class AdminService {
 
     @Autowired
     private DisciplineRepository disciplineRepository;
+
+    @Autowired
+    private OrderManagementService orderManagementService;
 
     // ==================== TEAM OPERATIONS ====================
 
@@ -649,7 +653,12 @@ public class AdminService {
             }
         }
 
-        return this.robotRepository.save(robot);
+        Robot savedRobot = this.robotRepository.save(robot);
+        
+        // Refresh Order Management System if running (to update robot name/info in queued matches)
+        this.orderManagementService.refreshIfRunning();
+        
+        return savedRobot;
     }
 
     // ==================== FORCE OPERATIONS (pro vyjimecne situace) ====================

@@ -2,6 +2,7 @@ package com.robogames.RoboCupMS.Business.Object;
 
 import java.time.LocalDateTime;
 
+import com.robogames.RoboCupMS.Business.Enum.ECategory;
 import com.robogames.RoboCupMS.Business.Enum.EMatchState;
 import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
@@ -26,12 +27,14 @@ public class RobotMatchInfo {
     private Long robotANumber;
     private String robotAName;
     private String teamAName;
+    private ECategory robotACategory;
     
     // Robot B info (null for single-robot matches)
     private Long robotBID;
     private Long robotBNumber;
     private String robotBName;
     private String teamBName;
+    private ECategory robotBCategory;
     
     private boolean twoRobotMatch;
     private LocalDateTime timestamp;
@@ -64,6 +67,7 @@ public class RobotMatchInfo {
             this.robotANumber = match.getRobotA().getNumber();
             this.robotAName = match.getRobotA().getName();
             this.teamAName = match.getRobotA().getTeamRegistration().getTeam().getName();
+            this.robotACategory = match.getRobotA().getCategory();
         }
         
         if (match.getRobotB() != null) {
@@ -71,6 +75,7 @@ public class RobotMatchInfo {
             this.robotBNumber = match.getRobotB().getNumber();
             this.robotBName = match.getRobotB().getName();
             this.teamBName = match.getRobotB().getTeamRegistration().getTeam().getName();
+            this.robotBCategory = match.getRobotB().getCategory();
         }
         
         this.twoRobotMatch = match.getRobotB() != null;
@@ -140,6 +145,14 @@ public class RobotMatchInfo {
 
     public String getTeamBName() {
         return teamBName;
+    }
+
+    public ECategory getRobotACategory() {
+        return robotACategory;
+    }
+
+    public ECategory getRobotBCategory() {
+        return robotBCategory;
     }
 
     public boolean isTwoRobotMatch() {

@@ -53,9 +53,9 @@ public class OrderManagementService {
             .synchronizedMap(new HashMap<Long, MatchQueue>());
 
     /**
-     * Competition year
+     * Competition year (volatile for thread-safety)
      */
-    private static int YEAR = -1;
+    private static volatile int YEAR = -1;
 
     public OrderManagementService() {
         // Listen to the application's communication system
@@ -162,6 +162,17 @@ public class OrderManagementService {
         OrderManagementService.MATCH_QUEUES.clear();
 
         this.refreshSystem();
+    }
+
+    /**
+     * Refresh the system if it is running (does nothing if not running).
+     * Use this when data changes (e.g., robot name edit) that should be reflected
+     * in the queued matches.
+     */
+    public void refreshIfRunning() {
+        if (OrderManagementService.YEAR != -1) {
+            this.refreshSystem();
+        }
     }
 
     /**
