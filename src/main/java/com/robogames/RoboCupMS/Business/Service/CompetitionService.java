@@ -8,6 +8,7 @@ import com.robogames.RoboCupMS.Business.Object.CompetitionObj;
 import com.robogames.RoboCupMS.Entity.Competition;
 import com.robogames.RoboCupMS.Entity.TeamRegistration;
 import com.robogames.RoboCupMS.Repository.CompetitionRepository;
+import com.robogames.RoboCupMS.Module.OrderManagement.Bussiness.Service.OrderManagementService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,9 @@ public class CompetitionService {
 
     @Autowired
     private CompetitionRepository repository;
+
+    @Autowired
+    private OrderManagementService orderManagementService;
 
     /**
      * Typy zprav
@@ -140,6 +144,9 @@ public class CompetitionService {
         competition.get().setStarted(true);
         this.repository.save(competition.get());
 
+        // spusti order management system pro tento rocnik
+        this.orderManagementService.run(competition.get().getYear());
+
         // odesle do komunikacniho systemu zpravu
         Communication.getInstance().sendAll(this, CompetitionService.Message.START);
     }
@@ -165,6 +172,9 @@ public class CompetitionService {
         // zrusi zahajeni souteze a ulozi zmeny
         competition.get().setStarted(false);
         this.repository.save(competition.get());
+
+        // zastavi order management system
+        this.orderManagementService.stop();
 
         // odesle do komunikacniho systemu zpravu
         Communication.getInstance().sendAll(this, CompetitionService.Message.START);

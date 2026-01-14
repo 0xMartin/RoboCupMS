@@ -176,6 +176,16 @@ public class OrderManagementService {
     }
 
     /**
+     * Stop the order management module.
+     * Clears all queues and resets the year.
+     */
+    public void stop() {
+        OrderManagementService.YEAR = -1;
+        OrderManagementService.MATCH_QUEUES.clear();
+        logger.info("Order Management Service stopped");
+    }
+
+    /**
      * Return list of all matches that should be played now on their respective playgrounds
      * 
      * @return All matches that should be played now
