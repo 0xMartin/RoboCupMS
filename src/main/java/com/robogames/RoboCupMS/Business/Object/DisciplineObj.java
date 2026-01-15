@@ -1,5 +1,6 @@
 package com.robogames.RoboCupMS.Business.Object;
 
+import com.robogames.RoboCupMS.Business.Enum.ECompetitionMode;
 import com.robogames.RoboCupMS.Business.Enum.EScoreAggregation;
 import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 
@@ -46,6 +47,11 @@ public class DisciplineObj {
      * Whether this discipline is hidden from regular users
      */
     private Boolean hidden;
+
+    /**
+     * Competition mode for this discipline (TOURNAMENT or BEST_SCORE)
+     */
+    private ECompetitionMode competitionMode;
 
 
     public DisciplineObj() {
@@ -121,6 +127,14 @@ public class DisciplineObj {
 
     public void setHidden(Boolean hidden) {
         this.hidden = hidden;
+    }
+
+    public ECompetitionMode getCompetitionMode() {
+        return this.competitionMode;
+    }
+
+    public void setCompetitionMode(ECompetitionMode competitionMode) {
+        this.competitionMode = competitionMode;
     }
 
 }

@@ -14,6 +14,7 @@ import javax.persistence.OneToMany;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.robogames.RoboCupMS.AppInit;
+import com.robogames.RoboCupMS.Business.Enum.ECompetitionMode;
 import com.robogames.RoboCupMS.Business.Enum.EScoreAggregation;
 import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 import com.robogames.RoboCupMS.Repository.ScoreAggregationRepository;
@@ -87,6 +88,12 @@ public class Discipline {
      */
     @Column(name = "hidden", nullable = false)
     private Boolean hidden = false;
+
+    /**
+     * Competition mode for this discipline (TOURNAMENT or BEST_SCORE)
+     */
+    @ManyToOne(optional = true)
+    private CompetitionMode competitionMode;
 
     /**
      * List of all playgrounds for this discipline
@@ -316,5 +323,33 @@ public class Discipline {
      */
     public void setHidden(Boolean _hidden) {
         this.hidden = _hidden;
+    }
+
+    /**
+     * Get the competition mode for this discipline
+     * 
+     * @return Competition mode or null
+     */
+    @JsonIgnore
+    public CompetitionMode getCompetitionMode() {
+        return this.competitionMode;
+    }
+
+    /**
+     * Get the competition mode name for this discipline
+     * 
+     * @return Competition mode name or null
+     */
+    public ECompetitionMode getCompetitionModeName() {
+        return this.competitionMode != null ? this.competitionMode.getName() : null;
+    }
+
+    /**
+     * Set the competition mode for this discipline
+     * 
+     * @param _competitionMode Competition mode
+     */
+    public void setCompetitionMode(CompetitionMode _competitionMode) {
+        this.competitionMode = _competitionMode;
     }
 }

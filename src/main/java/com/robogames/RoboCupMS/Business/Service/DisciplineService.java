@@ -5,9 +5,11 @@ import java.util.Optional;
 
 import com.robogames.RoboCupMS.Communication;
 import com.robogames.RoboCupMS.Business.Object.DisciplineObj;
+import com.robogames.RoboCupMS.Entity.CompetitionMode;
 import com.robogames.RoboCupMS.Entity.Discipline;
 import com.robogames.RoboCupMS.Entity.ScoreAggregation;
 import com.robogames.RoboCupMS.Entity.ScoreType;
+import com.robogames.RoboCupMS.Repository.CompetitionModeRepository;
 import com.robogames.RoboCupMS.Repository.DisciplineRepository;
 import com.robogames.RoboCupMS.Repository.ScoreAggregationRepository;
 import com.robogames.RoboCupMS.Repository.ScoreTypeRepository;
@@ -29,6 +31,9 @@ public class DisciplineService {
 
     @Autowired
     private ScoreTypeRepository scoreTypeRepository;
+
+    @Autowired
+    private CompetitionModeRepository competitionModeRepository;
 
     /**
      * Typy zprav
@@ -106,6 +111,14 @@ public class DisciplineService {
         if (disciplineObj.getHidden() != null) {
             discipline.setHidden(disciplineObj.getHidden());
         }
+
+        // Set competitionMode if provided
+        if (disciplineObj.getCompetitionMode() != null) {
+            Optional<CompetitionMode> competitionMode = this.competitionModeRepository.findByName(disciplineObj.getCompetitionMode());
+            if (competitionMode.isPresent()) {
+                discipline.setCompetitionMode(competitionMode.get());
+            }
+        }
         
         this.disciplineRepository.save(discipline);
 
@@ -159,6 +172,13 @@ public class DisciplineService {
         }
         final Optional<ScoreType> finalScoreType = scoreType;
 
+        // Get competitionMode if provided
+        Optional<CompetitionMode> competitionMode = Optional.empty();
+        if (disciplineObj.getCompetitionMode() != null) {
+            competitionMode = this.competitionModeRepository.findByName(disciplineObj.getCompetitionMode());
+        }
+        final Optional<CompetitionMode> finalCompetitionMode = competitionMode;
+
         Optional<Discipline> map = this.disciplineRepository.findById(id)
                 .map(d -> {
                     d.setName(disciplineObj.getName());
@@ -180,6 +200,11 @@ public class DisciplineService {
                     // Set hidden if provided
                     if (disciplineObj.getHidden() != null) {
                         d.setHidden(disciplineObj.getHidden());
+                    }
+
+                    // Set competitionMode if provided
+                    if (finalCompetitionMode.isPresent()) {
+                        d.setCompetitionMode(finalCompetitionMode.get());
                     }
                     
                     return this.disciplineRepository.save(d);

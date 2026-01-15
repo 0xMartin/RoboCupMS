@@ -6,12 +6,14 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.robogames.RoboCupMS.Business.Enum.ECategory;
+import com.robogames.RoboCupMS.Business.Enum.ECompetitionMode;
 import com.robogames.RoboCupMS.Business.Enum.EMatchState;
 import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Business.Enum.EScoreAggregation;
 import com.robogames.RoboCupMS.Business.Enum.EScoreType;
 import com.robogames.RoboCupMS.Business.Enum.ETournamentPhase;
 import com.robogames.RoboCupMS.Entity.Category;
+import com.robogames.RoboCupMS.Entity.CompetitionMode;
 import com.robogames.RoboCupMS.Entity.Discipline;
 import com.robogames.RoboCupMS.Entity.MatchState;
 import com.robogames.RoboCupMS.Entity.Role;
@@ -20,6 +22,7 @@ import com.robogames.RoboCupMS.Entity.ScoreType;
 import com.robogames.RoboCupMS.Entity.TournamentPhase;
 import com.robogames.RoboCupMS.Entity.UserRC;
 import com.robogames.RoboCupMS.Repository.CategoryRepository;
+import com.robogames.RoboCupMS.Repository.CompetitionModeRepository;
 import com.robogames.RoboCupMS.Repository.DisciplineRepository;
 import com.robogames.RoboCupMS.Repository.MatchStateRepository;
 import com.robogames.RoboCupMS.Repository.RoleRepository;
@@ -229,6 +232,22 @@ public class AppInit {
             return args -> repository.saveAll(Arrays.asList(
                     new ScoreType(EScoreType.TIME),
                     new ScoreType(EScoreType.SCORE)));
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Initialize competition modes
+     * 
+     * @param repository CompetitionModeRepository
+     */
+    @Bean
+    public ApplicationRunner initCompetitionMode(CompetitionModeRepository repository) {
+        if (repository.count() == 0) {
+            return args -> repository.saveAll(Arrays.asList(
+                    new CompetitionMode(ECompetitionMode.TOURNAMENT),
+                    new CompetitionMode(ECompetitionMode.BEST_SCORE)));
         } else {
             return null;
         }
