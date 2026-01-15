@@ -370,111 +370,6 @@ public class TournamentGeneratorService {
     }
 
     /**
-     * Generate bracket structure with empty slots for winners
-     */
-    private BracketPreviewDTO generateBracket(
-            int participantCount,
-            Long disciplineId,
-            ECategory category,
-            Integer year,
-            List<PlaygroundInfoDTO> playgrounds) {
-        
-        BracketPreviewDTO bracket = new BracketPreviewDTO();
-        String bracketId = getBracketId(disciplineId, category, year);
-        bracket.setBracketId(bracketId);
-        bracket.setParticipantCount(participantCount);
-
-        // Calculate bracket size (round up to nearest power of 2)
-        int bracketSize = 1;
-        while (bracketSize < participantCount) {
-            bracketSize *= 2;
-        }
-
-        List<BracketPreviewDTO.BracketRoundDTO> rounds = new ArrayList<>();
-        // Default playground for bracket - can be changed by frontend
-        Long playgroundId = playgrounds.isEmpty() ? null : playgrounds.get(0).getId();
-        bracket.setPlaygroundId(playgroundId);
-
-        int currentRoundSize = bracketSize / 2;
-        int roundNumber = 1;
-        int matchIdCounter = 1;
-
-        while (currentRoundSize >= 1) {
-            BracketPreviewDTO.BracketRoundDTO round = new BracketPreviewDTO.BracketRoundDTO();
-            round.setRoundNumber(roundNumber);
-            
-            // Determine round name
-            String roundName;
-            ETournamentPhase phase;
-            if (currentRoundSize == 1) {
-                roundName = "Final";
-                phase = ETournamentPhase.FINAL;
-            } else if (currentRoundSize == 2) {
-                roundName = "Semifinal";
-                phase = ETournamentPhase.SEMIFINAL;
-            } else if (currentRoundSize == 4) {
-                roundName = "Quarterfinal";
-                phase = ETournamentPhase.QUARTERFINAL;
-            } else {
-                roundName = String.format("Round %d", roundNumber);
-                phase = ETournamentPhase.PRELIMINARY;
-            }
-            round.setName(roundName);
-
-            List<MatchPreviewDTO> matches = new ArrayList<>();
-            for (int i = 0; i < currentRoundSize; i++) {
-                MatchPreviewDTO match = new MatchPreviewDTO();
-                String tempId = String.format("BRACKET_R%d_M%d", roundNumber, matchIdCounter++);
-                match.setTempId(tempId);
-                match.setRobotA(null); // Will be filled when winners advance
-                match.setRobotB(null);
-                match.setPhase(phase);
-                match.setGroup(bracketId);
-                match.setPlaygroundId(playgroundId);
-                match.setRoundName(roundName);
-                match.setMatchOrder(i + 1);
-                
-                // Set visual positions for bracket visualization
-                match.setVisualX(roundNumber - 1);
-                match.setVisualY(i);
-
-                // Link to next match
-                if (currentRoundSize > 1) {
-                    int nextMatchIndex = i / 2;
-                    String nextMatchId = String.format("BRACKET_R%d_M%d", 
-                        roundNumber + 1, 
-                        (roundNumber == 1 ? matchIdCounter : matchIdCounter - currentRoundSize) + nextMatchIndex);
-                    match.setNextMatchTempId(nextMatchId);
-                }
-
-                matches.add(match);
-            }
-            round.setMatches(matches);
-            rounds.add(round);
-
-            currentRoundSize /= 2;
-            roundNumber++;
-        }
-
-        // Fix nextMatchTempId references
-        for (int r = 0; r < rounds.size() - 1; r++) {
-            List<MatchPreviewDTO> currentMatches = rounds.get(r).getMatches();
-            List<MatchPreviewDTO> nextMatches = rounds.get(r + 1).getMatches();
-            
-            for (int i = 0; i < currentMatches.size(); i++) {
-                MatchPreviewDTO match = currentMatches.get(i);
-                int nextMatchIndex = i / 2;
-                if (nextMatchIndex < nextMatches.size()) {
-                    match.setNextMatchTempId(nextMatches.get(nextMatchIndex).getTempId());
-                }
-            }
-        }
-
-        bracket.setRounds(rounds);
-        return bracket;
-    }
-
-    /**
      * Get short name for discipline (for group naming)
      */
     private String getDisciplineShortName(Long disciplineId) {
@@ -851,5 +746,132 @@ public class TournamentGeneratorService {
                 matchService.remove(match.getID());
             }
         }
+    }
+
+    /**
+     * Get tournament status overview with groups, standings, and match progress
+     * 
+     * @param disciplineId Discipline ID
+     * @param category Category
+     * @param year Competition year
+     * @param advancingPerGroup Number of robots advancing from each group
+     * @return Map with tournament status information
+     */
+    public Map<String, Object> getTournamentStatus(Long disciplineId, ECategory category, Integer year, Integer advancingPerGroup) throws Exception {
+        String groupPrefix = getGroupPrefix(disciplineId, category, year);
+        String bracketId = getBracketId(disciplineId, category, year);
+        
+        List<RobotMatch> allMatches = matchService.allByYear(year);
+        
+        // Filter matches for this tournament
+        List<RobotMatch> tournamentMatches = allMatches.stream()
+            .filter(m -> m.getGroup() != null && 
+                        (m.getGroup().startsWith(groupPrefix) || m.getGroup().equals(bracketId)))
+            .collect(Collectors.toList());
+        
+        if (tournamentMatches.isEmpty()) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("exists", false);
+            return result;
+        }
+
+        // Determine highScoreWin from discipline
+        Boolean highScoreWin = true;
+        if (!tournamentMatches.isEmpty() && tournamentMatches.get(0).getPlayground() != null) {
+            highScoreWin = tournamentMatches.get(0).getPlayground().getDiscipline().getHighScoreWin();
+        }
+
+        // Group matches by group name
+        Map<String, List<RobotMatch>> matchesByGroup = tournamentMatches.stream()
+            .filter(m -> !m.getGroup().equals(bracketId))
+            .collect(Collectors.groupingBy(RobotMatch::getGroup));
+
+        // Bracket matches
+        List<RobotMatch> bracketMatches = tournamentMatches.stream()
+            .filter(m -> m.getGroup().equals(bracketId))
+            .collect(Collectors.toList());
+
+        List<Map<String, Object>> groups = new ArrayList<>();
+        int totalGroupMatches = 0;
+        int completedGroupMatches = 0;
+
+        for (Map.Entry<String, List<RobotMatch>> entry : matchesByGroup.entrySet()) {
+            String groupId = entry.getKey();
+            List<RobotMatch> groupMatches = entry.getValue();
+            
+            // Extract group letter from groupId (last character before any suffix)
+            String groupName = groupId.substring(groupId.lastIndexOf('_') + 1);
+            
+            int total = groupMatches.size();
+            int completed = (int) groupMatches.stream()
+                .filter(m -> m.getState().getName() == EMatchState.DONE)
+                .count();
+            
+            totalGroupMatches += total;
+            completedGroupMatches += completed;
+
+            // Calculate standings for this group
+            List<RobotStanding> standings = new ArrayList<>();
+            for (RobotMatch match : groupMatches) {
+                if (match.getState().getName() == EMatchState.DONE) {
+                    updateStandings(standings, match, highScoreWin);
+                }
+            }
+
+            // Sort standings
+            standings.sort((a, b) -> {
+                if (b.wins != a.wins) return b.wins - a.wins;
+                return Float.compare(b.scoreDiff, a.scoreDiff);
+            });
+
+            // Convert to response format with advancing flag
+            List<Map<String, Object>> standingsList = new ArrayList<>();
+            int rank = 1;
+            for (RobotStanding s : standings) {
+                Map<String, Object> standingEntry = new HashMap<>();
+                standingEntry.put("rank", rank);
+                standingEntry.put("robotId", s.robot.getID());
+                standingEntry.put("robotName", s.robot.getName());
+                standingEntry.put("robotNumber", s.robot.getNumber());
+                standingEntry.put("teamName", s.robot.getTeamName());
+                standingEntry.put("wins", s.wins);
+                standingEntry.put("losses", s.losses);
+                standingEntry.put("scoreDiff", s.scoreDiff);
+                standingEntry.put("advancing", rank <= advancingPerGroup);
+                standingsList.add(standingEntry);
+                rank++;
+            }
+
+            Map<String, Object> groupInfo = new HashMap<>();
+            groupInfo.put("groupId", groupId);
+            groupInfo.put("groupName", groupName);
+            groupInfo.put("totalMatches", total);
+            groupInfo.put("completedMatches", completed);
+            groupInfo.put("remainingMatches", total - completed);
+            groupInfo.put("standings", standingsList);
+            groups.add(groupInfo);
+        }
+
+        // Sort groups by name
+        groups.sort((a, b) -> ((String) a.get("groupName")).compareTo((String) b.get("groupName")));
+
+        // Bracket info
+        int totalBracketMatches = bracketMatches.size();
+        int completedBracketMatches = (int) bracketMatches.stream()
+            .filter(m -> m.getState().getName() == EMatchState.DONE)
+            .count();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("exists", true);
+        result.put("groups", groups);
+        result.put("totalGroupMatches", totalGroupMatches);
+        result.put("completedGroupMatches", completedGroupMatches);
+        result.put("remainingGroupMatches", totalGroupMatches - completedGroupMatches);
+        result.put("totalBracketMatches", totalBracketMatches);
+        result.put("completedBracketMatches", completedBracketMatches);
+        result.put("remainingBracketMatches", totalBracketMatches - completedBracketMatches);
+        result.put("advancingPerGroup", advancingPerGroup);
+
+        return result;
     }
 }

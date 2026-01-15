@@ -157,4 +157,27 @@ public class TournamentController {
             return ResponseHandler.error(ex.getMessage());
         }
     }
+
+    /**
+     * Get tournament status overview - groups with standings, match progress
+     * 
+     * @param disciplineId Discipline ID
+     * @param category Category
+     * @param year Competition year
+     * @return Tournament status with groups, standings, and match progress
+     */
+    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER })
+    @GetMapping("/status")
+    Response getTournamentStatus(
+            @RequestParam Long disciplineId,
+            @RequestParam ECategory category,
+            @RequestParam Integer year,
+            @RequestParam(defaultValue = "2") Integer advancingPerGroup) {
+        try {
+            Map<String, Object> status = tournamentService.getTournamentStatus(disciplineId, category, year, advancingPerGroup);
+            return ResponseHandler.response(status);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
 }
