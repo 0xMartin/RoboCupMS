@@ -62,6 +62,11 @@ public class MatchPreviewDTO {
      */
     private Integer matchOrder;
 
+    /**
+     * Whether this match is a bye (automatic advancement)
+     */
+    private Boolean isBye = false;
+
     public MatchPreviewDTO() {
     }
 
@@ -151,5 +156,13 @@ public class MatchPreviewDTO {
 
     public void setMatchOrder(Integer matchOrder) {
         this.matchOrder = matchOrder;
+    }
+
+    public Boolean getIsBye() {
+        return isBye;
+    }
+
+    public void setIsBye(Boolean isBye) {
+        this.isBye = isBye;
     }
 }

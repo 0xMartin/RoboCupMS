@@ -22,6 +22,11 @@ public class BracketPreviewDTO {
      */
     private Integer participantCount;
 
+    /**
+     * Number of byes (automatic advancements) in first round
+     */
+    private Integer byeCount = 0;
+
     public BracketPreviewDTO() {
     }
 
@@ -47,6 +52,14 @@ public class BracketPreviewDTO {
 
     public void setParticipantCount(Integer participantCount) {
         this.participantCount = participantCount;
+    }
+
+    public Integer getByeCount() {
+        return byeCount;
+    }
+
+    public void setByeCount(Integer byeCount) {
+        this.byeCount = byeCount;
     }
 
     /**

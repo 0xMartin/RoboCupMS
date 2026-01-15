@@ -38,9 +38,9 @@ public class TournamentGenerateRequestDTO {
     private Integer playgroundCount;
 
     /**
-     * Preferred group size (3-6 robots per group)
+     * Number of groups to create
      */
-    private Integer groupSize;
+    private Integer groupCount;
 
     /**
      * Number of robots advancing from each group to bracket
@@ -98,12 +98,12 @@ public class TournamentGenerateRequestDTO {
         this.playgroundCount = playgroundCount;
     }
 
-    public Integer getGroupSize() {
-        return groupSize;
+    public Integer getGroupCount() {
+        return groupCount;
     }
 
-    public void setGroupSize(Integer groupSize) {
-        this.groupSize = groupSize;
+    public void setGroupCount(Integer groupCount) {
+        this.groupCount = groupCount;
     }
 
     public Integer getAdvancingPerGroup() {

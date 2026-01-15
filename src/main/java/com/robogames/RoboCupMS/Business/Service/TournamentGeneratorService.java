@@ -80,7 +80,7 @@ public class TournamentGeneratorService {
         }
 
         // Validate parameters
-        int groupSize = request.getGroupSize() != null ? request.getGroupSize() : 4;
+        int groupCount = request.getGroupCount() != null ? request.getGroupCount() : 4;
         int advancingPerGroup = request.getAdvancingPerGroup() != null ? request.getAdvancingPerGroup() : 2;
         int playgroundCount = request.getPlaygroundCount() != null ? request.getPlaygroundCount() : 1;
         int matchTimeMinutes = request.getMatchTimeMinutes() != null ? request.getMatchTimeMinutes() : 
@@ -88,11 +88,17 @@ public class TournamentGeneratorService {
         int availableTimeMinutes = request.getAvailableTimeMinutes() != null ? 
             request.getAvailableTimeMinutes() : 180;
 
-        if (groupSize < 3 || groupSize > 6) {
-            throw new Exception("Group size must be between 3 and 6");
+        // Calculate minimum robots per group (must be at least advancingPerGroup + 1)
+        int minRobotsPerGroup = advancingPerGroup + 1;
+        
+        // Validate group count
+        if (groupCount < 1) {
+            throw new Exception("Group count must be at least 1");
         }
-        if (advancingPerGroup < 1 || advancingPerGroup >= groupSize) {
-            throw new Exception("Advancing per group must be at least 1 and less than group size");
+        if (robots.size() < groupCount * minRobotsPerGroup) {
+            throw new Exception(String.format(
+                "Not enough robots (%d) for %d groups with %d advancing. Need at least %d robots.",
+                robots.size(), groupCount, advancingPerGroup, groupCount * minRobotsPerGroup));
         }
 
         // Build preview
@@ -109,16 +115,16 @@ public class TournamentGeneratorService {
             .collect(Collectors.toList());
         preview.setAvailablePlaygrounds(availablePlaygrounds);
 
-        // Generate groups
-        List<GroupPreviewDTO> groups = generateGroups(robots, groupSize, advancingPerGroup, 
+        // Generate groups with specified count
+        List<GroupPreviewDTO> groups = generateGroups(robots, groupCount, advancingPerGroup, 
             discipline.getID(), request.getCategory(), request.getYear(), availablePlaygrounds);
         preview.setGroups(groups);
 
         // Calculate bracket size (number of advancing robots)
         int bracketSize = groups.size() * advancingPerGroup;
         
-        // Generate bracket structure
-        BracketPreviewDTO bracket = generateBracket(bracketSize, 
+        // Generate bracket structure with bye handling
+        BracketPreviewDTO bracket = generateBracketWithByes(bracketSize, 
             discipline.getID(), request.getCategory(), request.getYear(), availablePlaygrounds);
         preview.setBracket(bracket);
 
@@ -168,10 +174,13 @@ public class TournamentGeneratorService {
 
     /**
      * Generate groups with round-robin matches
+     * @param robots List of all robots to distribute
+     * @param groupCount Number of groups to create
+     * @param advancingPerGroup Number of robots advancing from each group
      */
     private List<GroupPreviewDTO> generateGroups(
             List<Robot> robots, 
-            int groupSize, 
+            int groupCount, 
             int advancingPerGroup,
             Long disciplineId,
             ECategory category,
@@ -184,17 +193,14 @@ public class TournamentGeneratorService {
         List<Robot> shuffledRobots = new ArrayList<>(robots);
         Collections.shuffle(shuffledRobots);
 
-        // Calculate number of groups
-        int numGroups = (int) Math.ceil((double) shuffledRobots.size() / groupSize);
-        
-        // Distribute robots evenly across groups
-        int baseSize = shuffledRobots.size() / numGroups;
-        int extra = shuffledRobots.size() % numGroups;
+        // Distribute robots evenly across the specified number of groups
+        int baseSize = shuffledRobots.size() / groupCount;
+        int extra = shuffledRobots.size() % groupCount;
 
         int robotIndex = 0;
         int matchIdCounter = 1;
 
-        for (int g = 0; g < numGroups; g++) {
+        for (int g = 0; g < groupCount; g++) {
             GroupPreviewDTO group = new GroupPreviewDTO();
             String groupName = String.valueOf((char) ('A' + g));
             String groupId = String.format("%s_%s_%d_GROUP_%s", 
@@ -251,6 +257,114 @@ public class TournamentGeneratorService {
         }
 
         return groups;
+    }
+
+    /**
+     * Generate bracket structure with bye handling for non-power-of-2 participant counts.
+     * Some participants will get automatic advancement (bye) in the first round.
+     */
+    private BracketPreviewDTO generateBracketWithByes(
+            int participantCount,
+            Long disciplineId,
+            ECategory category,
+            Integer year,
+            List<PlaygroundInfoDTO> playgrounds) {
+        
+        BracketPreviewDTO bracket = new BracketPreviewDTO();
+        String bracketId = String.format("%s_%s_%d_BRACKET", 
+            getDisciplineShortName(disciplineId), 
+            category.name(), 
+            year);
+        bracket.setBracketId(bracketId);
+        bracket.setParticipantCount(participantCount);
+
+        // Calculate bracket size (round up to nearest power of 2)
+        int bracketSize = 1;
+        while (bracketSize < participantCount) {
+            bracketSize *= 2;
+        }
+        
+        // Calculate number of byes (participants who advance automatically in round 1)
+        int byeCount = bracketSize - participantCount;
+        
+        List<BracketPreviewDTO.BracketRoundDTO> rounds = new ArrayList<>();
+        Long playgroundId = playgrounds.isEmpty() ? null : playgrounds.get(0).getId();
+
+        int currentRoundSize = bracketSize / 2;
+        int roundNumber = 1;
+        int matchIdCounter = 1;
+
+        while (currentRoundSize >= 1) {
+            BracketPreviewDTO.BracketRoundDTO round = new BracketPreviewDTO.BracketRoundDTO();
+            round.setRoundNumber(roundNumber);
+            
+            // Determine round name
+            String roundName;
+            ETournamentPhase phase;
+            if (currentRoundSize == 1) {
+                roundName = "Finále";
+                phase = ETournamentPhase.FINAL;
+            } else if (currentRoundSize == 2) {
+                roundName = "Semifinále";
+                phase = ETournamentPhase.SEMIFINAL;
+            } else if (currentRoundSize == 4) {
+                roundName = "Čtvrtfinále";
+                phase = ETournamentPhase.QUARTERFINAL;
+            } else {
+                roundName = String.format("Kolo %d", roundNumber);
+                phase = ETournamentPhase.PRELIMINARY;
+            }
+            round.setName(roundName);
+
+            List<MatchPreviewDTO> matches = new ArrayList<>();
+            for (int i = 0; i < currentRoundSize; i++) {
+                MatchPreviewDTO match = new MatchPreviewDTO();
+                String tempId = String.format("BRACKET_R%d_M%d", roundNumber, matchIdCounter++);
+                match.setTempId(tempId);
+                match.setRobotA(null); // Will be filled when winners advance
+                match.setRobotB(null);
+                match.setPhase(phase);
+                match.setGroup(bracketId);
+                match.setPlaygroundId(playgroundId);
+                match.setRoundName(roundName);
+                match.setMatchOrder(i + 1);
+                
+                // In round 1, mark matches that are byes
+                // Byes are distributed to top seeds (first matches in round 1)
+                if (roundNumber == 1 && i < byeCount) {
+                    match.setIsBye(true);
+                }
+                
+                // Set visual positions for bracket visualization
+                match.setVisualX(roundNumber - 1);
+                match.setVisualY(i);
+
+                matches.add(match);
+            }
+            round.setMatches(matches);
+            rounds.add(round);
+
+            currentRoundSize /= 2;
+            roundNumber++;
+        }
+
+        // Fix nextMatchTempId references
+        for (int r = 0; r < rounds.size() - 1; r++) {
+            List<MatchPreviewDTO> currentMatches = rounds.get(r).getMatches();
+            List<MatchPreviewDTO> nextMatches = rounds.get(r + 1).getMatches();
+            
+            for (int i = 0; i < currentMatches.size(); i++) {
+                MatchPreviewDTO match = currentMatches.get(i);
+                int nextMatchIndex = i / 2;
+                if (nextMatchIndex < nextMatches.size()) {
+                    match.setNextMatchTempId(nextMatches.get(nextMatchIndex).getTempId());
+                }
+            }
+        }
+
+        bracket.setRounds(rounds);
+        bracket.setByeCount(byeCount);
+        return bracket;
     }
 
     /**
