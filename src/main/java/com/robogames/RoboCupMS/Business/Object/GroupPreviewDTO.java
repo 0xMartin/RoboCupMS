@@ -32,6 +32,11 @@ public class GroupPreviewDTO {
      */
     private Integer advancingCount;
 
+    /**
+     * Playground ID for this group's matches
+     */
+    private Long playgroundId;
+
     public GroupPreviewDTO() {
     }
 
@@ -73,5 +78,13 @@ public class GroupPreviewDTO {
 
     public void setAdvancingCount(Integer advancingCount) {
         this.advancingCount = advancingCount;
+    }
+
+    public Long getPlaygroundId() {
+        return playgroundId;
+    }
+
+    public void setPlaygroundId(Long playgroundId) {
+        this.playgroundId = playgroundId;
     }
 }

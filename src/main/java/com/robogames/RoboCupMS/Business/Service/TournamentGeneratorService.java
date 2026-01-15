@@ -203,9 +203,10 @@ public class TournamentGeneratorService {
         for (int g = 0; g < groupCount; g++) {
             GroupPreviewDTO group = new GroupPreviewDTO();
             String groupName = String.valueOf((char) ('A' + g));
-            String groupId = String.format("%s_%s_%d_GROUP_%s", 
+            // Shorter group ID format: DISC_C_YEAR_A (e.g., ROBOS_H_2026_A)
+            String groupId = String.format("%s_%s_%d_%s", 
                 getDisciplineShortName(disciplineId), 
-                category.name(), 
+                getCategoryShortCode(category), 
                 year, 
                 groupName);
             
@@ -231,7 +232,9 @@ public class TournamentGeneratorService {
 
             // Generate round-robin matches for this group
             List<MatchPreviewDTO> matches = new ArrayList<>();
-            Long playgroundId = playgrounds.isEmpty() ? null : playgrounds.get(0).getId();
+            // Default playground - can be changed by frontend for each group
+            Long playgroundId = playgrounds.isEmpty() ? null : playgrounds.get(g % playgrounds.size()).getId();
+            group.setPlaygroundId(playgroundId);
             
             for (int i = 0; i < groupRobots.size(); i++) {
                 for (int j = i + 1; j < groupRobots.size(); j++) {
@@ -271,10 +274,7 @@ public class TournamentGeneratorService {
             List<PlaygroundInfoDTO> playgrounds) {
         
         BracketPreviewDTO bracket = new BracketPreviewDTO();
-        String bracketId = String.format("%s_%s_%d_BRACKET", 
-            getDisciplineShortName(disciplineId), 
-            category.name(), 
-            year);
+        String bracketId = getBracketId(disciplineId, category, year);
         bracket.setBracketId(bracketId);
         bracket.setParticipantCount(participantCount);
 
@@ -288,7 +288,9 @@ public class TournamentGeneratorService {
         int byeCount = bracketSize - participantCount;
         
         List<BracketPreviewDTO.BracketRoundDTO> rounds = new ArrayList<>();
+        // Default playground for bracket - can be changed by frontend
         Long playgroundId = playgrounds.isEmpty() ? null : playgrounds.get(0).getId();
+        bracket.setPlaygroundId(playgroundId);
 
         int currentRoundSize = bracketSize / 2;
         int roundNumber = 1;
@@ -378,10 +380,7 @@ public class TournamentGeneratorService {
             List<PlaygroundInfoDTO> playgrounds) {
         
         BracketPreviewDTO bracket = new BracketPreviewDTO();
-        String bracketId = String.format("%s_%s_%d_BRACKET", 
-            getDisciplineShortName(disciplineId), 
-            category.name(), 
-            year);
+        String bracketId = getBracketId(disciplineId, category, year);
         bracket.setBracketId(bracketId);
         bracket.setParticipantCount(participantCount);
 
@@ -392,7 +391,9 @@ public class TournamentGeneratorService {
         }
 
         List<BracketPreviewDTO.BracketRoundDTO> rounds = new ArrayList<>();
+        // Default playground for bracket - can be changed by frontend
         Long playgroundId = playgrounds.isEmpty() ? null : playgrounds.get(0).getId();
+        bracket.setPlaygroundId(playgroundId);
 
         int currentRoundSize = bracketSize / 2;
         int roundNumber = 1;
@@ -482,9 +483,39 @@ public class TournamentGeneratorService {
             String name = d.get().getName().toUpperCase()
                 .replaceAll("\\s+", "_")
                 .replaceAll("[^A-Z0-9_]", "");
-            return name.length() > 10 ? name.substring(0, 10) : name;
+            // Return max 6 characters for shorter group IDs
+            return name.length() > 6 ? name.substring(0, 6) : name;
         }
-        return "DISC" + disciplineId;
+        return "D" + disciplineId;
+    }
+
+    /**
+     * Get short category code (L for LOW_AGE, H for HIGH_AGE)
+     */
+    private String getCategoryShortCode(ECategory category) {
+        return category == ECategory.LOW_AGE_CATEGORY ? "L" : "H";
+    }
+
+    /**
+     * Generate group ID prefix for matching/searching groups
+     * Format: DISC_C_YEAR_ (e.g., ROBOS_H_2026_)
+     */
+    private String getGroupPrefix(Long disciplineId, ECategory category, Integer year) {
+        return String.format("%s_%s_%d_", 
+            getDisciplineShortName(disciplineId), 
+            getCategoryShortCode(category), 
+            year);
+    }
+
+    /**
+     * Generate bracket ID
+     * Format: DISC_C_YEAR_BR (e.g., ROBOS_H_2026_BR)
+     */
+    private String getBracketId(Long disciplineId, ECategory category, Integer year) {
+        return String.format("%s_%s_%d_BR", 
+            getDisciplineShortName(disciplineId), 
+            getCategoryShortCode(category), 
+            year);
     }
 
     /**
@@ -512,10 +543,15 @@ public class TournamentGeneratorService {
         // First pass: Create all matches without nextMatch references
         // Create group matches
         for (GroupPreviewDTO group : request.getGroups()) {
+            // Use group's playgroundId as fallback for matches
+            Long groupPlaygroundId = group.getPlaygroundId() != null ? 
+                group.getPlaygroundId() : playgrounds.get(0).getID();
+            
             for (MatchPreviewDTO matchPreview : group.getMatches()) {
                 RobotMatchObj matchObj = new RobotMatchObj();
+                // Priority: match playgroundId > group playgroundId > first playground
                 matchObj.setPlaygroundID(matchPreview.getPlaygroundId() != null ? 
-                    matchPreview.getPlaygroundId() : playgrounds.get(0).getID());
+                    matchPreview.getPlaygroundId() : groupPlaygroundId);
                 matchObj.setPhase(matchPreview.getPhase());
                 matchObj.setGroup(matchPreview.getGroup());
                 matchObj.setVisualX(matchPreview.getVisualX());
@@ -536,11 +572,16 @@ public class TournamentGeneratorService {
 
         // Create bracket matches
         if (request.getBracket() != null) {
+            // Use bracket's playgroundId as fallback for bracket matches
+            Long bracketPlaygroundId = request.getBracket().getPlaygroundId() != null ?
+                request.getBracket().getPlaygroundId() : playgrounds.get(0).getID();
+            
             for (BracketPreviewDTO.BracketRoundDTO round : request.getBracket().getRounds()) {
                 for (MatchPreviewDTO matchPreview : round.getMatches()) {
                     RobotMatchObj matchObj = new RobotMatchObj();
+                    // Priority: match playgroundId > bracket playgroundId > first playground
                     matchObj.setPlaygroundID(matchPreview.getPlaygroundId() != null ? 
-                        matchPreview.getPlaygroundId() : playgrounds.get(0).getID());
+                        matchPreview.getPlaygroundId() : bracketPlaygroundId);
                     matchObj.setPhase(matchPreview.getPhase());
                     matchObj.setGroup(matchPreview.getGroup());
                     matchObj.setVisualX(matchPreview.getVisualX());
@@ -595,14 +636,8 @@ public class TournamentGeneratorService {
         Discipline discipline = disciplineOpt.get();
 
         // Find all group matches for this discipline/category/year
-        String groupPrefix = String.format("%s_%s_%d_GROUP_", 
-            getDisciplineShortName(disciplineId), 
-            category.name(), 
-            year);
-        String bracketId = String.format("%s_%s_%d_BRACKET", 
-            getDisciplineShortName(disciplineId), 
-            category.name(), 
-            year);
+        String groupPrefix = getGroupPrefix(disciplineId, category, year);
+        String bracketId = getBracketId(disciplineId, category, year);
 
         // Get all matches
         List<RobotMatch> allMatches = matchService.allByYear(year);
@@ -793,10 +828,7 @@ public class TournamentGeneratorService {
      * Check if tournament structure already exists
      */
     public boolean tournamentExists(Long disciplineId, ECategory category, Integer year) {
-        String groupPrefix = String.format("%s_%s_%d_GROUP_", 
-            getDisciplineShortName(disciplineId), 
-            category.name(), 
-            year);
+        String groupPrefix = getGroupPrefix(disciplineId, category, year);
         
         List<RobotMatch> matches = matchService.allByYear(year);
         return matches.stream()
@@ -808,14 +840,8 @@ public class TournamentGeneratorService {
      */
     @Transactional
     public void deleteTournamentStructure(Long disciplineId, ECategory category, Integer year) throws Exception {
-        String groupPrefix = String.format("%s_%s_%d_GROUP_", 
-            getDisciplineShortName(disciplineId), 
-            category.name(), 
-            year);
-        String bracketId = String.format("%s_%s_%d_BRACKET", 
-            getDisciplineShortName(disciplineId), 
-            category.name(), 
-            year);
+        String groupPrefix = getGroupPrefix(disciplineId, category, year);
+        String bracketId = getBracketId(disciplineId, category, year);
         
         List<RobotMatch> matches = matchService.allByYear(year);
         

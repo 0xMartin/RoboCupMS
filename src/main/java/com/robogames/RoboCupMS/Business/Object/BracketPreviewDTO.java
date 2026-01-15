@@ -27,6 +27,11 @@ public class BracketPreviewDTO {
      */
     private Integer byeCount = 0;
 
+    /**
+     * Playground ID for bracket matches
+     */
+    private Long playgroundId;
+
     public BracketPreviewDTO() {
     }
 
@@ -60,6 +65,14 @@ public class BracketPreviewDTO {
 
     public void setByeCount(Integer byeCount) {
         this.byeCount = byeCount;
+    }
+
+    public Long getPlaygroundId() {
+        return playgroundId;
+    }
+
+    public void setPlaygroundId(Long playgroundId) {
+        this.playgroundId = playgroundId;
     }
 
     /**
