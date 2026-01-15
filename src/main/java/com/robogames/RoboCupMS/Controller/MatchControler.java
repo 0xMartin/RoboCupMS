@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Controller for robot match management
  */
 @RestController
+@Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.ASSISTANT, ERole.Names.REFEREE })
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping(GlobalConfig.API_PREFIX + "/match")
 public class MatchControler {
@@ -167,7 +168,6 @@ public class MatchControler {
      * @param matchObj Match parameters
      * @return Created match info
      */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @PostMapping("/create")
     Response create(@RequestBody RobotMatchObj matchObj) {
         try {
@@ -185,7 +185,6 @@ public class MatchControler {
      * @param matchObj New match parameters
      * @return Success message
      */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @PutMapping("/update")
     Response update(@RequestParam Long id, @RequestBody RobotMatchObj matchObj) {
         try {
@@ -204,7 +203,6 @@ public class MatchControler {
      * @param robotBID Robot B ID (optional)
      * @return Success message
      */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @PutMapping("/assignRobots")
     Response assignRobots(@RequestParam Long id, 
                           @RequestParam(required = false) Long robotAID,
@@ -223,7 +221,6 @@ public class MatchControler {
      * @param id Match ID
      * @return Success message
      */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @DeleteMapping("/remove")
     Response remove(@RequestParam Long id) {
         try {
@@ -241,7 +238,6 @@ public class MatchControler {
      * @param scoreObj Score data (matchID, scoreA, scoreB)
      * @return Success message
      */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @PutMapping("/writeScore")
     Response writeScore(@RequestBody MatchScoreObj scoreObj) {
         try {
@@ -258,7 +254,6 @@ public class MatchControler {
      * @param id Match ID
      * @return Success message
      */
-    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER, ERole.Names.REFEREE })
     @PutMapping("/rematch")
     Response rematch(@RequestParam Long id) {
         try {

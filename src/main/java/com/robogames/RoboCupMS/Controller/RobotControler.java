@@ -39,6 +39,7 @@ public class RobotControler {
      * @return Robot
      */
     @GetMapping("/get")
+    @Secured({ ERole.Names.ADMIN })
     Response get(@RequestParam Long id) {
         Robot robot;
         try {
@@ -73,6 +74,7 @@ public class RobotControler {
      * @return Seznam zapasu robota
      */
     @GetMapping("/matches")
+    @Secured({ ERole.Names.ADMIN })
     Response getRobotMatches(@RequestParam Long id) {
         List<RobotMatchInfo> matches;
         try {
@@ -90,6 +92,7 @@ public class RobotControler {
      * @return Seznam vsech robotu
      */
     @GetMapping("/all")
+    @Secured({ ERole.Names.ADMIN })
     Response getAll(@RequestParam int year) {
         List<Robot> robots;
         try {
@@ -107,6 +110,7 @@ public class RobotControler {
      * @return Seznam robotu s potvrzenou registraci
      */
     @GetMapping("/allConfirmed")
+    @Secured({ ERole.Names.ADMIN })
     Response getAllConfirmed(@RequestParam int year) {
         List<Robot> robots;
         try {
@@ -124,6 +128,7 @@ public class RobotControler {
      * @return Seznam robotu s potvrzenou registraci
      */
     @GetMapping("/allForYear")
+    @Secured({ ERole.Names.ADMIN })
     Response allForYear(@RequestParam int year) {
         List<Robot> robots;
         try {

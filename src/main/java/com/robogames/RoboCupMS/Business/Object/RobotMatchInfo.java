@@ -39,6 +39,9 @@ public class RobotMatchInfo {
     private boolean twoRobotMatch;
     private LocalDateTime timestamp;
     private String group;
+    private Integer visualX;
+    private Integer visualY;
+    private Long disciplineId;
     
     public RobotMatchInfo() {
     }
@@ -81,6 +84,12 @@ public class RobotMatchInfo {
         this.twoRobotMatch = match.getRobotB() != null;
         this.timestamp = match.getTimestamp();
         this.group = match.getGroup();
+        this.visualX = match.getVisualX();
+        this.visualY = match.getVisualY();
+        
+        if (match.getPlayground() != null && match.getPlayground().getDiscipline() != null) {
+            this.disciplineId = match.getPlayground().getDiscipline().getID();
+        }
     }
 
     public long getId() {
@@ -165,5 +174,17 @@ public class RobotMatchInfo {
 
     public String getGroup() {
         return group;
+    }
+
+    public Integer getVisualX() {
+        return visualX;
+    }
+
+    public Integer getVisualY() {
+        return visualY;
+    }
+
+    public Long getDisciplineId() {
+        return disciplineId;
     }
 }

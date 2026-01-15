@@ -6,6 +6,7 @@ import java.util.List;
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Response;
 import com.robogames.RoboCupMS.ResponseHandler;
+import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Business.Object.TeamJoinRequestObj;
 import com.robogames.RoboCupMS.Business.Object.TeamObj;
 import com.robogames.RoboCupMS.Business.Service.TeamService;
@@ -13,6 +14,7 @@ import com.robogames.RoboCupMS.Entity.Team;
 import com.robogames.RoboCupMS.Entity.TeamJoinRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -88,6 +90,7 @@ public class TeamControler {
      * @return Seznam vsech tymu
      */
     @GetMapping("/all")
+    @Secured({ ERole.Names.ADMIN })
     Response getAll() {
         List<Team> all = this.teamService.getAll();
         return ResponseHandler.response(all);

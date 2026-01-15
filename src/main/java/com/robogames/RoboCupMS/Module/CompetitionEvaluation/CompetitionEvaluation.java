@@ -1,6 +1,7 @@
 package com.robogames.RoboCupMS.Module.CompetitionEvaluation;
 
 import java.util.List;
+import java.util.Map;
 
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Response;
@@ -100,6 +101,27 @@ public class CompetitionEvaluation {
             return ResponseHandler.error(ex.getMessage());
         }
         return ResponseHandler.response(winners);
+    }
+
+    /**
+     * Retrieves tournament visualization data for a specific discipline, category, and year.
+     * Returns groups with standings, bracket matches with visual positions.
+     * Works for both tournament-type and regular disciplines.
+     * 
+     * @param year Competition year
+     * @param category Competition category
+     * @param disciplineId Discipline ID
+     * @return Tournament data with groups, bracket, and standings
+     */
+    @GetMapping("/tournamentData")
+    Response getTournamentData(@RequestParam int year, @RequestParam ECategory category, @RequestParam long disciplineId) {
+        Map<String, Object> data;
+        try {
+            data = this.competitionEvaluationService.getTournamentData(year, category, disciplineId);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+        return ResponseHandler.response(data);
     }
 
 }

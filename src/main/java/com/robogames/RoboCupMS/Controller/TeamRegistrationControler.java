@@ -38,6 +38,7 @@ public class TeamRegistrationControler {
      * @return Seznam vsech registraci
      */
     @GetMapping("/all")
+    @Secured({ ERole.Names.ADMIN })
     Response getAll() {
         List<TeamRegistration> all = null;
         try {

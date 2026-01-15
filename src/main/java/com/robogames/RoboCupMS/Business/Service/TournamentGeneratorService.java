@@ -242,7 +242,7 @@ public class TournamentGeneratorService {
                     match.setTempId(String.format("GROUP_%s_M%d", groupName, matchIdCounter++));
                     match.setRobotA(groupRobots.get(i));
                     match.setRobotB(groupRobots.get(j));
-                    match.setPhase(ETournamentPhase.PRELIMINARY);
+                    match.setPhase(ETournamentPhase.GROUP_STAGE);
                     match.setGroup(groupId);
                     match.setPlaygroundId(playgroundId);
                     match.setRoundName(String.format("Group %s", groupName));
@@ -312,6 +312,9 @@ public class TournamentGeneratorService {
             } else if (currentRoundSize == 4) {
                 roundName = "Čtvrtfinále";
                 phase = ETournamentPhase.QUARTERFINAL;
+            } else if (currentRoundSize == 8) {
+                roundName = "Osmifinále";
+                phase = ETournamentPhase.ROUND_OF_16;
             } else {
                 roundName = String.format("Kolo %d", roundNumber);
                 phase = ETournamentPhase.PRELIMINARY;
@@ -861,6 +864,10 @@ public class TournamentGeneratorService {
             .filter(m -> m.getState().getName() == EMatchState.DONE)
             .count();
 
+        // Check if final bracket has started (any bracket match has robot assigned)
+        boolean finalStarted = bracketMatches.stream()
+            .anyMatch(m -> m.getRobotA() != null || m.getRobotB() != null);
+
         Map<String, Object> result = new HashMap<>();
         result.put("exists", true);
         result.put("groups", groups);
@@ -871,6 +878,7 @@ public class TournamentGeneratorService {
         result.put("completedBracketMatches", completedBracketMatches);
         result.put("remainingBracketMatches", totalBracketMatches - completedBracketMatches);
         result.put("advancingPerGroup", advancingPerGroup);
+        result.put("finalStarted", finalStarted);
 
         return result;
     }

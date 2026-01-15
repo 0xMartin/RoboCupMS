@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 
 import com.robogames.RoboCupMS.GlobalConfig;
 import com.robogames.RoboCupMS.Business.Enum.ECategory;
+import com.robogames.RoboCupMS.Business.Enum.ERole;
 import com.robogames.RoboCupMS.Business.Object.RobotObj;
 import com.robogames.RoboCupMS.Business.Object.RobotProfile;
 import com.robogames.RoboCupMS.Business.Object.RobotMatchInfo;
@@ -60,11 +61,15 @@ public class RobotService {
 
     /**
      * Navrati podrobny profil robota podle id
+     * Pristupny pouze pro cleny tymu robota nebo uzivatele s roli ADMIN, LEADER, ASSISTANT
      * 
      * @param id ID robota
      * @return Profil robota (podrobnejsni info)
      */
     public RobotProfile getRobotProfile(Long id) throws Exception {
+        // Ziska aktualniho uzivatele
+        UserRC currentUser = (UserRC) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        
         // Ziska robota podle ID
         Optional<Robot> robotOpt = this.robotRepository.findById(id);
         if (!robotOpt.isPresent()) {
@@ -82,6 +87,19 @@ public class RobotService {
         Team team = teamRegistration.getTeam();
         if (team == null) {
             throw new Exception(String.format("failure, team registration has no team", id));
+        }
+        
+        // Kontrola pristupu - uzivatel musi byt clenem tymu nebo mit vyssi roli
+        boolean hasElevatedRole = currentUser.getRoles().stream()
+            .anyMatch(role -> role.getName() == ERole.ADMIN || 
+                             role.getName() == ERole.LEADER || 
+                             role.getName() == ERole.ASSISTANT);
+        
+        boolean isTeamMember = team.getMembers().stream()
+            .anyMatch(member -> member.getID() == currentUser.getID());
+        
+        if (!hasElevatedRole && !isTeamMember) {
+            throw new Exception("failure, access denied - robot profile is only accessible to team members and organizers");
         }
 
         // Ziska informace o vedoucim tymu
@@ -111,6 +129,7 @@ public class RobotService {
         List<RobotProfile.TeamMemberInfo> teamMembers = new ArrayList<>();
         for (UserRC member : team.getMembers()) {
             teamMembers.add(new RobotProfile.TeamMemberInfo(
+                    member.getID(),
                     member.getName(),
                     member.getSurname(),
                     member.getEmail()));

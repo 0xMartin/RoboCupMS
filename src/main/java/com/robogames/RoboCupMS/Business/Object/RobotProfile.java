@@ -166,6 +166,7 @@ public class RobotProfile {
     }
 
     public static class TeamMemberInfo {
+        private Long id;
         private String name;
         private String surname;
         private String email;
@@ -173,10 +174,19 @@ public class RobotProfile {
         public TeamMemberInfo() {
         }
 
-        public TeamMemberInfo(String name, String surname, String email) {
+        public TeamMemberInfo(Long id, String name, String surname, String email) {
+            this.id = id;
             this.name = name;
             this.surname = surname;
             this.email = email;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
         }
 
         public String getName() {

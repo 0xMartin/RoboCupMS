@@ -214,8 +214,7 @@ public class AppInit {
                     new TournamentPhase(ETournamentPhase.PRELIMINARY),
                     new TournamentPhase(ETournamentPhase.QUARTERFINAL),
                     new TournamentPhase(ETournamentPhase.SEMIFINAL),
-                    new TournamentPhase(ETournamentPhase.FINAL),
-                    new TournamentPhase(ETournamentPhase.THIRD_PLACE)));
+                    new TournamentPhase(ETournamentPhase.FINAL)));
         } else {
             return null;
         }

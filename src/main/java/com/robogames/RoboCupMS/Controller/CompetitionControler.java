@@ -49,6 +49,7 @@ public class CompetitionControler {
      * @return List vsech registraci
      */
     @GetMapping("/allRegistrations")
+    @Secured({ ERole.Names.ADMIN })
     Response allRegistrations(@RequestParam int year) {
         List<TeamRegistration> registrations;
         try {

@@ -55,6 +55,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         GlobalConfig.MODULE_PREFIX + "/competitionEvaluation/scoreOfTeam",
                         GlobalConfig.MODULE_PREFIX + "/competitionEvaluation/scoreOfRobot",
                         GlobalConfig.MODULE_PREFIX + "/competitionEvaluation/getOrder",
+                        GlobalConfig.MODULE_PREFIX + "/competitionEvaluation/tournamentData",
 
                         // vysledky souteze (dostupne i pro verejnost)
                         GlobalConfig.MODULE_PREFIX + "/orderManagement/currentMatches",
