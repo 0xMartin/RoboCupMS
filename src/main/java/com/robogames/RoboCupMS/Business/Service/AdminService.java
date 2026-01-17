@@ -672,8 +672,13 @@ public class AdminService {
 
             // pokud je registrace potvrzena a robot nema cislo, vygenerujeme ho
             if (editObj.getConfirmed() && robot.getNumber() == 0 && robot.getDiscipline() != null) {
+                int year = robot.getTeamRegistration().getCompetitionYear();
                 long maxNumber = 0;
-                for (Robot r : robot.getDiscipline().getRobots()) {
+                // najde maximalni cislo ze vsech robotu v danem rocniku
+                List<Robot> allRobotsInYear = this.robotRepository.findAll().stream()
+                        .filter(r -> r.getTeamRegistration().getCompetitionYear() == year)
+                        .collect(java.util.stream.Collectors.toList());
+                for (Robot r : allRobotsInYear) {
                     maxNumber = Math.max(maxNumber, r.getNumber());
                 }
                 robot.setNumber(maxNumber + 1);
@@ -830,8 +835,13 @@ public class AdminService {
 
         // pokud je registrace potvrzena a robot nema cislo, vygenerujeme ho
         if (confirmed && robot.getNumber() == 0 && robot.getDiscipline() != null) {
+            int year = robot.getTeamRegistration().getCompetitionYear();
             long maxNumber = 0;
-            for (Robot r : robot.getDiscipline().getRobots()) {
+            // najde maximalni cislo ze vsech robotu v danem rocniku
+            List<Robot> allRobotsInYear = this.robotRepository.findAll().stream()
+                    .filter(r -> r.getTeamRegistration().getCompetitionYear() == year)
+                    .collect(java.util.stream.Collectors.toList());
+            for (Robot r : allRobotsInYear) {
                 maxNumber = Math.max(maxNumber, r.getNumber());
             }
             robot.setNumber(maxNumber + 1);

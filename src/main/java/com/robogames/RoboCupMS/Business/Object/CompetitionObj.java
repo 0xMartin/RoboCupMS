@@ -25,6 +25,11 @@ public class CompetitionObj {
      */
     private Time endTime;
 
+    /**
+     * Urcuje zda zobrazit globalni vysledky
+     */
+    private Boolean showResults;
+
     public CompetitionObj() {
     }
 
@@ -65,6 +70,14 @@ public class CompetitionObj {
 
     public void setEndTime(Time endTime) {
         this.endTime = endTime;
+    }
+
+    public Boolean getShowResults() {
+        return this.showResults;
+    }
+
+    public void setShowResults(Boolean showResults) {
+        this.showResults = showResults;
     }
 
 }

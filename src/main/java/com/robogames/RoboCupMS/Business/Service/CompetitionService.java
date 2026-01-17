@@ -124,6 +124,26 @@ public class CompetitionService {
         c.get().setDate(compatitionObj.getDate());
         c.get().setStartTime(compatitionObj.getStartTime());
         c.get().setEndTime(compatitionObj.getEndTime());
+        if (compatitionObj.getShowResults() != null) {
+            c.get().setShowResults(compatitionObj.getShowResults());
+        }
+        repository.save(c.get());
+    }
+
+    /**
+     * Prepne zobrazeni globalnich vysledku (showResults)
+     * Tato akce je povolena i po zahajeni souteze
+     * 
+     * @param id ID souteze
+     * @param showResults Nova hodnota showResults
+     */
+    public void toggleShowResults(Long id, Boolean showResults) throws Exception {
+        Optional<Competition> c = repository.findById(id);
+        if (!c.isPresent()) {
+            throw new Exception(String.format("failure, compatition with ID [%d] not exists", id));
+        }
+
+        c.get().setShowResults(showResults);
         repository.save(c.get());
     }
 

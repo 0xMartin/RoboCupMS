@@ -217,7 +217,18 @@ public class CompetitionEvaluationService {
     }
 
     /**
-     * Returns the placement of robots in a specific discipline within a competition category
+     * Returns the placement of robots in a specific discipline within a competition category.
+     * For tournament-type disciplines (with bracket), the placement is determined by bracket results:
+     * - 1st place: Winner of FINAL match
+     * - 2nd place: Loser of FINAL match
+     * - 3rd place: Winner of THIRD_PLACE match
+     * - 4th place: Loser of THIRD_PLACE match
+     * - 5th-8th: Losers of SEMIFINAL (sorted by score)
+     * - 9th-16th: Losers of QUARTERFINAL (sorted by score)
+     * - etc. for earlier rounds
+     * - Last: Robots that didn't advance from groups (sorted by group standings)
+     * 
+     * For regular disciplines, placement is based on total score from all matches.
      * 
      * @param year     Competition year
      * @param category Competition category
@@ -236,12 +247,193 @@ public class CompetitionEvaluationService {
             throw new Exception(String.format("failure, discipline with ID [%d] not exists", id));
         }
 
+        // Get all matches for this discipline
+        List<RobotMatch> allMatches = robotMatchRepository.findAll().stream()
+            .filter(m -> m.getPlayground() != null && 
+                        m.getPlayground().getDiscipline().getID() == id)
+            .collect(Collectors.toList());
+
+        // Check if this is a tournament (has bracket matches)
+        String disciplineShortName = getDisciplineShortName(discipline.get());
+        String categoryShortCode = category == ECategory.LOW_AGE_CATEGORY ? "L" : "H";
+        String bracketId = String.format("%s_%s_%d_BR", disciplineShortName, categoryShortCode, year);
+        
+        List<RobotMatch> bracketMatches = allMatches.stream()
+            .filter(m -> m.getGroup() != null && m.getGroup().equals(bracketId))
+            .collect(Collectors.toList());
+
+        boolean isTournament = !bracketMatches.isEmpty();
+
+        if (isTournament) {
+            return getOrderForTournament(year, category, discipline.get(), allMatches, bracketMatches, bracketId);
+        } else {
+            return getOrderForRegularDiscipline(year, category, discipline.get());
+        }
+    }
+
+    /**
+     * Calculate order for tournament-type disciplines based on bracket results
+     */
+    private List<OrderObj> getOrderForTournament(int year, ECategory category, Discipline discipline,
+            List<RobotMatch> allMatches, List<RobotMatch> bracketMatches, String bracketId) {
+        
+        Boolean highScoreWin = discipline.getHighScoreWin();
+        List<OrderObj> order = new ArrayList<>();
+        int currentPlace = 1;
+
+        // Track robots that have been placed
+        java.util.Set<Long> placedRobots = new java.util.HashSet<>();
+
+        // 1. Find FINAL match - winner is 1st, loser is 2nd
+        List<RobotMatch> finalMatches = bracketMatches.stream()
+            .filter(m -> m.getPhase() != null && m.getPhase().getName() == ETournamentPhase.FINAL)
+            .filter(m -> m.getState().getName() == EMatchState.DONE)
+            .collect(Collectors.toList());
+
+        for (RobotMatch finalMatch : finalMatches) {
+            Robot winner = getMatchWinner(finalMatch, highScoreWin);
+            Robot loser = getMatchLoser(finalMatch, highScoreWin);
+            
+            if (winner != null && !placedRobots.contains(winner.getID())) {
+                order.add(createOrderObj(currentPlace++, winner, finalMatch, highScoreWin));
+                placedRobots.add(winner.getID());
+            }
+            if (loser != null && !placedRobots.contains(loser.getID())) {
+                order.add(createOrderObj(currentPlace++, loser, finalMatch, highScoreWin));
+                placedRobots.add(loser.getID());
+            }
+        }
+
+        // 2. Find THIRD_PLACE match - winner is 3rd, loser is 4th
+        List<RobotMatch> thirdPlaceMatches = bracketMatches.stream()
+            .filter(m -> m.getPhase() != null && m.getPhase().getName() == ETournamentPhase.THIRD_PLACE)
+            .filter(m -> m.getState().getName() == EMatchState.DONE)
+            .collect(Collectors.toList());
+
+        for (RobotMatch thirdMatch : thirdPlaceMatches) {
+            Robot winner = getMatchWinner(thirdMatch, highScoreWin);
+            Robot loser = getMatchLoser(thirdMatch, highScoreWin);
+            
+            if (winner != null && !placedRobots.contains(winner.getID())) {
+                order.add(createOrderObj(currentPlace++, winner, thirdMatch, highScoreWin));
+                placedRobots.add(winner.getID());
+            }
+            if (loser != null && !placedRobots.contains(loser.getID())) {
+                order.add(createOrderObj(currentPlace++, loser, thirdMatch, highScoreWin));
+                placedRobots.add(loser.getID());
+            }
+        }
+
+        // 3. Process remaining bracket phases in order: SEMIFINAL, QUARTERFINAL, ROUND_OF_16, PRELIMINARY
+        ETournamentPhase[] phases = { 
+            ETournamentPhase.SEMIFINAL, 
+            ETournamentPhase.QUARTERFINAL, 
+            ETournamentPhase.ROUND_OF_16,
+            ETournamentPhase.PRELIMINARY 
+        };
+
+        for (ETournamentPhase phase : phases) {
+            List<Robot> losersInPhase = new ArrayList<>();
+            
+            List<RobotMatch> phaseMatches = bracketMatches.stream()
+                .filter(m -> m.getPhase() != null && m.getPhase().getName() == phase)
+                .filter(m -> m.getState().getName() == EMatchState.DONE)
+                .collect(Collectors.toList());
+
+            for (RobotMatch match : phaseMatches) {
+                Robot loser = getMatchLoser(match, highScoreWin);
+                if (loser != null && !placedRobots.contains(loser.getID())) {
+                    losersInPhase.add(loser);
+                    placedRobots.add(loser.getID());
+                }
+            }
+
+            // Sort losers by their score in the match they lost (higher score = better placement)
+            // This creates a fair sub-ordering within the same bracket round
+            losersInPhase.sort((a, b) -> {
+                Float scoreA = getLastMatchScore(a, bracketMatches);
+                Float scoreB = getLastMatchScore(b, bracketMatches);
+                if (highScoreWin != null && highScoreWin) {
+                    return Float.compare(scoreB != null ? scoreB : 0, scoreA != null ? scoreA : 0);
+                } else {
+                    return Float.compare(scoreA != null ? scoreA : Float.MAX_VALUE, scoreB != null ? scoreB : Float.MAX_VALUE);
+                }
+            });
+
+            for (Robot loser : losersInPhase) {
+                order.add(createOrderObjFromRobot(currentPlace++, loser, discipline));
+            }
+        }
+
+        // 4. Add robots that didn't advance from groups
+        String disciplineShortName = getDisciplineShortName(discipline);
+        String categoryShortCode = category == ECategory.LOW_AGE_CATEGORY ? "L" : "H";
+        String groupPrefix = String.format("%s_%s_%d_", disciplineShortName, categoryShortCode, year);
+
+        List<RobotMatch> groupMatches = allMatches.stream()
+            .filter(m -> m.getGroup() != null && m.getGroup().startsWith(groupPrefix) && !m.getGroup().endsWith("_BR"))
+            .collect(Collectors.toList());
+
+        // Get all robots from groups
+        java.util.Set<Long> groupRobots = new java.util.HashSet<>();
+        for (RobotMatch match : groupMatches) {
+            if (match.getRobotA() != null) groupRobots.add(match.getRobotA().getID());
+            if (match.getRobotB() != null) groupRobots.add(match.getRobotB().getID());
+        }
+
+        // Find robots that played in groups but aren't placed yet
+        List<Robot> unplacedGroupRobots = new ArrayList<>();
+        for (Long robotId : groupRobots) {
+            if (!placedRobots.contains(robotId)) {
+                Optional<Robot> robot = robotRepository.findById(robotId);
+                if (robot.isPresent()) {
+                    unplacedGroupRobots.add(robot.get());
+                    placedRobots.add(robotId);
+                }
+            }
+        }
+
+        // Sort unplaced robots by their group performance (wins, then score diff)
+        Map<Long, Map<String, Object>> robotGroupStats = calculateGroupStatsForRobots(groupMatches, highScoreWin);
+        unplacedGroupRobots.sort((a, b) -> {
+            Map<String, Object> statsA = robotGroupStats.get(a.getID());
+            Map<String, Object> statsB = robotGroupStats.get(b.getID());
+            if (statsA == null && statsB == null) return 0;
+            if (statsA == null) return 1;
+            if (statsB == null) return -1;
+            int winsComp = Integer.compare((int) statsB.get("wins"), (int) statsA.get("wins"));
+            if (winsComp != 0) return winsComp;
+            return Float.compare((float) statsB.get("scoreDiff"), (float) statsA.get("scoreDiff"));
+        });
+
+        for (Robot robot : unplacedGroupRobots) {
+            order.add(createOrderObjFromRobot(currentPlace++, robot, discipline));
+        }
+
+        // 5. Add any remaining robots in this discipline/category that weren't in matches yet
+        Stream<Robot> allRobots = discipline.getRobots().stream()
+            .filter(r -> r.getTeamRegistration().getCompetitionYear() == year)
+            .filter(r -> r.getConfirmed() && r.getCategory() == category)
+            .filter(r -> !placedRobots.contains(r.getID()));
+
+        List<Robot> remainingRobots = allRobots.collect(Collectors.toList());
+        for (Robot robot : remainingRobots) {
+            order.add(createOrderObjFromRobot(currentPlace++, robot, discipline));
+        }
+
+        return order;
+    }
+
+    /**
+     * Calculate order for regular (non-tournament) disciplines based on total score
+     */
+    private List<OrderObj> getOrderForRegularDiscipline(int year, ECategory category, Discipline discipline) {
         // find all robots in discipline who played in the given year
-        Stream<Robot> robots = discipline.get().getRobots().stream()
+        Stream<Robot> robots = discipline.getRobots().stream()
                 .filter((r) -> (r.getTeamRegistration().getCompetitionYear() == year));
 
         // score aggregation function
-        ScoreAggregation ag = discipline.get().getScoreAggregation();
+        ScoreAggregation ag = discipline.getScoreAggregation();
 
         List<RobotScore> all = new LinkedList<>();
         robots.forEach(r -> {
@@ -265,32 +457,152 @@ public class CompetitionEvaluationService {
 
         // sorting
         if (ag.getName() == EScoreAggregation.MIN) {
-            // MIN -> from lowest score to highest (line follower, drag race, ...
-            // => score represents time)
-            Collections.sort(all, new Comparator<RobotScore>() {
-                @Override
-                public int compare(RobotScore r1, RobotScore r2) {
-                    return r2.getScore() < r1.getScore() ? 1 : -1;
-                }
-            });
+            Collections.sort(all, (r1, r2) -> r2.getScore() < r1.getScore() ? 1 : -1);
         } else {
-            // MAX or SUM -> from highest to lowest (sumo, robostrong, ..)
-            Collections.sort(all, new Comparator<RobotScore>() {
-                @Override
-                public int compare(RobotScore r1, RobotScore r2) {
-                    return r2.getScore() > r1.getScore() ? 1 : -1;
-                }
-            });
+            Collections.sort(all, (r1, r2) -> r2.getScore() > r1.getScore() ? 1 : -1);
         }
 
-        List<OrderObj> order = new LinkedList<OrderObj>();
+        List<OrderObj> order = new LinkedList<>();
         int place = 1;
         for (RobotScore scoreObj : all) {
             order.add(new OrderObj(place++, scoreObj));
         }
 
-        // return winner of discipline in the given competition category
         return order;
+    }
+
+    /**
+     * Get winner of a match based on scores
+     */
+    private Robot getMatchWinner(RobotMatch match, Boolean highScoreWin) {
+        if (match.getRobotA() == null || match.getRobotB() == null) return null;
+        if (match.getScoreA() == null || match.getScoreB() == null) return null;
+        
+        boolean aWins;
+        if (highScoreWin != null && highScoreWin) {
+            aWins = match.getScoreA() > match.getScoreB();
+        } else {
+            aWins = match.getScoreA() < match.getScoreB();
+        }
+        
+        return aWins ? match.getRobotA() : match.getRobotB();
+    }
+
+    /**
+     * Get loser of a match based on scores
+     */
+    private Robot getMatchLoser(RobotMatch match, Boolean highScoreWin) {
+        if (match.getRobotA() == null || match.getRobotB() == null) return null;
+        if (match.getScoreA() == null || match.getScoreB() == null) return null;
+        
+        boolean aWins;
+        if (highScoreWin != null && highScoreWin) {
+            aWins = match.getScoreA() > match.getScoreB();
+        } else {
+            aWins = match.getScoreA() < match.getScoreB();
+        }
+        
+        return aWins ? match.getRobotB() : match.getRobotA();
+    }
+
+    /**
+     * Get robot's score from their last match in the bracket
+     */
+    private Float getLastMatchScore(Robot robot, List<RobotMatch> bracketMatches) {
+        for (RobotMatch match : bracketMatches) {
+            if (match.getState().getName() != EMatchState.DONE) continue;
+            if (match.getRobotA() != null && match.getRobotA().getID() == robot.getID()) {
+                return match.getScoreA();
+            }
+            if (match.getRobotB() != null && match.getRobotB().getID() == robot.getID()) {
+                return match.getScoreB();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Calculate group statistics for all robots
+     */
+    private Map<Long, Map<String, Object>> calculateGroupStatsForRobots(List<RobotMatch> groupMatches, Boolean highScoreWin) {
+        Map<Long, Map<String, Object>> robotStats = new HashMap<>();
+
+        for (RobotMatch match : groupMatches) {
+            if (match.getState().getName() != EMatchState.DONE) continue;
+
+            Robot robotA = match.getRobotA();
+            Robot robotB = match.getRobotB();
+            Float scoreA = match.getScoreA();
+            Float scoreB = match.getScoreB();
+
+            if (robotA == null || robotB == null || scoreA == null || scoreB == null) continue;
+
+            // Initialize robot stats if needed
+            if (!robotStats.containsKey(robotA.getID())) {
+                Map<String, Object> stats = new HashMap<>();
+                stats.put("wins", 0);
+                stats.put("losses", 0);
+                stats.put("scoreDiff", 0f);
+                robotStats.put(robotA.getID(), stats);
+            }
+            if (!robotStats.containsKey(robotB.getID())) {
+                Map<String, Object> stats = new HashMap<>();
+                stats.put("wins", 0);
+                stats.put("losses", 0);
+                stats.put("scoreDiff", 0f);
+                robotStats.put(robotB.getID(), stats);
+            }
+
+            // Determine winner
+            boolean aWins;
+            if (highScoreWin != null && highScoreWin) {
+                aWins = scoreA > scoreB;
+            } else {
+                aWins = scoreA < scoreB;
+            }
+
+            Map<String, Object> statsA = robotStats.get(robotA.getID());
+            Map<String, Object> statsB = robotStats.get(robotB.getID());
+
+            if (aWins) {
+                statsA.put("wins", (int) statsA.get("wins") + 1);
+                statsB.put("losses", (int) statsB.get("losses") + 1);
+            } else if (!scoreA.equals(scoreB)) {
+                statsB.put("wins", (int) statsB.get("wins") + 1);
+                statsA.put("losses", (int) statsA.get("losses") + 1);
+            }
+
+            statsA.put("scoreDiff", (float) statsA.get("scoreDiff") + (scoreA - scoreB));
+            statsB.put("scoreDiff", (float) statsB.get("scoreDiff") + (scoreB - scoreA));
+        }
+
+        return robotStats;
+    }
+
+    /**
+     * Create OrderObj from robot and match info
+     */
+    private OrderObj createOrderObj(int place, Robot robot, RobotMatch match, Boolean highScoreWin) {
+        Float score = getScoreForRobot(match, robot);
+        return new OrderObj(place, new RobotScore(robot, score != null ? score : 0));
+    }
+
+    /**
+     * Create OrderObj from robot with total score from all matches
+     */
+    private OrderObj createOrderObjFromRobot(int place, Robot robot, Discipline discipline) {
+        ScoreAggregation ag = discipline.getScoreAggregation();
+        float totalScore = ag.getTotalScoreInitValue();
+        List<RobotMatch> matches = robot.getMatches();
+        for (RobotMatch m : matches) {
+            if (m.getState().getName() == EMatchState.DONE) {
+                Float robotScore = getScoreForRobot(m, robot);
+                if (robotScore != null) {
+                    totalScore = ag.proccess(totalScore, robotScore);
+                }
+            }
+        }
+        return new OrderObj(place, new RobotScore(robot, totalScore));
     }
 
     private static List<RobotScore> filterByAggregation(List<RobotScore> scoreList, EScoreAggregation aggregation) {
@@ -652,6 +964,84 @@ public class CompetitionEvaluationService {
             .replaceAll("[^A-Z0-9_]", "");
         // Return max 6 characters for shorter group IDs
         return name.length() > 6 ? name.substring(0, 6) : name;
+    }
+
+    /**
+     * Get all winners (1st, 2nd, 3rd place) for all disciplines and categories in a given year.
+     * Returns a structured list of disciplines with their winners for each category.
+     * 
+     * @param year Competition year
+     * @return List of discipline winners with robot info
+     */
+    public List<Map<String, Object>> getAllWinners(int year) throws Exception {
+        // Verify that competition year exists
+        Optional<Competition> competition = this.competitionRepository.findByYear(year);
+        if (!competition.isPresent()) {
+            throw new Exception(String.format("failure, competition [%d] not exists", year));
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        // Get all disciplines
+        List<Discipline> disciplines = this.disciplineRepository.findAll();
+        
+        for (Discipline discipline : disciplines) {
+            Map<String, Object> disciplineData = new HashMap<>();
+            disciplineData.put("disciplineId", discipline.getID());
+            disciplineData.put("disciplineName", discipline.getName());
+            
+            List<Map<String, Object>> categoryResults = new ArrayList<>();
+            
+            // Process both categories
+            for (ECategory category : ECategory.values()) {
+                try {
+                    List<OrderObj> order = getOrder(year, category, discipline.getID());
+                    
+                    // Get top 3 winners (or less if not enough participants)
+                    List<Map<String, Object>> winners = new ArrayList<>();
+                    for (int i = 0; i < Math.min(3, order.size()); i++) {
+                        OrderObj winner = order.get(i);
+                        RobotScore robotScore = winner.getData();
+                        Robot robot = robotScore.getRobot();
+                        
+                        Map<String, Object> winnerData = new HashMap<>();
+                        winnerData.put("place", winner.getPlace());
+                        winnerData.put("robotId", robot.getID());
+                        winnerData.put("robotName", robot.getName());
+                        winnerData.put("robotNumber", robot.getNumber());
+                        winnerData.put("teamName", robot.getTeamRegistration().getTeam().getName());
+                        winnerData.put("score", robotScore.getScore());
+                        winners.add(winnerData);
+                    }
+                    
+                    Map<String, Object> catResult = new HashMap<>();
+                    catResult.put("category", category.name());
+                    catResult.put("categoryLabel", category == ECategory.LOW_AGE_CATEGORY ? "Žáci" : "Studenti a dospělí");
+                    catResult.put("winners", winners);
+                    catResult.put("hasWinners", !winners.isEmpty());
+                    categoryResults.add(catResult);
+                } catch (Exception e) {
+                    // No participants in this category - add empty result
+                    Map<String, Object> catResult = new HashMap<>();
+                    catResult.put("category", category.name());
+                    catResult.put("categoryLabel", category == ECategory.LOW_AGE_CATEGORY ? "Žáci" : "Studenti a dospělí");
+                    catResult.put("winners", new ArrayList<>());
+                    catResult.put("hasWinners", false);
+                    categoryResults.add(catResult);
+                }
+            }
+            
+            disciplineData.put("categories", categoryResults);
+            
+            // Check if discipline has any winners at all
+            boolean hasAnyWinners = categoryResults.stream()
+                .anyMatch(c -> (boolean) c.get("hasWinners"));
+            disciplineData.put("hasAnyWinners", hasAnyWinners);
+            
+            result.add(disciplineData);
+        }
+
+        return result;
     }
 
 }

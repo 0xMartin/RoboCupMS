@@ -113,6 +113,24 @@ public class CompetitionControler {
     }
 
     /**
+     * Prepne zobrazeni globalnich vysledku - povoleno i po zahajeni souteze
+     * 
+     * @param id          ID souteze
+     * @param showResults Nova hodnota showResults
+     * @return Informace o stavu provedeneho requestu
+     */
+    @Secured({ ERole.Names.ADMIN, ERole.Names.LEADER })
+    @PutMapping("/toggleShowResults")
+    Response toggleShowResults(@RequestParam Long id, @RequestParam Boolean showResults) {
+        try {
+            this.competitionService.toggleShowResults(id, showResults);
+            return ResponseHandler.response("success");
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+    }
+
+    /**
      * Zahaji soutez
      * 
      * @param id ID souteze, ktera ma byt zahajena

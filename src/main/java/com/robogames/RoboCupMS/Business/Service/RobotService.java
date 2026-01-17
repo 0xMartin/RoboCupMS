@@ -456,12 +456,16 @@ public class RobotService {
 
         // jen pokud byla registrace povrzena
         if (confirmed) {
-            // vygeneruje unikatni identifikacni cislo pro robota v ramci rocniku souteze a
-            // kategorie
+            // vygeneruje unikatni identifikacni cislo pro robota v ramci rocniku souteze
+            // (cislo je unikatni pres vsechny discipliny a kategorie)
+            int year = robot.get().getTeamRegistration().getCompetitionYear();
             long max = 0;
 
-            List<Robot> robots = robot.get().getDiscipline().getRobots();
-            for (Robot r : robots) {
+            // najde maximalni cislo ze vsech robotu v danem rocniku
+            List<Robot> allRobotsInYear = this.robotRepository.findAll().stream()
+                    .filter(r -> r.getTeamRegistration().getCompetitionYear() == year)
+                    .collect(Collectors.toList());
+            for (Robot r : allRobotsInYear) {
                 max = Math.max(max, r.getNumber());
             }
 

@@ -124,4 +124,22 @@ public class CompetitionEvaluation {
         return ResponseHandler.response(data);
     }
 
+    /**
+     * Retrieves all winners (1st, 2nd, 3rd place) for all disciplines and categories.
+     * Useful for displaying a global winners overview on the main page.
+     * 
+     * @param year Competition year
+     * @return List of disciplines with their winners for each category
+     */
+    @GetMapping("/allWinners")
+    Response getAllWinners(@RequestParam int year) {
+        List<Map<String, Object>> winners;
+        try {
+            winners = this.competitionEvaluationService.getAllWinners(year);
+        } catch (Exception ex) {
+            return ResponseHandler.error(ex.getMessage());
+        }
+        return ResponseHandler.response(winners);
+    }
+
 }

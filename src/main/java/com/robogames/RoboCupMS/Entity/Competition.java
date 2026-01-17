@@ -55,6 +55,12 @@ public class Competition {
     private Boolean started;
 
     /**
+     * Urcuje zda zobrazit globalni vysledky (1., 2., 3. misto) na hlavni strance
+     */
+    @Column(name = "show_results", nullable = false, unique = false)
+    private Boolean showResults;
+
+    /**
      * Registrace tymu do tohoto rocniku souteze
      */
     @OneToMany(mappedBy = "competition", fetch = FetchType.EAGER)
@@ -83,6 +89,7 @@ public class Competition {
         this.startTime = _start;
         this.endTime = _end;
         this.started = false;
+        this.showResults = false;
         this.registrations = new ArrayList<TeamRegistration>();
     }
 
@@ -185,7 +192,25 @@ public class Competition {
         this.started = s;
     }
 
+    /**zda jsou globalni vysledky zobrazeny
+     * 
+     * @return True pokud jsou vysledky zobrazeny
+     */
+    public Boolean getShowResults() {
+        return this.showResults;
+    }
+
     /**
+     * Nastavi zda zobrazit globalni vysledky
+     * 
+     * @param showResults True pro zobrazeni vysledku
+     */
+    public void setShowResults(Boolean showResults) {
+        this.showResults = showResults;
+    }
+
+    /**
+     * Navrati 
      * Navrati vsechny registrace tymu do tohoto rocniku souteze
      * 
      * @return Seznam vsech registraci
