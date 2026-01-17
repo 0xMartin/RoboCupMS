@@ -33,6 +33,11 @@ public class RobotMatchObj {
     private Long nextMatchID;
 
     /**
+     * ID of the next match for losers (e.g., 3rd place match)
+     */
+    private Long nextMatchLoserID;
+
+    /**
      * Whether higher score wins (true) or lower score wins (false)
      * If not specified, will be inherited from discipline
      */
@@ -109,6 +114,14 @@ public class RobotMatchObj {
 
     public void setNextMatchID(Long nextMatchID) {
         this.nextMatchID = nextMatchID;
+    }
+
+    public Long getNextMatchLoserID() {
+        return this.nextMatchLoserID;
+    }
+
+    public void setNextMatchLoserID(Long nextMatchLoserID) {
+        this.nextMatchLoserID = nextMatchLoserID;
     }
 
     public Boolean getHighScoreWin() {

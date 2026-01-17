@@ -320,6 +320,17 @@ public class MatchService {
             nextMatch = nextMatchOpt.get();
         }
 
+        // Get next match loser if provided (for 3rd place matches)
+        RobotMatch nextMatchLoser = null;
+        if (matchObj.getNextMatchLoserID() != null) {
+            Optional<RobotMatch> nextMatchLoserOpt = this.robotMatchRepository.findById(matchObj.getNextMatchLoserID());
+            if (!nextMatchLoserOpt.isPresent()) {
+                throw new Exception(
+                        String.format("failure, next match loser with ID [%d] not exists", matchObj.getNextMatchLoserID()));
+            }
+            nextMatchLoser = nextMatchLoserOpt.get();
+        }
+
         // Get initial match state
         MatchState state = matchStateRepository.findByName(EMatchState.WAITING).get();
 
@@ -334,6 +345,11 @@ public class MatchService {
         // Create and save the match
         RobotMatch match = new RobotMatch(robotA, robotB, playground.get(), state,
                 scoreType, phase, nextMatch, highScoreWin);
+        
+        // Set next match loser if provided (for 3rd place matches)
+        if (nextMatchLoser != null) {
+            match.setNextMatchLoser(nextMatchLoser);
+        }
         
         // Set group and visual position if provided
         if (matchObj.getGroup() != null) {
@@ -477,6 +493,16 @@ public class MatchService {
                         String.format("failure, next match with ID [%d] not exists", matchObj.getNextMatchID()));
             }
             match.setNextMatch(nextMatch.get());
+        }
+
+        // Update next match loser if provided
+        if (matchObj.getNextMatchLoserID() != null) {
+            Optional<RobotMatch> nextMatchLoser = this.robotMatchRepository.findById(matchObj.getNextMatchLoserID());
+            if (!nextMatchLoser.isPresent()) {
+                throw new Exception(
+                        String.format("failure, next match loser with ID [%d] not exists", matchObj.getNextMatchLoserID()));
+            }
+            match.setNextMatchLoser(nextMatchLoser.get());
         }
 
         // Update highScoreWin if provided
@@ -652,6 +678,11 @@ public class MatchService {
             this.progressWinnerToNextMatch(match);
         }
 
+        // Handle loser progression to next match loser (e.g., 3rd place match)
+        if (match.getNextMatchLoser() != null) {
+            this.progressLoserToNextMatch(match);
+        }
+
         // Send message to communication system
         Communication.getInstance().sendAll(this, MatchService.Message.WRITE_SCORE);
     }
@@ -808,6 +839,100 @@ public class MatchService {
         // If both slots are taken by robots from other matches, do nothing
         
         this.robotMatchRepository.save(nextMatch);
+    }
+
+    /**
+     * Progress the loser of a match to the next match loser (e.g., 3rd place match).
+     * Similar logic to progressWinnerToNextMatch but for losers.
+     * 
+     * @param match The completed match
+     */
+    private void progressLoserToNextMatch(RobotMatch match) {
+        RobotMatch nextMatchLoser = match.getNextMatchLoser();
+        if (nextMatchLoser == null) {
+            return;
+        }
+
+        // Determine the loser
+        Robot winner = match.getWinner();
+        Robot loser = null;
+        
+        // Single robot match - no loser
+        if (match.getRobotB() == null || match.getRobotA() == null) {
+            return; // No loser in single robot match
+        }
+        
+        // Two robot match - determine loser based on winner
+        if (winner == null) {
+            return; // No clear winner (tie or missing scores), so no loser either
+        }
+        
+        loser = winner.equals(match.getRobotA()) ? match.getRobotB() : match.getRobotA();
+        
+        if (loser == null) {
+            return; // No loser to advance
+        }
+        
+        Long loserID = loser.getID();
+        
+        // Get current robots in next match loser
+        Robot nextRobotA = nextMatchLoser.getRobotA();
+        Robot nextRobotB = nextMatchLoser.getRobotB();
+        Long nextRobotAID = nextRobotA != null ? nextRobotA.getID() : null;
+        Long nextRobotBID = nextRobotB != null ? nextRobotB.getID() : null;
+        
+        // Check if loser is already correctly assigned
+        if (loserID.equals(nextRobotAID) || loserID.equals(nextRobotBID)) {
+            return; // Loser already in next match loser
+        }
+        
+        // Check if winner (or any other robot from this match) is incorrectly in next match loser - replace it
+        Long winnerID = winner.getID();
+        if (winnerID.equals(nextRobotAID)) {
+            nextMatchLoser.setRobotA(loser);
+            this.robotMatchRepository.save(nextMatchLoser);
+            return;
+        }
+        if (winnerID.equals(nextRobotBID)) {
+            nextMatchLoser.setRobotB(loser);
+            this.robotMatchRepository.save(nextMatchLoser);
+            return;
+        }
+        
+        // Also check if either robot from this match is in the next match loser
+        Long robotAID = match.getRobotA().getID();
+        Long robotBID = match.getRobotB().getID();
+        
+        if (robotAID.equals(nextRobotAID)) {
+            nextMatchLoser.setRobotA(loser);
+            this.robotMatchRepository.save(nextMatchLoser);
+            return;
+        }
+        if (robotAID.equals(nextRobotBID)) {
+            nextMatchLoser.setRobotB(loser);
+            this.robotMatchRepository.save(nextMatchLoser);
+            return;
+        }
+        if (robotBID.equals(nextRobotAID)) {
+            nextMatchLoser.setRobotA(loser);
+            this.robotMatchRepository.save(nextMatchLoser);
+            return;
+        }
+        if (robotBID.equals(nextRobotBID)) {
+            nextMatchLoser.setRobotB(loser);
+            this.robotMatchRepository.save(nextMatchLoser);
+            return;
+        }
+        
+        // No robot from this match is in next match loser yet - assign to first available slot
+        if (nextRobotA == null) {
+            nextMatchLoser.setRobotA(loser);
+        } else if (nextRobotB == null) {
+            nextMatchLoser.setRobotB(loser);
+        }
+        // If both slots are taken by robots from other matches, do nothing
+        
+        this.robotMatchRepository.save(nextMatchLoser);
     }
 
     /**

@@ -31,6 +31,11 @@ public enum ETournamentPhase {
     SEMIFINAL,
 
     /**
+     * Third place match - match between semifinal losers
+     */
+    THIRD_PLACE,
+
+    /**
      * Final round - championship match
      */
     FINAL

@@ -48,6 +48,11 @@ public class MatchPreviewDTO {
     private String nextMatchTempId;
 
     /**
+     * Reference to the next match temp ID for losers (e.g., 3rd place match)
+     */
+    private String nextMatchLoserTempId;
+
+    /**
      * Playground ID to use
      */
     private Long playgroundId;
@@ -132,6 +137,14 @@ public class MatchPreviewDTO {
 
     public void setNextMatchTempId(String nextMatchTempId) {
         this.nextMatchTempId = nextMatchTempId;
+    }
+
+    public String getNextMatchLoserTempId() {
+        return nextMatchLoserTempId;
+    }
+
+    public void setNextMatchLoserTempId(String nextMatchLoserTempId) {
+        this.nextMatchLoserTempId = nextMatchLoserTempId;
     }
 
     public Long getPlaygroundId() {

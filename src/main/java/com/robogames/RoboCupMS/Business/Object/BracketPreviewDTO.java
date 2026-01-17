@@ -32,6 +32,11 @@ public class BracketPreviewDTO {
      */
     private Long playgroundId;
 
+    /**
+     * Third place match (between semifinal losers)
+     */
+    private MatchPreviewDTO thirdPlaceMatch;
+
     public BracketPreviewDTO() {
     }
 
@@ -73,6 +78,14 @@ public class BracketPreviewDTO {
 
     public void setPlaygroundId(Long playgroundId) {
         this.playgroundId = playgroundId;
+    }
+
+    public MatchPreviewDTO getThirdPlaceMatch() {
+        return thirdPlaceMatch;
+    }
+
+    public void setThirdPlaceMatch(MatchPreviewDTO thirdPlaceMatch) {
+        this.thirdPlaceMatch = thirdPlaceMatch;
     }
 
     /**

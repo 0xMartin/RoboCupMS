@@ -367,6 +367,58 @@ public class TournamentGeneratorService {
             }
         }
 
+        // Generate 3rd place match if there are semifinals (at least 2 matches in semifinal round)
+        // Find semifinal round
+        BracketPreviewDTO.BracketRoundDTO semifinalRound = null;
+        for (BracketPreviewDTO.BracketRoundDTO round : rounds) {
+            if (round.getMatches().size() == 2) {
+                // Check if this is semifinal (has 2 matches and next round has 1 match)
+                int roundIndex = rounds.indexOf(round);
+                if (roundIndex < rounds.size() - 1 && rounds.get(roundIndex + 1).getMatches().size() == 1) {
+                    semifinalRound = round;
+                    break;
+                }
+            }
+        }
+
+        if (semifinalRound != null && semifinalRound.getMatches().size() == 2) {
+            // Create 3rd place match
+            MatchPreviewDTO thirdPlaceMatch = new MatchPreviewDTO();
+            String thirdPlaceTempId = String.format("BRACKET_3RD_M%d", matchIdCounter++);
+            thirdPlaceMatch.setTempId(thirdPlaceTempId);
+            thirdPlaceMatch.setRobotA(null);
+            thirdPlaceMatch.setRobotB(null);
+            thirdPlaceMatch.setPhase(ETournamentPhase.THIRD_PLACE);
+            thirdPlaceMatch.setGroup(bracketId);
+            thirdPlaceMatch.setPlaygroundId(playgroundId);
+            thirdPlaceMatch.setRoundName("O 3. místo");
+            thirdPlaceMatch.setMatchOrder(1);
+            thirdPlaceMatch.setIsBye(false);
+            
+            // Position the 3rd place match - use a unique visualX so it's in its own round
+            // Find the final round to get its visual position
+            BracketPreviewDTO.BracketRoundDTO finalRound = rounds.get(rounds.size() - 1);
+            // Use visualX = finalRound.visualX + 100 to ensure it's grouped separately
+            thirdPlaceMatch.setVisualX(finalRound.getMatches().get(0).getVisualX() + 100);
+            thirdPlaceMatch.setVisualY(0);
+            
+            // Set nextMatchLoserTempId for semifinal matches to point to 3rd place match
+            for (MatchPreviewDTO semifinalMatch : semifinalRound.getMatches()) {
+                semifinalMatch.setNextMatchLoserTempId(thirdPlaceTempId);
+            }
+            
+            // Create a separate round for 3rd place match
+            BracketPreviewDTO.BracketRoundDTO thirdPlaceRound = new BracketPreviewDTO.BracketRoundDTO();
+            thirdPlaceRound.setRoundNumber(rounds.size() + 1);
+            thirdPlaceRound.setName("O 3. místo");
+            List<MatchPreviewDTO> thirdPlaceMatches = new ArrayList<>();
+            thirdPlaceMatches.add(thirdPlaceMatch);
+            thirdPlaceRound.setMatches(thirdPlaceMatches);
+            rounds.add(thirdPlaceRound);
+            
+            bracket.setThirdPlaceMatch(thirdPlaceMatch);
+        }
+
         bracket.setRounds(rounds);
         bracket.setByeCount(byeCount);
         return bracket;
@@ -498,15 +550,32 @@ public class TournamentGeneratorService {
             // Second pass: Update nextMatch references for bracket
             for (BracketPreviewDTO.BracketRoundDTO round : request.getBracket().getRounds()) {
                 for (MatchPreviewDTO matchPreview : round.getMatches()) {
+                    Long matchId = tempIdToMatchId.get(matchPreview.getTempId());
+                    if (matchId == null) continue;
+                    
+                    boolean needsUpdate = false;
+                    RobotMatchObj updateObj = new RobotMatchObj();
+                    
+                    // Update nextMatch reference
                     if (matchPreview.getNextMatchTempId() != null) {
-                        Long matchId = tempIdToMatchId.get(matchPreview.getTempId());
                         Long nextMatchId = tempIdToMatchId.get(matchPreview.getNextMatchTempId());
-                        
-                        if (matchId != null && nextMatchId != null) {
-                            RobotMatchObj updateObj = new RobotMatchObj();
+                        if (nextMatchId != null) {
                             updateObj.setNextMatchID(nextMatchId);
-                            matchService.update(matchId, updateObj);
+                            needsUpdate = true;
                         }
+                    }
+                    
+                    // Update nextMatchLoser reference (for 3rd place match)
+                    if (matchPreview.getNextMatchLoserTempId() != null) {
+                        Long nextMatchLoserId = tempIdToMatchId.get(matchPreview.getNextMatchLoserTempId());
+                        if (nextMatchLoserId != null) {
+                            updateObj.setNextMatchLoserID(nextMatchLoserId);
+                            needsUpdate = true;
+                        }
+                    }
+                    
+                    if (needsUpdate) {
+                        matchService.update(matchId, updateObj);
                     }
                 }
             }

@@ -571,8 +571,17 @@ public class CompetitionEvaluationService {
      * Process bracket matches into rounds for visualization
      */
     private List<Map<String, Object>> processBracketRounds(List<RobotMatch> bracketMatches) {
-        // Group by visualX (round number)
-        Map<Integer, List<RobotMatch>> matchesByRound = bracketMatches.stream()
+        // First, separate THIRD_PLACE matches from regular bracket matches
+        List<RobotMatch> thirdPlaceMatches = bracketMatches.stream()
+            .filter(m -> m.getPhase() != null && m.getPhase().getName() == ETournamentPhase.THIRD_PLACE)
+            .collect(Collectors.toList());
+        
+        List<RobotMatch> regularMatches = bracketMatches.stream()
+            .filter(m -> m.getPhase() == null || m.getPhase().getName() != ETournamentPhase.THIRD_PLACE)
+            .collect(Collectors.toList());
+
+        // Group regular matches by visualX (round number)
+        Map<Integer, List<RobotMatch>> matchesByRound = regularMatches.stream()
             .filter(m -> m.getVisualX() != null)
             .collect(Collectors.groupingBy(RobotMatch::getVisualX));
 
@@ -616,6 +625,19 @@ public class CompetitionEvaluationService {
         // Sort by round number
         rounds.sort((a, b) -> Integer.compare(
             (int) a.get("roundNumber"), (int) b.get("roundNumber")));
+
+        // Add 3rd place match as a separate round at the end (if exists)
+        if (!thirdPlaceMatches.isEmpty()) {
+            List<RobotMatchInfo> thirdPlaceInfos = thirdPlaceMatches.stream()
+                .map(RobotMatchInfo::new)
+                .collect(Collectors.toList());
+            
+            Map<String, Object> thirdPlaceRound = new HashMap<>();
+            thirdPlaceRound.put("roundNumber", 9999); // High number to ensure it's last
+            thirdPlaceRound.put("name", "O 3. místo");
+            thirdPlaceRound.put("matches", thirdPlaceInfos);
+            rounds.add(thirdPlaceRound);
+        }
 
         return rounds;
     }

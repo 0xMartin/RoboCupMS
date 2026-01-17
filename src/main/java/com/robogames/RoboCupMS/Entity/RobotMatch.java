@@ -92,6 +92,13 @@ public class RobotMatch {
     private RobotMatch nextMatch;
 
     /**
+     * Reference to the next match for losers (e.g., 3rd place match)
+     * Loser of this match will be automatically assigned to this match
+     */
+    @ManyToOne(optional = true)
+    private RobotMatch nextMatchLoser;
+
+    /**
      * Determines how to select the winner based on score
      * true = higher score wins (e.g., sumo wins count)
      * false = lower score wins (e.g., time-based like line follower)
@@ -368,6 +375,15 @@ public class RobotMatch {
     }
 
     /**
+     * Get the next match ID for losers (e.g., 3rd place match)
+     * 
+     * @return Next match loser ID or null
+     */
+    public Long getNextMatchLoserID() {
+        return this.nextMatchLoser != null ? this.nextMatchLoser.getID() : null;
+    }
+
+    /**
      * Get whether higher score wins
      * 
      * @return true if higher score wins, false if lower score wins
@@ -536,6 +552,16 @@ public class RobotMatch {
         return this.nextMatch;
     }
 
+    /**
+     * Get the next match entity for losers (e.g., 3rd place match)
+     * 
+     * @return Next match for losers
+     */
+    @JsonIgnore
+    public RobotMatch getNextMatchLoser() {
+        return this.nextMatchLoser;
+    }
+
     // ==================== SETTERS ====================
 
     /**
@@ -617,6 +643,15 @@ public class RobotMatch {
      */
     public void setNextMatch(RobotMatch nextMatch) {
         this.nextMatch = nextMatch;
+    }
+
+    /**
+     * Set the next match for losers (e.g., 3rd place match)
+     * 
+     * @param nextMatchLoser Next match for losers
+     */
+    public void setNextMatchLoser(RobotMatch nextMatchLoser) {
+        this.nextMatchLoser = nextMatchLoser;
     }
 
     /**
